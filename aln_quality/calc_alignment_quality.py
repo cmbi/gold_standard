@@ -4,6 +4,9 @@ import logging
 import os
 import re
 
+from custom_exceptions import CustomException
+
+
 fs = frozenset
 
 FORMAT = '%(asctime)s:%(levelname)s:%(funcName)s - %(message)s'
@@ -36,7 +39,7 @@ def split_core(core, full_seq, add_index=0):
             position = full_seq.find(core[:-i])
             new_cores.append({"seq": core[:-i],
                               "pos": position + add_index})
-            new_add_index = position + len(core[:-i])
+            # new_add_index = position + len(core[:-i])
             # remaining_seq = full_seq[new_add_index:]
             # new_cores.extend(split_core(core[-i:], remaining_seq,
             #                             new_add_index))
@@ -45,8 +48,8 @@ def split_core(core, full_seq, add_index=0):
             break
     _log.debug("Split up core {} in two cores: {}".format(core, new_cores))
     if not new_cores:
-        _log.error("Didn't find a way to split up the core {}".format(core))
-        raise Exception
+        raise CustomException("Didn't find a way to split up the "
+                              "core {}".format(core))
     return new_cores
 
 
@@ -165,16 +168,14 @@ def convert_var_to_aln(var_file):
                 var1[i].isupper() and var2[j].isupper()):
             # both segments are cores
             if len(var2[j]) != len(var1[i]):
-                _log.error("Core {} and {} have different lengths".format(
-                    var1[i], var2[j]))
-                raise Exception
+                raise CustomException("Core {} and {} have different "
+                                      "lengths".format(var1[i], var2[j]))
             aln_seq2 += var2[j]
             aln_seq1 += var1[i]
             i += 1
             j += 1
         else:
-            _log.error("Incorrect Var file: check number of cores")
-            raise Exception
+            raise CustomException("Incorrect Var file: check number of cores")
     return {id1: aln_seq1, id2: aln_seq2}
 
 
@@ -191,8 +192,7 @@ def parse_var_file(file_path):
 def get_golden_alns(golden_dir):
     _log.info("Getting golden standard alignments")
     if not os.path.exists(golden_dir):
-        _log.error("No such directory: {}".format(golden_dir))
-        raise Exception
+        raise CustomException("No such directory: {}".format(golden_dir))
     # get all ".Var" files in the given directory
     var_list = filter(lambda x: x.endswith(".Var"), os.listdir(golden_dir))
     _log.info("Got {} var files".format(len(var_list)))
@@ -235,6 +235,8 @@ def parse_3dm_aln(aln_path, full_seq, golden_ids):
 
 def parse_fasta(aln_path, golden_ids):
     _log.info("Parsing FASTA: {}".format(aln_path))
+    if not os.path.exists(aln_path):
+        raise CustomException("FASTA file doesn't exist: {}".format(aln_path))
     with open(aln_path) as a:
         aln_file = a.read().splitlines()
     aln_dict = {}
@@ -246,8 +248,8 @@ def parse_fasta(aln_path, golden_ids):
             else:
                 seq_id = l.lstrip('>')
             if seq_id in aln_dict.keys():
-                _log.error("Sequence {} is duplicated".format(seq_id))
-                raise Exception
+                raise CustomException("Sequence {} is duplicated".format(
+                    seq_id))
             if seq_id in golden_ids:
                 aln_dict[seq_id] = ""
         elif seq_id and seq_id in golden_ids:
@@ -262,8 +264,8 @@ def get_aligned_res(res_num, query_id, id2, golden_aln):
 
 def calc_confusion_matrix(golden_aln, id1, seq1, id2, seq2):
     if len(seq1) != len(seq2):
-        _log.error("Aligned sequences {} and {} are not of the same length")
-        raise Exception
+        raise CustomException("Aligned sequences {} and {} are not of the same "
+                              "length")
 
     matrix = {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
 
@@ -271,9 +273,9 @@ def calc_confusion_matrix(golden_aln, id1, seq1, id2, seq2):
         if seq1[i] != '-' and seq2[i] != '-':
             res2_gold = get_aligned_res(seq1[i], id1, id2, golden_aln)
             if seq2[i] == res2_gold:
-                matrix["TP"] += 1
+                matrix["TP"] += 2
             else:
-                matrix["FP"] += 1
+                matrix["FP"] += 2
         elif seq1[i] != '-':
             res2_gold = get_aligned_res(seq1[i], id1, id2, golden_aln)
             if res2_gold == '-':
@@ -287,7 +289,33 @@ def calc_confusion_matrix(golden_aln, id1, seq1, id2, seq2):
             else:
                 matrix["FN"] += 1
         # if both are gaps do nothing
+
+    # check output sanity
+    res_only = filter(lambda x: x != "-", seq1 + seq2)
+    if len(res_only) != sum(matrix.values()):
+        raise CustomException("Sum of values in the confusion matrix({}) should"
+                              " be equal to the total number of"
+                              " residues({})".format(len(res_only),
+                                                     sum(matrix.values())))
+    sums = calc_sums(golden_aln, id1, id2)
+
+    if (sums["pos"] != matrix["TP"] + matrix["FN"] or
+            sums["neg"] != matrix["TN"] + matrix["FP"]):
+        raise CustomException("Sums of TP + FN and FP + TN are incorrect")
+
     return matrix
+
+
+def calc_sums(aln, id1, id2):
+    sum_pos = 0
+    sum_neg = 0
+    for i in range(len(aln[id1])):
+        if ((aln[id1][i] == "-" and aln[id2][i] != "-") or
+                (aln[id1][i] != "-" and aln[id2][i] == "-")):
+            sum_neg += 1
+        elif aln[id1][i] != "-" and aln[id2][i] != "-":
+            sum_pos += 2
+    return {"pos": sum_pos, "neg": sum_neg}
 
 
 def score_var_regions(golden_aln, id1, id2, var1):
@@ -303,8 +331,8 @@ def score_var_regions(golden_aln, id1, id2, var1):
 
 def calc_confusion_matrix_3dm(golden_aln, id1, seq1, var1, id2, seq2, var2):
     if len(seq1) != len(seq2):
-        _log.error("Aligned sequences {} and {} are not of the same length")
-        raise Exception
+        raise CustomException("Aligned sequences {} and {} are not of the same "
+                              "length")
 
     matrix = {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
     # score core regions
@@ -312,23 +340,25 @@ def calc_confusion_matrix_3dm(golden_aln, id1, seq1, var1, id2, seq2, var2):
         if seq1[i] != '-' and seq2[i] != '-':
             res2_gold = get_aligned_res(seq1[i], id1, id2, golden_aln)
             if seq2[i] == res2_gold:
-                matrix["TP"] += 1
+                matrix["TP"] += 2
             else:
-                matrix["FP"] += 1
-        elif seq1[i] != '-':
+                matrix["FP"] += 2
+        elif seq1[i] != '-' and seq2[i] == '-':
             res2_gold = get_aligned_res(seq1[i], id1, id2, golden_aln)
+            print seq1[i], seq2[i], res2_gold
             if res2_gold == '-':
                 matrix["TN"] += 1
             else:
                 matrix["FN"] += 1
-        elif seq2[i] != '-':
+        elif seq2[i] != '-' and seq1[i] == '-':
             res1_gold = get_aligned_res(seq2[i], id2, id1, golden_aln)
+            print seq1[i], seq2[i], res2_gold
             if res1_gold == '-':
                 matrix["TN"] += 1
             else:
                 matrix["FN"] += 1
         # if both are gaps do nothing
-
+    _log.debug("FN: {} TN: {}".format(matrix["FN"], matrix["TN"]))
     # score variable regions in seq1
     var_matrix = score_var_regions(golden_aln, id1, id2, var1)
     matrix = merge_dicts(matrix, var_matrix)
@@ -336,6 +366,24 @@ def calc_confusion_matrix_3dm(golden_aln, id1, seq1, var1, id2, seq2, var2):
     # score variable regions in seq2
     var_matrix = score_var_regions(golden_aln, id2, id1, var2)
     matrix = merge_dicts(matrix, var_matrix)
+
+    # check output sanity
+    res_only = filter(lambda x: x != "-", seq1 + seq2 + var1 + var2)
+    if len(res_only) != sum(matrix.values()):
+        raise CustomException("Sum of values in the confusion matrix({}) should"
+                              " be equal to the total number of"
+                              " residues({})".format(len(res_only),
+                                                     sum(matrix.values())))
+    sums = calc_sums(golden_aln, id1, id2)
+    _log.debug("vars: {}".format(len(var1 + var2)))
+
+    if (sums["pos"] != matrix["TP"] + matrix["FN"] or
+            sums["neg"] != matrix["TN"] + matrix["FP"]):
+        _log.debug("p: {} n: {} tp: {} fn: {} tn: {} fp: {}".format(
+            sums["pos"], sums["neg"], matrix["TP"], matrix["FN"], matrix["TN"],
+            matrix["FP"]))
+        raise CustomException("Sums of TP + FN and FP + TN are incorrect")
+
     return matrix
 
 
@@ -396,14 +444,30 @@ def calc_stats(confusion_matrices):
 def process_results(matrices, output):
     _log.info("Processing the results")
     stats = calc_stats(matrices)
+
+    out_txt = ""
+    for s_id, s in stats.iteritems():
+        header = s_id if (s_id is str) else ' '.join(list(s_id))
+        out_txt += "# {}\n".format(header)
+        # sensitivity, specificity, ppv, npv
+        out_txt += ' '.join(["{}: {}".format(k, v)
+                             for k, v in matrices[s_id].iteritems()]) + '\n'
+        # FP, TP, FN, TN values
+        out_txt += ''.join(["{}: {}\n".format(k, v)
+                            for k, v in s.iteritems()])
+        val_sum = sum(matrices[s_id].values())
+        out_txt += "{}\n".format(val_sum)
+
     with open(output, 'w') as out:
-        for s_id, s in stats.iteritems():
-            newlines = ''.join(["{}: {}\n".format(k, v)
-                                for k, v in s.iteritems()])
-            out.write("# {}\n".format(' '.join(list(s_id))))
-            out.write(' '.join(["{}: {}".format(k, v)
-                                for k, v in matrices[s_id].iteritems()]) + '\n')
-            out.write(newlines)
+        out.write(out_txt)
+    _log.info("Created the output file: {}".format(output))
+
+
+def check_input(golden_alns, full_seq):
+    for id_set, s in golden_alns.iteritems():
+        for s_id in id_set:
+            seq_gold = filter(lambda x: x != "-", s[s_id])
+            assert len(full_seq[s_id]) == len(seq_gold)
 
 
 def calculate_aln_quality(golden_dir, test_aln_path, output, in3dm,
@@ -412,6 +476,7 @@ def calculate_aln_quality(golden_dir, test_aln_path, output, in3dm,
     if in3dm:
         _log.info("Calculating alignment quality in 3DM mode")
         full_seq = parse_fasta(full_seq_path, golden_ids)
+        check_input(golden_alns, full_seq)
         num_aln_dict = parse_3dm_aln(test_aln_path, full_seq, golden_ids)
         confusion_matrices = calc_confusion_matrices_3dm(golden_alns,
                                                          num_aln_dict)
@@ -450,6 +515,6 @@ if __name__ == "__main__":
     try:
         calculate_aln_quality(args.golden_dir, args.test_aln_path, args.output,
                               args.in3dm, args.full_seq)
-    except Exception as e:
-        _log.error("Exiting: {}".format(e.message))
+    except CustomException as e:
+        _log.error("{}".format(e.message))
         exit(1)
