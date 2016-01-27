@@ -37,15 +37,16 @@ def split_core(core, full_seq, add_index=0):
             new_cores.append({"seq": core[:-i],
                               "pos": position + add_index})
             new_add_index = position + len(core[:-i])
-            remaining_seq = full_seq[new_add_index:]
-            new_cores.extend(split_core(core[-i:], remaining_seq,
-                                        new_add_index))
+            # remaining_seq = full_seq[new_add_index:]
+            # new_cores.extend(split_core(core[-i:], remaining_seq,
+            #                             new_add_index))
+            new_cores.extend(split_core(core[-i:], full_seq))
+
             break
     _log.debug("Split up core {} in two cores: {}".format(core, new_cores))
     if not new_cores:
         _log.error("Didn't find a way to split up the core {}".format(core))
         raise Exception
-    print new_cores, full_seq, add_index
     return new_cores
 
 
@@ -84,7 +85,6 @@ def core_to_num_seq(aligned_seq, full_seq):
         if not is_single_core:
             cores = split_core(core, full_seq)
             cores = sorted(cores, key=lambda x: x["pos"])
-            print cores
             for c in cores:
                 grounded_seq.extend([c['pos'] + i + 1
                                      for i in range(len(c['seq']))])

@@ -1,7 +1,7 @@
 from nose.tools import eq_, ok_
 from mock import patch, mock_open
 
-from scripts.aln_quality import calc_alignment_quality as ca
+from aln_quality_script.aln_quality import calc_alignment_quality as ca
 
 
 def test_convert_var_to_aln():
@@ -11,6 +11,7 @@ def test_convert_var_to_aln():
     expected = {"ID1": "SDFGSFG-DFGABC--",
                 "ID2": "----GFGGVBF---BC"
                 }
+
     eq_(ca.convert_var_to_aln(var_file), expected)
 
 
@@ -21,10 +22,10 @@ def test_parse_var_file():
     eq_(var['ids'], ['1HVXA', '1E43A'])
 
 
-@patch('scripts.aln_quality.calc_alignment_quality.open',
+@patch('aln_quality_script.aln_quality.calc_alignment_quality.open',
        mock_open(read_data=">ID1\nA-C\nDEF\n>ID2\nGHI\n"), create=True)
 def test_parse_fasta():
-    aln = ca.parse_fasta("path")
+    aln = ca.parse_fasta("path", ["ID1", "ID2"])
     expected = {"ID1": "A-CDEF", "ID2": "GHI"}
     eq_(aln, expected)
 
@@ -42,7 +43,7 @@ def test_calc_confusion_matrix():
     eq_(m, expected)
 
 
-@patch('scripts.aln_quality.calc_alignment_quality.calc_confusion_matrix')
+@patch('aln_quality_script.aln_quality.calc_alignment_quality.calc_confusion_matrix')
 def test_calc_confusion_matrices(mock_calc):
     m1 = {"TP": 2, "FN": 0, "TN": 1, "FP": 1}
     m2 = {"TP": 3, "FN": 4, "TN": 7, "FP": 1}
@@ -61,9 +62,9 @@ def test_calc_confusion_matrices(mock_calc):
     eq_(result["all"], expected_all)
 
 
-@patch('scripts.aln_quality.calc_alignment_quality.os.path.exists')
-@patch('scripts.aln_quality.calc_alignment_quality.os.listdir')
-@patch('scripts.aln_quality.calc_alignment_quality.parse_var_file')
+@patch('aln_quality_script.aln_quality.calc_alignment_quality.os.path.exists')
+@patch('aln_quality_script.aln_quality.calc_alignment_quality.os.listdir')
+@patch('aln_quality_script.aln_quality.calc_alignment_quality.parse_var_file')
 def test_get_golden_alns(mock_parse, mock_listdir, mock_path_exists):
     mock_parse.side_effect = [{"ids": ["id1", "id2"], "aln": "test_aln"},
                               {"ids": ["id2", "id3"], "aln": "test_aln"}]
@@ -93,28 +94,21 @@ def test_core_to_num_seq():
 
 
 def test_get_next_core():
-    seq = "--ASDFssSDFH-ss-"
+    seq = "--ASDFSSSDFH-SS-"
 
     start = 0
-    core, core_start = ca.get_next_core(seq, start)
-    expected_core = "ASDFs"
+    r = ca.get_next_core(seq, start)
+    expected_core = "ASDFSSSDFH"
     expected_start = 2
-    eq_(core, expected_core)
-    eq_(core_start, expected_start)
-
-    start = 7
-    core, core_start = ca.get_next_core(seq, start)
-    expected_core = "sSDFH"
-    expected_start = 7
-    eq_(core, expected_core)
-    eq_(core_start, expected_start)
+    eq_(r["core"], expected_core)
+    eq_(r["core_start"], expected_start)
 
     start = 12
-    core, core_start = ca.get_next_core(seq, start)
-    expected_core = "s"
+    r = ca.get_next_core(seq, start)
+    expected_core = "SS"
     expected_start = 13
-    eq_(core, expected_core)
-    eq_(core_start, expected_start)
+    eq_(r["core"], expected_core)
+    eq_(r["core_start"], expected_start)
 
 
 def test_get_var_pos():
@@ -125,14 +119,14 @@ def test_get_var_pos():
     eq_(expected, ca.get_var_pos(num_seq, full_seq))
 
 
-@patch('scripts.aln_quality.calc_alignment_quality.open',
+@patch('aln_quality_script.aln_quality.calc_alignment_quality.open',
        mock_open(read_data=">ID1\n--BCD--\n>ID2\n-BC-FG-\n"), create=True)
 def test_parse_3dm_aln():
     full_seq = {"ID1": "ABCDEF", "ID2": "BCDEFG"}
     expected = {"cores": {"ID1": ['-', '-', 2, 3, 4, '-', '-'],
                           "ID2": ['-', 1, 2, '-', 5, 6, '-']},
                 "var": {"ID1": [1, 5, 6], "ID2": [3, 4]}}
-    aln = ca.parse_3dm_aln("testpath", full_seq)
+    aln = ca.parse_3dm_aln("testpath", full_seq, ["ID1", "ID2"])
     eq_(expected, aln)
 
 
@@ -165,4 +159,3 @@ def test_num_3dm():
     test_aln_path = "tests/testdata/test_3dm_aln.fasta"
     full_seq = ca.parse_fasta(full_seq_path, golden_ids)
     num_aln_dict = ca.parse_3dm_aln(test_aln_path, full_seq, golden_ids)
-    print num_aln_dict
