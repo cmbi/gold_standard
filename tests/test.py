@@ -38,14 +38,15 @@ def test_calc_confusion_matrix():
     test_aln = {'id1': "--12--345-6",
                 'id2': "-12--3-456-"}
 
-    expected = {"TP": 2, "FN": 4, "TN": 2, "FP": 1}
+    expected = {"TP": 4, "FN": 4, "TN": 2, "FP": 2}
 
     m = ca.calc_confusion_matrix(golden_aln, 'id1', test_aln['id1'], 'id2',
                                  test_aln['id2'])
     eq_(m, expected)
 
 
-@patch('aln_quality_script.aln_quality.calc_alignment_quality.calc_confusion_matrix')
+@patch('aln_quality_script.aln_quality.calc_alignment_quality.'
+       'calc_confusion_matrix')
 def test_calc_confusion_matrices(mock_calc):
     m1 = {"TP": 2, "FN": 0, "TN": 1, "FP": 1}
     m2 = {"TP": 3, "FN": 4, "TN": 7, "FP": 1}
@@ -60,20 +61,44 @@ def test_calc_confusion_matrices(mock_calc):
     }
     expected_all = {"TP": 6, "FN": 7, "TN": 10, "FP": 2}
     result = ca.calc_confusion_matrices(golden_alns, test_aln)
-    ok_(all(m in result.values() for m in [m1, m2, m3]))
-    eq_(result["all"], expected_all)
+    ok_(all(m in result[0].values() for m in [m1, m2, m3]))
+    eq_(result[1], expected_all)
+
+
+@patch('aln_quality_script.aln_quality.calc_alignment_quality.'
+       'calc_confusion_matrix_3dm')
+def test_calc_confusion_matrices_3dm(mock_calc):
+    m1 = {"TP": 2, "FN": 0, "TN": 1, "FP": 1}
+    m2 = {"TP": 3, "FN": 4, "TN": 7, "FP": 1}
+    m3 = {"TP": 1, "FN": 3, "TN": 2, "FP": 0}
+    mock_calc.side_effect = [m1, m2, m3]
+    fs = frozenset
+    test_aln = {"cores": {"id1": "seq1", "id2": "seq2", "id3": "seq3"},
+                "var": {"id1": "var", "id2": "var", "id3": "var"}
+                }
+    golden_alns = {
+        fs(['id1', 'id2']): "gold1",
+        fs(['id1', 'id3']): "gold2",
+        fs(['id2', 'id3']): "gold3"
+    }
+    expected_all = {"TP": 6, "FN": 7, "TN": 10, "FP": 2}
+    result = ca.calc_confusion_matrices_3dm(golden_alns, test_aln)
+    ok_(all(m in result[0].values() for m in [m1, m2, m3]))
+    eq_(result[1], expected_all)
 
 
 @patch('aln_quality_script.aln_quality.calc_alignment_quality.os.path.exists')
 @patch('aln_quality_script.aln_quality.calc_alignment_quality.os.listdir')
 @patch('aln_quality_script.aln_quality.calc_alignment_quality.parse_var_file')
-def test_get_golden_alns(mock_parse, mock_listdir, mock_path_exists):
-    mock_parse.side_effect = [{"ids": ["id1", "id2"], "aln": "test_aln"},
-                              {"ids": ["id2", "id3"], "aln": "test_aln"}]
+def test_parse_golden_alns(mock_parse, mock_listdir, mock_path_exists):
+    mock_parse.side_effect = [{"ids": ["id1", "id2"], "aln": "test_aln",
+                               "full": {'id1': 'seq1', 'id2': 'seq2'}},
+                              {"ids": ["id2", "id3"], "aln": "test_aln",
+                               "full": {'id1': 'seq1', 'id2': 'seq2'}}]
     mock_path_exists.return_value = True
     mock_listdir.return_value = ["file1.Var", "file2.var",
                                  "file3.fasta", "file4.Var"]
-    eq_(2, len(ca.get_golden_alns("test_dir")))
+    eq_(2, len(ca.parse_golden_alns("test_dir")[0]))
 
 
 def test_core_to_num_seq():
@@ -134,13 +159,6 @@ def test_parse_3dm_aln(mock_path_exists):
     eq_(expected, aln)
 
 
-def test_parse_3dm_aln_1OB0A():
-    # TODO: 1OB0A debugging
-    full_seq = ca.parse_fasta('tests/testdata/1OB0A_full.fasta', ["1OB0A"])
-    print ca.parse_3dm_aln('tests/testdata/1OB0A_3dm_aln.fasta', full_seq,
-                           ["1OB0A"])
-
-
 def test_score_var_regions():
     golden = {"1": [1, 2, 3, '-', '-', 4, 5, 6, '-', '-'],
               "2": ['-', '-', '-', 1, 2, 3, 4, 5, '-', '-']
@@ -159,14 +177,13 @@ def test_calc_confusion_matrix_3dm():
     var2 = [1, 2]
     seq1 = ['-', 4, 5, 6, '-', '-', 8]
     seq2 = [3, 4, '-', 5, 6, '-', '-']
-    expected = {"TN": 6, "FN": 4, "TP": 1, "FP": 1}
+    expected = {"TN": 6, "FN": 4, "TP": 2, "FP": 2}
     m = ca.calc_confusion_matrix_3dm(golden, '1', seq1, var1, '2', seq2, var2)
     eq_(expected, m)
 
 
-# def test_num_3dm():
-#     golden_ids = "1HVXA"
-#     full_seq_path = "tests/testdata/full_seq.fasta"
-#     test_aln_path = "tests/testdata/test_3dm_aln.fasta"
-#     full_seq = ca.parse_fasta(full_seq_path, golden_ids)
-#     num_aln_dict = ca.parse_3dm_aln(test_aln_path, full_seq, golden_ids)
+def test_calc_stats():
+    matrices = {'m1': {"TP": 2, "FN": 0, "TN": 4, "FP": 6}}
+
+    expected = {'m1': {'specificity': 0.4, 'sensitivity': 1, 'ppv': 0.25, 'npv': 1}}
+    eq_(expected, ca.calc_stats(matrices))

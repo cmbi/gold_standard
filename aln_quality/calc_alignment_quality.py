@@ -39,10 +39,6 @@ def split_core(core, full_seq, add_index=0):
             position = full_seq.find(core[:-i])
             new_cores.append({"seq": core[:-i],
                               "pos": position + add_index})
-            # new_add_index = position + len(core[:-i])
-            # remaining_seq = full_seq[new_add_index:]
-            # new_cores.extend(split_core(core[-i:], remaining_seq,
-            #                             new_add_index))
             new_cores.extend(split_core(core[-i:], full_seq))
 
             break
@@ -267,29 +263,34 @@ def get_aligned_res(res_num, query_id, id2, golden_aln):
     return golden_aln[id2][aln_pos]
 
 
-def calc_confusion_matrix(golden_aln, id1, seq1, id2, seq2):
+def calc_pairwise_score(golden_aln, id1, seq1, id2, seq2):
     if len(seq1) != len(seq2):
         raise CustomException("Aligned sequences {} and {} are not of the same "
                               "length")
 
     matrix = {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
+    sp_score = 0
 
     for i in range(len(seq1)):
         if seq1[i] != '-' and seq2[i] != '-':
             res2_gold = get_aligned_res(seq1[i], id1, id2, golden_aln)
             if seq2[i] == res2_gold:
+                sp_score += 2
                 matrix["TP"] += 2
             else:
+                sp_score -= 2
                 matrix["FP"] += 2
         elif seq1[i] != '-':
             res2_gold = get_aligned_res(seq1[i], id1, id2, golden_aln)
             if res2_gold == '-':
+                sp_score += 1
                 matrix["TN"] += 1
             else:
                 matrix["FN"] += 1
         elif seq2[i] != '-':
             res1_gold = get_aligned_res(seq2[i], id2, id1, golden_aln)
             if res1_gold == '-':
+                sp_score += 1
                 matrix["TN"] += 1
             else:
                 matrix["FN"] += 1
@@ -302,8 +303,10 @@ def calc_confusion_matrix(golden_aln, id1, seq1, id2, seq2):
                               " be equal to the total number of"
                               " residues({})".format(len(res_only),
                                                      sum(matrix.values())))
+    sp_max = get_max_sp_score(golden_aln)
+    sp_score = float(sp_score) / sp_max
 
-    return matrix
+    return {'matrix': matrix, 'SP': sp_score}
 
 
 def calc_sums(aln, id1, id2):
@@ -329,29 +332,46 @@ def score_var_regions(golden_aln, id1, id2, var1):
     return matrix
 
 
-def calc_confusion_matrix_3dm(golden_aln, id1, seq1, var1, id2, seq2, var2):
+def get_max_sp_score(golden_aln):
+    seq1, seq2 = golden_aln.values()
+    id1, id2 = golden_aln.keys()
+    score = 0
+    for i in range(len(golden_aln[id1])):
+        if seq1[i] != '-' and seq2[i] != '-':
+            score += 2
+        elif seq1[i] != '-' or seq2[i] != '-':
+            score += 1
+    return score
+
+
+def calc_pairwise_score_3dm(golden_aln, id1, seq1, var1, id2, seq2, var2):
     if len(seq1) != len(seq2):
         raise CustomException("Aligned sequences {} and {} are not of the same "
                               "length")
 
     matrix = {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
+    sp_score = 0
     # score core regions
     for i in range(len(seq1)):
         if seq1[i] != '-' and seq2[i] != '-':
             res2_gold = get_aligned_res(seq1[i], id1, id2, golden_aln)
             if seq2[i] == res2_gold:
+                sp_score += 2
                 matrix["TP"] += 2
             else:
+                sp_score -= 2
                 matrix["FP"] += 2
         elif seq1[i] != '-' and seq2[i] == '-':
             res2_gold = get_aligned_res(seq1[i], id1, id2, golden_aln)
             if res2_gold == '-':
+                sp_score += 1
                 matrix["TN"] += 1
             else:
                 matrix["FN"] += 1
         elif seq2[i] != '-' and seq1[i] == '-':
             res1_gold = get_aligned_res(seq2[i], id2, id1, golden_aln)
             if res1_gold == '-':
+                sp_score += 1
                 matrix["TN"] += 1
             else:
                 matrix["FN"] += 1
@@ -372,13 +392,17 @@ def calc_confusion_matrix_3dm(golden_aln, id1, seq1, var1, id2, seq2, var2):
                               " residues({})".format(len(res_only),
                                                      sum(matrix.values())))
 
-    return matrix
+    sp_max = get_max_sp_score(golden_aln)
+    sp_score = float(sp_score) / sp_max
+
+    return {'matrix': matrix, 'SP': sp_score}
 
 
-def calc_confusion_matrices_3dm(golden_alns, test_aln):
+def calc_scores_3dm(golden_alns, test_aln):
     _log.info("Calculating confusion matrices [3DM mode]")
     matrices_dict = {}
     full_matrix = {'TP': 0, 'FP': 0, 'TN': 0, 'FN': 0}
+    sp_scores = {}
     for id1, seq1 in test_aln["cores"].iteritems():
         for id2, seq2 in test_aln["cores"].iteritems():
             id_set = fs([id1, id2])
@@ -386,30 +410,35 @@ def calc_confusion_matrices_3dm(golden_alns, test_aln):
                     id_set in golden_alns.keys()):
                 _log.debug("Calculating confusion matrix for sequences {} "
                            "and {}".format(id1, id2))
-                matrices_dict[id_set] = calc_confusion_matrix_3dm(
+                scores = calc_pairwise_score_3dm(
                     golden_alns[id_set], id1, seq1, test_aln["var"][id1],
                     id2, seq2, test_aln["var"][id2])
+                matrices_dict[id_set] = scores['matrix']
                 # add the values to the matrix with overall scores
-                full_matrix = merge_dicts(full_matrix, matrices_dict[id_set])
-    return matrices_dict, full_matrix
+                full_matrix = merge_dicts(full_matrix, scores['matrix'])
+                sp_scores[id_set] = scores['SP']
+    return {'pairwise': matrices_dict, 'full': full_matrix, 'SP': sp_scores}
 
 
-def calc_confusion_matrices(golden_alns, test_aln):
+def calc_scores(golden_alns, test_aln):
     _log.info("Calculating confusion matrices")
-    # one of the matrices ('all') holds scores summed up from all sequence pairs
     matrices_dict = {}
+    # full matrix holds scores summed up from all sequence pairs
     full_matrix = {'TP': 0, 'FP': 0, 'TN': 0, 'FN': 0}
+    sp_scores = {}
     for id1, seq1 in test_aln.iteritems():
         for id2, seq2 in test_aln.iteritems():
             id_set = fs([id1, id2])
             # check if not the same sequence and if not already calculated
             if (id1 != id2 and id_set not in matrices_dict.keys() and
                     id_set in golden_alns.keys()):
-                matrices_dict[id_set] = calc_confusion_matrix(
-                        golden_alns[id_set], id1, seq1, id2, seq2)
+                scores = calc_pairwise_score(golden_alns[id_set], id1, seq1,
+                                             id2, seq2)
+                matrices_dict[id_set] = scores['matrix']
                 # add the values to the matrix with overall scores
-                full_matrix = merge_dicts(full_matrix, matrices_dict[id_set])
-    return matrices_dict, full_matrix
+                full_matrix = merge_dicts(full_matrix, scores['matrix'])
+                sp_scores[id_set] = scores['SP']
+    return {'pairwise': matrices_dict, 'full': full_matrix, 'SP': sp_scores}
 
 
 def calc_stats(confusion_matrices):
@@ -429,19 +458,24 @@ def calc_stats(confusion_matrices):
     return stats
 
 
-def process_results(matrices, full_matrix, output):
+def process_results(matrices, full_matrix, sp_scores, output):
     _log.info("Processing the results")
-    stats = calc_stats(matrices)
-    full_stats = calc_stats({'full': full_matrix})['full']
     out_txt = ""
+
+    # FULL MATRIX #
     out_txt += "#### RESULTS ####\n"
     # sensitivity, specificity, ppv, npv
     out_txt += ' '.join(["{}: {}".format(k, v)
                          for k, v in full_matrix.iteritems()]) + '\n'
     # FP, TP, FN, TN values
+    full_stats = calc_stats({'full': full_matrix})['full']
     out_txt += ''.join(["{}: {}\n".format(k, v)
                         for k, v in full_stats.iteritems()]) + '\n'
+    # average SP score
+    out_txt += "SP score: {}\n".format(sum(sp_scores.values()) / len(sp_scores))
 
+    # PAIRWISE stats
+    stats = calc_stats(matrices)
     for s_id, s in stats.iteritems():
         header = s_id if (s_id is str) else ' '.join(list(s_id))
         out_txt += "# {}\n".format(header)
@@ -451,6 +485,8 @@ def process_results(matrices, full_matrix, output):
         # FP, TP, FN, TN values
         out_txt += ''.join(["{}: {}\n".format(k, v)
                             for k, v in s.iteritems()]) + '\n'
+        # SP score
+        out_txt += "SP score: {}\n".format(sp_scores[s_id])
 
     with open(output, 'w') as out:
         out.write(out_txt)
@@ -461,18 +497,15 @@ def calculate_aln_quality(golden_dir, test_aln_path, output, in3dm):
     golden_alns, golden_ids, full_seq = parse_golden_alns(golden_dir)
     if in3dm:
         _log.info("Calculating alignment quality in 3DM mode")
-        # full_seq = parse_fasta(full_seq_path, golden_ids)
         num_aln_dict = parse_3dm_aln(test_aln_path, full_seq, golden_ids)
-        confusion_matrices, full_matrix = calc_confusion_matrices_3dm(
-            golden_alns, num_aln_dict)
+        scores = calc_scores_3dm(golden_alns, num_aln_dict)
     else:
         _log.info("Calculating alignment quality")
         aln_dict = parse_fasta(test_aln_path, golden_ids)
         num_aln_dict = {seq_id: aln_seq_to_num(seq)
                         for seq_id, seq in aln_dict.iteritems()}
-        confusion_matrices, full_matrix = calc_confusion_matrices(golden_alns,
-                                                                  num_aln_dict)
-    process_results(confusion_matrices, full_matrix, output)
+        scores = calc_scores(golden_alns, num_aln_dict)
+    process_results(scores['pairwise'], scores['full'], scores['SP'], output)
 
 
 if __name__ == "__main__":
