@@ -185,11 +185,14 @@ def parse_var_file(file_path):
         var_file = a.read().splitlines()
     ids = [i.split(',')[0] for i in var_file]
     aln = convert_var_to_aln(var_file)
+    full = {}
+    full[ids[0]] = re.sub('-', '', aln[ids[0]])
+    full[ids[1]] = re.sub('-', '', aln[ids[1]])
     num_aln = {seq_id: aln_seq_to_num(seq) for seq_id, seq in aln.iteritems()}
-    return {'ids': ids, 'aln': num_aln}
+    return {'ids': ids, 'aln': num_aln, 'full': full}
 
 
-def get_golden_alns(golden_dir):
+def parse_golden_alns(golden_dir):
     _log.info("Getting golden standard alignments")
     if not os.path.exists(golden_dir):
         raise CustomException("No such directory: {}".format(golden_dir))
@@ -198,13 +201,15 @@ def get_golden_alns(golden_dir):
     _log.info("Got {} var files".format(len(var_list)))
     golden_alns = {}
     golden_ids = set()
+    full_seq = {}
     for v in var_list:
         var = parse_var_file(os.path.join(golden_dir, v))
         golden_ids.update(var['ids'])
         aln_ids = fs(var['ids'])
         golden_alns[aln_ids] = var['aln']
+        full_seq.update(var['full'])
     _log.info("Finished parsing .Var files")
-    return golden_alns, golden_ids
+    return golden_alns, golden_ids, full_seq
 
 
 def get_var_pos(num_seq, full_seq):
@@ -297,11 +302,6 @@ def calc_confusion_matrix(golden_aln, id1, seq1, id2, seq2):
                               " be equal to the total number of"
                               " residues({})".format(len(res_only),
                                                      sum(matrix.values())))
-    sums = calc_sums(golden_aln, id1, id2)
-
-    if (sums["pos"] != matrix["TP"] + matrix["FN"] or
-            sums["neg"] != matrix["TN"] + matrix["FP"]):
-        raise CustomException("Sums of TP + FN and FP + TN are incorrect")
 
     return matrix
 
@@ -345,20 +345,17 @@ def calc_confusion_matrix_3dm(golden_aln, id1, seq1, var1, id2, seq2, var2):
                 matrix["FP"] += 2
         elif seq1[i] != '-' and seq2[i] == '-':
             res2_gold = get_aligned_res(seq1[i], id1, id2, golden_aln)
-            print seq1[i], seq2[i], res2_gold
             if res2_gold == '-':
                 matrix["TN"] += 1
             else:
                 matrix["FN"] += 1
         elif seq2[i] != '-' and seq1[i] == '-':
             res1_gold = get_aligned_res(seq2[i], id2, id1, golden_aln)
-            print seq1[i], seq2[i], res2_gold
             if res1_gold == '-':
                 matrix["TN"] += 1
             else:
                 matrix["FN"] += 1
         # if both are gaps do nothing
-    _log.debug("FN: {} TN: {}".format(matrix["FN"], matrix["TN"]))
     # score variable regions in seq1
     var_matrix = score_var_regions(golden_aln, id1, id2, var1)
     matrix = merge_dicts(matrix, var_matrix)
@@ -374,22 +371,14 @@ def calc_confusion_matrix_3dm(golden_aln, id1, seq1, var1, id2, seq2, var2):
                               " be equal to the total number of"
                               " residues({})".format(len(res_only),
                                                      sum(matrix.values())))
-    sums = calc_sums(golden_aln, id1, id2)
-    _log.debug("vars: {}".format(len(var1 + var2)))
-
-    if (sums["pos"] != matrix["TP"] + matrix["FN"] or
-            sums["neg"] != matrix["TN"] + matrix["FP"]):
-        _log.debug("p: {} n: {} tp: {} fn: {} tn: {} fp: {}".format(
-            sums["pos"], sums["neg"], matrix["TP"], matrix["FN"], matrix["TN"],
-            matrix["FP"]))
-        raise CustomException("Sums of TP + FN and FP + TN are incorrect")
 
     return matrix
 
 
 def calc_confusion_matrices_3dm(golden_alns, test_aln):
     _log.info("Calculating confusion matrices [3DM mode]")
-    matrices_dict = {'all': {'TP': 0, 'FP': 0, 'TN': 0, 'FN': 0}}
+    matrices_dict = {}
+    full_matrix = {'TP': 0, 'FP': 0, 'TN': 0, 'FN': 0}
     for id1, seq1 in test_aln["cores"].iteritems():
         for id2, seq2 in test_aln["cores"].iteritems():
             id_set = fs([id1, id2])
@@ -401,15 +390,15 @@ def calc_confusion_matrices_3dm(golden_alns, test_aln):
                     golden_alns[id_set], id1, seq1, test_aln["var"][id1],
                     id2, seq2, test_aln["var"][id2])
                 # add the values to the matrix with overall scores
-                matrices_dict['all'] = merge_dicts(matrices_dict['all'],
-                                                   matrices_dict[id_set])
-    return matrices_dict
+                full_matrix = merge_dicts(full_matrix, matrices_dict[id_set])
+    return matrices_dict, full_matrix
 
 
 def calc_confusion_matrices(golden_alns, test_aln):
     _log.info("Calculating confusion matrices")
     # one of the matrices ('all') holds scores summed up from all sequence pairs
-    matrices_dict = {'all': {'TP': 0, 'FP': 0, 'TN': 0, 'FN': 0}}
+    matrices_dict = {}
+    full_matrix = {'TP': 0, 'FP': 0, 'TN': 0, 'FN': 0}
     for id1, seq1 in test_aln.iteritems():
         for id2, seq2 in test_aln.iteritems():
             id_set = fs([id1, id2])
@@ -419,9 +408,8 @@ def calc_confusion_matrices(golden_alns, test_aln):
                 matrices_dict[id_set] = calc_confusion_matrix(
                         golden_alns[id_set], id1, seq1, id2, seq2)
                 # add the values to the matrix with overall scores
-                matrices_dict['all'] = merge_dicts(matrices_dict['all'],
-                                                   matrices_dict[id_set])
-    return matrices_dict
+                full_matrix = merge_dicts(full_matrix, matrices_dict[id_set])
+    return matrices_dict, full_matrix
 
 
 def calc_stats(confusion_matrices):
@@ -441,11 +429,19 @@ def calc_stats(confusion_matrices):
     return stats
 
 
-def process_results(matrices, output):
+def process_results(matrices, full_matrix, output):
     _log.info("Processing the results")
     stats = calc_stats(matrices)
-
+    full_stats = calc_stats({'full': full_matrix})['full']
     out_txt = ""
+    out_txt += "#### RESULTS ####\n"
+    # sensitivity, specificity, ppv, npv
+    out_txt += ' '.join(["{}: {}".format(k, v)
+                         for k, v in full_matrix.iteritems()]) + '\n'
+    # FP, TP, FN, TN values
+    out_txt += ''.join(["{}: {}\n".format(k, v)
+                        for k, v in full_stats.iteritems()]) + '\n'
+
     for s_id, s in stats.iteritems():
         header = s_id if (s_id is str) else ' '.join(list(s_id))
         out_txt += "# {}\n".format(header)
@@ -454,39 +450,29 @@ def process_results(matrices, output):
                              for k, v in matrices[s_id].iteritems()]) + '\n'
         # FP, TP, FN, TN values
         out_txt += ''.join(["{}: {}\n".format(k, v)
-                            for k, v in s.iteritems()])
-        val_sum = sum(matrices[s_id].values())
-        out_txt += "{}\n".format(val_sum)
+                            for k, v in s.iteritems()]) + '\n'
 
     with open(output, 'w') as out:
         out.write(out_txt)
     _log.info("Created the output file: {}".format(output))
 
 
-def check_input(golden_alns, full_seq):
-    for id_set, s in golden_alns.iteritems():
-        for s_id in id_set:
-            seq_gold = filter(lambda x: x != "-", s[s_id])
-            assert len(full_seq[s_id]) == len(seq_gold)
-
-
-def calculate_aln_quality(golden_dir, test_aln_path, output, in3dm,
-                          full_seq_path):
-    golden_alns, golden_ids = get_golden_alns(golden_dir)
+def calculate_aln_quality(golden_dir, test_aln_path, output, in3dm):
+    golden_alns, golden_ids, full_seq = parse_golden_alns(golden_dir)
     if in3dm:
         _log.info("Calculating alignment quality in 3DM mode")
-        full_seq = parse_fasta(full_seq_path, golden_ids)
-        check_input(golden_alns, full_seq)
+        # full_seq = parse_fasta(full_seq_path, golden_ids)
         num_aln_dict = parse_3dm_aln(test_aln_path, full_seq, golden_ids)
-        confusion_matrices = calc_confusion_matrices_3dm(golden_alns,
-                                                         num_aln_dict)
+        confusion_matrices, full_matrix = calc_confusion_matrices_3dm(
+            golden_alns, num_aln_dict)
     else:
         _log.info("Calculating alignment quality")
         aln_dict = parse_fasta(test_aln_path, golden_ids)
         num_aln_dict = {seq_id: aln_seq_to_num(seq)
                         for seq_id, seq in aln_dict.iteritems()}
-        confusion_matrices = calc_confusion_matrices(golden_alns, num_aln_dict)
-    process_results(confusion_matrices, output)
+        confusion_matrices, full_matrix = calc_confusion_matrices(golden_alns,
+                                                                  num_aln_dict)
+    process_results(confusion_matrices, full_matrix, output)
 
 
 if __name__ == "__main__":
@@ -499,7 +485,6 @@ if __name__ == "__main__":
     parser.add_argument("test_aln_path")
     parser.add_argument("output")
     parser.add_argument("--in3dm", default=False, action="store_true")
-    parser.add_argument("-f", "--full_seq")
     parser.add_argument("-d", "--debug", default=False, action="store_true")
 
     args = parser.parse_args()
@@ -508,13 +493,9 @@ if __name__ == "__main__":
     if args.debug:
         _log.setLevel(logging.DEBUG)
 
-    # check arguments
-    if args.in3dm and not args.full_seq:
-        parser.error("In the 3DM mode you need to provide the path to the full "
-                     "sequences file (--full_seq)")
     try:
         calculate_aln_quality(args.golden_dir, args.test_aln_path, args.output,
-                              args.in3dm, args.full_seq)
+                              args.in3dm)
     except CustomException as e:
         _log.error("{}".format(e.message))
         exit(1)

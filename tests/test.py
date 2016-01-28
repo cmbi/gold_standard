@@ -24,7 +24,9 @@ def test_parse_var_file():
 
 @patch('aln_quality_script.aln_quality.calc_alignment_quality.open',
        mock_open(read_data=">ID1\nA-C\nDEF\n>ID2\nGHI\n"), create=True)
-def test_parse_fasta():
+@patch('aln_quality_script.aln_quality.calc_alignment_quality.os.path.exists')
+def test_parse_fasta(mock_path_exists):
+    mock_path_exists.return_value = True
     aln = ca.parse_fasta("path", ["ID1", "ID2"])
     expected = {"ID1": "A-CDEF", "ID2": "GHI"}
     eq_(aln, expected)
@@ -121,13 +123,22 @@ def test_get_var_pos():
 
 @patch('aln_quality_script.aln_quality.calc_alignment_quality.open',
        mock_open(read_data=">ID1\n--BCD--\n>ID2\n-BC-FG-\n"), create=True)
-def test_parse_3dm_aln():
+@patch('aln_quality_script.aln_quality.calc_alignment_quality.os.path.exists')
+def test_parse_3dm_aln(mock_path_exists):
+    mock_path_exists.return_value = True
     full_seq = {"ID1": "ABCDEF", "ID2": "BCDEFG"}
     expected = {"cores": {"ID1": ['-', '-', 2, 3, 4, '-', '-'],
                           "ID2": ['-', 1, 2, '-', 5, 6, '-']},
                 "var": {"ID1": [1, 5, 6], "ID2": [3, 4]}}
     aln = ca.parse_3dm_aln("testpath", full_seq, ["ID1", "ID2"])
     eq_(expected, aln)
+
+
+def test_parse_3dm_aln_1OB0A():
+    # TODO: 1OB0A debugging
+    full_seq = ca.parse_fasta('tests/testdata/1OB0A_full.fasta', ["1OB0A"])
+    print ca.parse_3dm_aln('tests/testdata/1OB0A_3dm_aln.fasta', full_seq,
+                           ["1OB0A"])
 
 
 def test_score_var_regions():
@@ -153,9 +164,9 @@ def test_calc_confusion_matrix_3dm():
     eq_(expected, m)
 
 
-def test_num_3dm():
-    golden_ids = "1HVXA"
-    full_seq_path = "tests/testdata/full_seq.fasta"
-    test_aln_path = "tests/testdata/test_3dm_aln.fasta"
-    full_seq = ca.parse_fasta(full_seq_path, golden_ids)
-    num_aln_dict = ca.parse_3dm_aln(test_aln_path, full_seq, golden_ids)
+# def test_num_3dm():
+#     golden_ids = "1HVXA"
+#     full_seq_path = "tests/testdata/full_seq.fasta"
+#     test_aln_path = "tests/testdata/test_3dm_aln.fasta"
+#     full_seq = ca.parse_fasta(full_seq_path, golden_ids)
+#     num_aln_dict = ca.parse_3dm_aln(test_aln_path, full_seq, golden_ids)
