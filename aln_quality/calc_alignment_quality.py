@@ -5,6 +5,8 @@ import os
 import re
 
 from custom_exceptions import CustomException
+from html_handler import aln_to_html
+from paths import CSS, TEMPLATE
 
 
 fs = frozenset
@@ -217,7 +219,7 @@ def get_var_pos(num_seq, full_seq):
     return var_pos
 
 
-def parse_3dm_aln(aln_path, full_seq, golden_ids):
+def aln_3dm_to_num(aln_dict, full_seq, golden_ids):
     """
     :param aln_path: path to the core alignment file
     :param full_seq_path: path to the full plain sequences in fasta format
@@ -226,8 +228,7 @@ def parse_3dm_aln(aln_path, full_seq, golden_ids):
     """
     _log.info("Parsing 3DM alignment")
     aln_3dm = {"cores": {}, "var": {}}
-    aln_fasta = parse_fasta(aln_path, golden_ids)
-    for seq_id, seq in aln_fasta.iteritems():
+    for seq_id, seq in aln_dict.iteritems():
         aln_3dm["cores"][seq_id] = core_to_num_seq(seq, full_seq[seq_id])
         aln_3dm["var"][seq_id] = get_var_pos(aln_3dm["cores"][seq_id],
                                              full_seq[seq_id])
@@ -270,6 +271,7 @@ def calc_pairwise_score(golden_aln, id1, seq1, id2, seq2):
 
     matrix = {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
     sp_score = 0
+    wrong_cols = set()
 
     for i in range(len(seq1)):
         if seq1[i] != '-' and seq2[i] != '-':
@@ -280,6 +282,7 @@ def calc_pairwise_score(golden_aln, id1, seq1, id2, seq2):
             else:
                 sp_score -= 2
                 matrix["FP"] += 2
+                wrong_cols.add(i)
         elif seq1[i] != '-':
             res2_gold = get_aligned_res(seq1[i], id1, id2, golden_aln)
             if res2_gold == '-':
@@ -287,6 +290,7 @@ def calc_pairwise_score(golden_aln, id1, seq1, id2, seq2):
                 matrix["TN"] += 1
             else:
                 matrix["FN"] += 1
+                wrong_cols.add(i)
         elif seq2[i] != '-':
             res1_gold = get_aligned_res(seq2[i], id2, id1, golden_aln)
             if res1_gold == '-':
@@ -294,6 +298,7 @@ def calc_pairwise_score(golden_aln, id1, seq1, id2, seq2):
                 matrix["TN"] += 1
             else:
                 matrix["FN"] += 1
+                wrong_cols.add(i)
         # if both are gaps do nothing
 
     # check output sanity
@@ -306,7 +311,7 @@ def calc_pairwise_score(golden_aln, id1, seq1, id2, seq2):
     sp_max = get_max_sp_score(golden_aln)
     sp_score = float(sp_score) / sp_max
 
-    return {'matrix': matrix, 'SP': sp_score}
+    return {"matrix": matrix, "SP": sp_score, "wrong_cols": wrong_cols}
 
 
 def calc_sums(aln, id1, id2):
@@ -351,6 +356,7 @@ def calc_pairwise_score_3dm(golden_aln, id1, seq1, var1, id2, seq2, var2):
 
     matrix = {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
     sp_score = 0
+    wrong_cols = set()
     # score core regions
     for i in range(len(seq1)):
         if seq1[i] != '-' and seq2[i] != '-':
@@ -361,6 +367,7 @@ def calc_pairwise_score_3dm(golden_aln, id1, seq1, var1, id2, seq2, var2):
             else:
                 sp_score -= 2
                 matrix["FP"] += 2
+                wrong_cols.add(i)
         elif seq1[i] != '-' and seq2[i] == '-':
             res2_gold = get_aligned_res(seq1[i], id1, id2, golden_aln)
             if res2_gold == '-':
@@ -368,6 +375,7 @@ def calc_pairwise_score_3dm(golden_aln, id1, seq1, var1, id2, seq2, var2):
                 matrix["TN"] += 1
             else:
                 matrix["FN"] += 1
+                wrong_cols.add(i)
         elif seq2[i] != '-' and seq1[i] == '-':
             res1_gold = get_aligned_res(seq2[i], id2, id1, golden_aln)
             if res1_gold == '-':
@@ -375,6 +383,7 @@ def calc_pairwise_score_3dm(golden_aln, id1, seq1, var1, id2, seq2, var2):
                 matrix["TN"] += 1
             else:
                 matrix["FN"] += 1
+                wrong_cols.add(i)
         # if both are gaps do nothing
     # score variable regions in seq1
     var_matrix = score_var_regions(golden_aln, id1, id2, var1)
@@ -395,7 +404,7 @@ def calc_pairwise_score_3dm(golden_aln, id1, seq1, var1, id2, seq2, var2):
     sp_max = get_max_sp_score(golden_aln)
     sp_score = float(sp_score) / sp_max
 
-    return {'matrix': matrix, 'SP': sp_score}
+    return {"matrix": matrix, "SP": sp_score, "wrong_cols": wrong_cols}
 
 
 def calc_scores_3dm(golden_alns, test_aln):
@@ -403,6 +412,7 @@ def calc_scores_3dm(golden_alns, test_aln):
     matrices_dict = {}
     full_matrix = {'TP': 0, 'FP': 0, 'TN': 0, 'FN': 0}
     sp_scores = {}
+    wrong_cols = set()
     for id1, seq1 in test_aln["cores"].iteritems():
         for id2, seq2 in test_aln["cores"].iteritems():
             id_set = fs([id1, id2])
@@ -413,11 +423,13 @@ def calc_scores_3dm(golden_alns, test_aln):
                 scores = calc_pairwise_score_3dm(
                     golden_alns[id_set], id1, seq1, test_aln["var"][id1],
                     id2, seq2, test_aln["var"][id2])
+                wrong_cols.update(scores["wrong_cols"])
                 matrices_dict[id_set] = scores['matrix']
                 # add the values to the matrix with overall scores
                 full_matrix = merge_dicts(full_matrix, scores['matrix'])
                 sp_scores[id_set] = scores['SP']
-    return {'pairwise': matrices_dict, 'full': full_matrix, 'SP': sp_scores}
+    return {'pairwise': matrices_dict, 'full': full_matrix, 'SP': sp_scores,
+            'wrong_cols': wrong_cols}
 
 
 def calc_scores(golden_alns, test_aln):
@@ -426,6 +438,7 @@ def calc_scores(golden_alns, test_aln):
     # full matrix holds scores summed up from all sequence pairs
     full_matrix = {'TP': 0, 'FP': 0, 'TN': 0, 'FN': 0}
     sp_scores = {}
+    wrong_cols = set()
     for id1, seq1 in test_aln.iteritems():
         for id2, seq2 in test_aln.iteritems():
             id_set = fs([id1, id2])
@@ -434,11 +447,13 @@ def calc_scores(golden_alns, test_aln):
                     id_set in golden_alns.keys()):
                 scores = calc_pairwise_score(golden_alns[id_set], id1, seq1,
                                              id2, seq2)
+                wrong_cols.update(scores["wrong_cols"])
                 matrices_dict[id_set] = scores['matrix']
                 # add the values to the matrix with overall scores
                 full_matrix = merge_dicts(full_matrix, scores['matrix'])
                 sp_scores[id_set] = scores['SP']
-    return {'pairwise': matrices_dict, 'full': full_matrix, 'SP': sp_scores}
+    return {'pairwise': matrices_dict, 'full': full_matrix, 'SP': sp_scores,
+            'wrong_cols': wrong_cols}
 
 
 def calc_stats(confusion_matrices):
@@ -493,11 +508,12 @@ def process_results(matrices, full_matrix, sp_scores, output):
     _log.info("Created the output file: {}".format(output))
 
 
-def calculate_aln_quality(golden_dir, test_aln_path, output, in3dm):
+def calculate_aln_quality(golden_dir, test_aln_path, output, in3dm, html):
     golden_alns, golden_ids, full_seq = parse_golden_alns(golden_dir)
     if in3dm:
         _log.info("Calculating alignment quality in 3DM mode")
-        num_aln_dict = parse_3dm_aln(test_aln_path, full_seq, golden_ids)
+        aln_dict = parse_fasta(test_aln_path, golden_ids)
+        num_aln_dict = aln_3dm_to_num(aln_dict, full_seq, golden_ids)
         scores = calc_scores_3dm(golden_alns, num_aln_dict)
     else:
         _log.info("Calculating alignment quality")
@@ -506,6 +522,21 @@ def calculate_aln_quality(golden_dir, test_aln_path, output, in3dm):
                         for seq_id, seq in aln_dict.iteritems()}
         scores = calc_scores(golden_alns, num_aln_dict)
     process_results(scores['pairwise'], scores['full'], scores['SP'], output)
+    if html:
+        return {
+            'wrong_cols': scores["wrong_cols"],
+            'aln': aln_dict,
+        }
+
+
+def write_html(quality_data, outname):
+    outtxt = aln_to_html(quality_data)
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    css_full_path = os.path.join(script_dir, CSS)
+    with open(os.path.join(script_dir, TEMPLATE)) as a:
+        template_fmt = a.read()
+    with open(outname, 'w') as out:
+        out.write(template_fmt.format(css_full_path, outtxt))
 
 
 if __name__ == "__main__":
@@ -517,6 +548,7 @@ if __name__ == "__main__":
     parser.add_argument("golden_dir")
     parser.add_argument("test_aln_path")
     parser.add_argument("output")
+    parser.add_argument("--html", action="store_true")
     parser.add_argument("--in3dm", default=False, action="store_true")
     parser.add_argument("-d", "--debug", default=False, action="store_true")
 
@@ -527,8 +559,11 @@ if __name__ == "__main__":
         _log.setLevel(logging.DEBUG)
 
     try:
-        calculate_aln_quality(args.golden_dir, args.test_aln_path, args.output,
-                              args.in3dm)
+        quality_data = calculate_aln_quality(args.golden_dir,
+                                             args.test_aln_path,
+                                             args.output, args.in3dm, args.html)
+        if args.html:
+            write_html(quality_data, args.output + ".html")
     except CustomException as e:
         _log.error("{}".format(e.message))
         exit(1)
