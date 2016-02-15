@@ -185,5 +185,23 @@ def test_calc_confusion_matrix_3dm():
 def test_calc_stats():
     matrices = {'m1': {"TP": 2, "FN": 0, "TN": 4, "FP": 6}}
 
-    expected = {'m1': {'specificity': 0.4, 'sensitivity': 1, 'ppv': 0.25, 'npv': 1}}
+    expected = {'m1': {'specificity': 0.4, 'sensitivity': 1, 'ppv': 0.25,
+                       'npv': 1}}
     eq_(expected, ca.calc_stats(matrices))
+
+
+def test_core_to_num_seq_known_cores():
+    aligned = "ABCDE--FGHI--JKL"
+    core_indexes = [0, 5, 11]
+    full_seq = "ABCDEGFGHIGJKL"
+    expected = [1, 2, 3, 4, 5, '-', '-', 7, 8, 9, 10, '-', '-', 12, 13, 14]
+    result = ca.core_to_num_seq_known_cores(aligned, full_seq, core_indexes)
+    eq_(result, expected)
+
+
+@patch('aln_quality_script.aln_quality.calc_alignment_quality.open',
+       mock_open(read_data="1ABCA ABCD ABC ABC-- DFGJH"), create=True)
+def test_get_core_indexes():
+    result = ca.get_core_indexes('testfile')
+    expected = [0, 4, 7, 12]
+    eq_(result, expected)
