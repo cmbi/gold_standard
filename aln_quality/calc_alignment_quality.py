@@ -64,7 +64,9 @@ def core_to_num_seq_known_cores(aligned_seq, full_seq, core_indexes):
         core = aligned_seq[c_i:next_start]
         degapped = re.sub('-', '', core)
         seq_index = full_seq.find(degapped)
-        assert seq_index < 0
+        if seq_index < 0:
+            raise CustomException("Didn't find the {} core in the full "
+                                  "sequence".format(core))
         res_count = 0
         for j, res in enumerate(core):
             if res == '-':
@@ -86,8 +88,6 @@ def core_to_num_seq(aligned_seq, full_seq):
 
     full_seq_a = 'IVAFCLYKYFPFGGLQRDFMRIASTVAARGHHVRVYTQSWEG'
     full_seq_b = 'NLLHVAVLAFPFGTHAAPLLSLVKKIATEAPKVTFSFFCTTTTNDTLFSRSNEFLPNIKYY'
-
-
     """
     # 1-based!!!
     grounded_seq = []
