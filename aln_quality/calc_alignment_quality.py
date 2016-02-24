@@ -306,7 +306,7 @@ def parse_fasta(aln_path, golden_ids):
             if seq_id in golden_ids:
                 aln_dict[seq_id] = ""
         elif seq_id and seq_id in golden_ids:
-            aln_dict[seq_id] += l.upper()
+            aln_dict[seq_id] += l.upper().rstrip("*")
     return aln_dict
 
 
