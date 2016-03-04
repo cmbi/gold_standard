@@ -7,8 +7,13 @@ from custom_exceptions import CustomException
 _log = logging.getLogger(__name__)
 
 
-def aln_3SSP_to_num(aln_dict, full_seq, final_core):
-    pass
+def aln_3SSP_to_num(aln_dict, full_seq):
+    aln = {"cores": {}, "var": {}}
+    for seq_id, seq in aln_dict.iteritems():
+        aln["cores"][seq_id] = core_to_num_seq_3SSP(
+            seq, full_seq[seq_id])
+        aln["var"][seq_id] = get_var_pos(aln["cores"][seq_id], full_seq[seq_id])
+    return aln
 
 
 def aln_3dm_to_num(aln_dict, full_seq, golden_ids, final_core):
@@ -19,7 +24,7 @@ def aln_3dm_to_num(aln_dict, full_seq, golden_ids, final_core):
     :return: dict with core alignment (num), and var - a dict of the positions
         in the variable regions
     """
-    _log.info("Parsing 3DM alignment")
+    _log.info("Converting 3DM alignment to grounded sequences")
     aln_3dm = {"cores": {}, "var": {}}
     if final_core:
         core_indexes = get_core_indexes(final_core)
@@ -100,6 +105,34 @@ def core_to_num_seq_known_cores(aligned_seq, full_seq, core_indexes):
     return grounded
 
 
+def core_to_num_seq_3SSP(aligned_seq, full_seq):
+    """
+    """
+    # 1-based!!!
+    grounded_seq = []
+    start = 0
+    finished = False
+    while not finished:
+        c = get_next_core_lowercase(aligned_seq, start)
+        core = c["core"]
+        core_aligned_start = c["core_start"]
+        if core == '':
+            finished = True
+            continue
+        # fill in the gaps to the next core
+        grounded_seq += '-' * (core_aligned_start - start)
+        start = core_aligned_start + len(core)
+        # position of the core in the full sequence
+        core_full_start = full_seq.find(core)
+        if core_full_start == -1:
+            raise CustomException("Core not found: {}".format(core))
+        grounded_seq.extend([core_full_start + i + 1
+                             for i in range(len(core))])
+    # fill in the c-terminal gaps
+    grounded_seq += '-' * (len(aligned_seq) - len(grounded_seq))
+    return grounded_seq
+
+
 def core_to_num_seq(aligned_seq, full_seq):
     """
     this function returns a grounded seq for a normally aligned seq
@@ -144,6 +177,29 @@ def core_to_num_seq(aligned_seq, full_seq):
     # fill in the c-terminal gaps
     grounded_seq += '-' * (len(aligned_seq) - len(grounded_seq))
     return grounded_seq
+
+
+def get_next_core_lowercase(aligned_seq, start):
+    core = ""
+    core_start = 0
+    it = start
+    found = False
+    in_core = False
+
+    while not found and it < len(aligned_seq):
+        res = aligned_seq[it]
+        if not in_core and res != '-':
+            in_core = True
+            core += res.upper()
+            core_start = it
+        elif (res == '-' or res.islower()) and in_core:
+            found = True
+            if res.islower():
+                core += res.upper()
+        elif in_core:
+            core += res.upper()
+        it += 1
+    return {"core": core, "core_start": core_start}
 
 
 def get_next_core(aligned_seq, start):
