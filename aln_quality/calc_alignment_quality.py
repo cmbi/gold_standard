@@ -2,12 +2,14 @@
 import argparse
 import logging
 import os
-import re
 
 from custom_exceptions import CustomException
 from html_handler import aln_to_html
 from paths import CSS, TEMPLATE
-from var_parser import convert_var_to_aln
+from parsers.aln3SSP import parse_3SSP
+from parsers.golden import parse_golden_alns
+from parsers.fasta import parse_fasta
+from num_seq import aln_seq_to_num, aln_3dm_to_num, aln_3SSP_to_num
 
 
 fs = frozenset
@@ -17,260 +19,12 @@ logging.basicConfig(level=logging.INFO, format=FORMAT)
 _log = logging.getLogger(__name__)
 
 
-def split_core(core, full_seq, add_index=0):
-    """
-    Recursively splits up a core into multiple cores
-    :param core: core to split up
-    :param full_seq: sequence in which we want find the cores
-    :param add_index: only changed when called from inside this function,
-        indicates by how many residues was the full_seq trimmed to adjust
-        the position accordingly
-    :return: list of dicts cores [{"core": string [core's aa seq],
-                                   "pos": int [position in the full sequence]}]
-    """
-    _log.debug("Splitting up a core: {}\n full seq: {}".format(core, full_seq))
-    new_cores = []
-    for i in xrange(1, len(core)):
-        if full_seq.find(core[:-i]) != -1 and full_seq.find(core[-i:]) != -1:
-            new_cores = [core[:-i], core[-i:]]
-            new_cores = [{"seq": core[:-i],
-                          "pos": full_seq.find(core[:-i]) + add_index},
-                         {"seq": core[-i:],
-                          "pos": full_seq.find(core[-i:]) + add_index}]
-            break
-        elif full_seq.find(core[:-i]) != -1:
-            position = full_seq.find(core[:-i])
-            new_cores.append({"seq": core[:-i],
-                              "pos": position + add_index})
-            new_cores.extend(split_core(core[-i:], full_seq))
-
-            break
-    _log.debug("Split up core {} in two cores: {}".format(core, new_cores))
-    if not new_cores:
-        raise CustomException("Didn't find a way to split up the "
-                              "core {}".format(core))
-    return new_cores
-
-
-def core_to_num_seq_known_cores(aligned_seq, full_seq, core_indexes):
-    """
-    convert aligned seq to grounded seq when core lengths are known
-    """
-    grounded = []
-    for i, c_i in enumerate(core_indexes):
-        if i < len(core_indexes) - 1:
-            next_start = core_indexes[i + 1]
-        else:
-            next_start = len(aligned_seq)
-        core = aligned_seq[c_i:next_start]
-        degapped = re.sub('-', '', core)
-        seq_index = full_seq.find(degapped)
-        if seq_index < 0:
-            raise CustomException("Didn't find the {} core in the full "
-                                  "sequence".format(core))
-        res_count = 0
-        for j, res in enumerate(core):
-            if res == '-':
-                grounded.append('-')
-            else:
-                grounded.append(seq_index + res_count + 1)
-                res_count += 1
-    return grounded
-
-
-def core_to_num_seq(aligned_seq, full_seq):
-    """
-    this function returns a grounded seq for a normally aligned seq
-    :param aligned_seq:
-    :param full_seq:
-
-    alig_seq_a = '--------------DFMRI----------------HVRVYT--------------------'
-    alig_seq_b = '---------------------LVKKIA----NIKY-------'
-
-    full_seq_a = 'IVAFCLYKYFPFGGLQRDFMRIASTVAARGHHVRVYTQSWEG'
-    full_seq_b = 'NLLHVAVLAFPFGTHAAPLLSLVKKIATEAPKVTFSFFCTTTTNDTLFSRSNEFLPNIKYY'
-    """
-    # 1-based!!!
-    grounded_seq = []
-    start = 0
-    finished = False
-    while not finished:
-        c = get_next_core(aligned_seq, start)
-        core = c["core"]
-        core_aligned_start = c["core_start"]
-        if core == '':
-            finished = True
-            continue
-        # fill in the gaps to the next core
-        grounded_seq += '-' * (core_aligned_start - start)
-        start = core_aligned_start + len(core)
-        # position of the core in the full sequence
-        core_full_start = full_seq.find(core)
-        is_single_core = core_full_start != -1
-        # the next 'core' actually consists of multiple cores, thus we need to
-        # split them up
-        if not is_single_core:
-            cores = split_core(core, full_seq)
-            cores = sorted(cores, key=lambda x: x["pos"])
-            for c in cores:
-                grounded_seq.extend([c['pos'] + i + 1
-                                     for i in range(len(c['seq']))])
-
-        else:
-            grounded_seq.extend([core_full_start + i + 1
-                                 for i in range(len(core))])
-    # fill in the c-terminal gaps
-    grounded_seq += '-' * (len(aligned_seq) - len(grounded_seq))
-    return grounded_seq
-
-
-def get_next_core(aligned_seq, start):
-    core = ""
-    core_start = 0
-    it = start
-    found = False
-    in_core = False
-
-    while not found and it < len(aligned_seq):
-        res = aligned_seq[it]
-        if not in_core and res != '-':
-            in_core = True
-            core += res
-            core_start = it
-        elif res == '-' and in_core:
-            found = True
-        elif in_core:
-            core += res
-        it += 1
-    return {"core": core, "core_start": core_start}
-
-
 def merge_dicts(dict1, dict2):
     """
     Sum up values with the same keys
     """
     return {k: dict1.get(k, 0) + dict2.get(k, 0)
             for k in set(dict1) | set(dict2)}
-
-
-def aln_seq_to_num(aln_seq):
-    num_seq = []
-    count = 1
-    for i in aln_seq:
-        if i != '-':
-            num_seq.append(count)
-            count += 1
-        else:
-            num_seq += '-'
-    return num_seq
-
-
-def parse_var_file(file_path):
-    _log.debug("Parsing var file: {}".format(file_path))
-    with open(file_path) as a:
-        var_file = a.read().splitlines()
-    ids = [i.split(',')[0] for i in var_file]
-    aln = convert_var_to_aln(var_file)
-    full = {}
-    full[ids[0]] = re.sub('-', '', aln[ids[0]])
-    full[ids[1]] = re.sub('-', '', aln[ids[1]])
-    num_aln = {seq_id: aln_seq_to_num(seq) for seq_id, seq in aln.iteritems()}
-    return {'ids': ids, 'aln': num_aln, 'full': full}
-
-
-def parse_golden_alns(golden_dir):
-    _log.info("Getting golden standard alignments")
-    if not os.path.exists(golden_dir):
-        raise CustomException("No such directory: {}".format(golden_dir))
-    # get all ".Var" files in the given directory
-    var_list = filter(lambda x: x.endswith(".Var"), os.listdir(golden_dir))
-    _log.info("Got {} var files".format(len(var_list)))
-    golden_alns = {}
-    golden_ids = set()
-    full_seq = {}
-    for v in var_list:
-        var = parse_var_file(os.path.join(golden_dir, v))
-        golden_ids.update(var['ids'])
-        aln_ids = fs(var['ids'])
-        golden_alns[aln_ids] = var['aln']
-        full_seq.update(var['full'])
-    _log.info("Finished parsing .Var files")
-    return golden_alns, golden_ids, full_seq
-
-
-def get_var_pos(num_seq, full_seq):
-    """
-    Returns position missing in the core num seq
-    """
-    full_num = range(1, len(full_seq) + 1)
-    var_pos = [i for i in full_num if i not in num_seq]
-    return var_pos
-
-
-def get_core_indexes(final_core_file):
-    with open(final_core_file) as a:
-        final_core = a.read().splitlines()[0].split()
-    if len(final_core[0]) == 5:
-        cores = final_core[1:]
-    elif len(final_core[0]) == 4 and len(final_core[1]) == 1:
-        cores = final_core[2:]
-    else:
-        raise CustomException("final_core file has incorrect format")
-    indexes = []
-    prev_end = -1
-    for i in cores:
-        indexes.append(prev_end + 1)
-        prev_end += len(i)
-    return indexes
-
-
-def aln_3dm_to_num(aln_dict, full_seq, golden_ids, final_core):
-    """
-    :param aln_path: path to the core alignment file
-    :param full_seq_path: path to the full plain sequences in fasta format
-    :param final_core: path to the final_core.txt file
-    :return: dict with core alignment (num), and var - a dict of the positions
-        in the variable regions
-    """
-    _log.info("Parsing 3DM alignment")
-    aln_3dm = {"cores": {}, "var": {}}
-    if final_core:
-        core_indexes = get_core_indexes(final_core)
-    else:
-        core_indexes = None
-    for seq_id, seq in aln_dict.iteritems():
-        if final_core:
-            aln_3dm["cores"][seq_id] = core_to_num_seq_known_cores(
-                seq, full_seq[seq_id], core_indexes)
-        else:
-            aln_3dm["cores"][seq_id] = core_to_num_seq(seq, full_seq[seq_id])
-        aln_3dm["var"][seq_id] = get_var_pos(aln_3dm["cores"][seq_id],
-                                             full_seq[seq_id])
-    return aln_3dm
-
-
-def parse_fasta(aln_path, golden_ids):
-    _log.info("Parsing FASTA: {}".format(aln_path))
-    if not os.path.exists(aln_path):
-        raise CustomException("FASTA file doesn't exist: {}".format(aln_path))
-    with open(aln_path) as a:
-        aln_file = a.read().splitlines()
-    aln_dict = {}
-    seq_id = ""
-    for l in aln_file:
-        if l.startswith(">"):
-            if '|' in l:
-                seq_id = l.lstrip('>').split('|')[0]
-            else:
-                seq_id = l.lstrip('>')
-            if seq_id in aln_dict.keys():
-                raise CustomException("Sequence {} is duplicated".format(
-                    seq_id))
-            if seq_id in golden_ids:
-                aln_dict[seq_id] = ""
-        elif seq_id and seq_id in golden_ids:
-            aln_dict[seq_id] += l.upper().rstrip("*")
-    return aln_dict
 
 
 def get_aligned_res(res_num, query_id, id2, golden_aln):
@@ -540,14 +294,20 @@ def process_results(matrices, full_matrix, sp_scores, output):
     _log.info("Created the output file: {}".format(output))
 
 
-def calculate_aln_quality(golden_dir, test_aln_path, output, in3dm, html,
-                          final_core=None):
+def calculate_aln_quality(golden_dir, test_aln_path, output, in3dm, in3SSP,
+                          html, final_core=None):
     golden_alns, golden_ids, full_seq = parse_golden_alns(golden_dir)
+
     if in3dm:
         _log.info("Calculating alignment quality in 3DM mode")
         aln_dict = parse_fasta(test_aln_path, golden_ids)
         num_aln_dict = aln_3dm_to_num(aln_dict, full_seq, golden_ids,
                                       final_core)
+        scores = calc_scores_3dm(golden_alns, num_aln_dict)
+    elif in3SSP:
+        aln_dict = parse_3SSP(test_aln_path)
+        num_aln_dict = aln_3SSP_to_num(aln_dict, full_seq, golden_ids,
+                                       final_core)
         scores = calc_scores_3dm(golden_alns, num_aln_dict)
     else:
         _log.info("Calculating alignment quality")
@@ -584,6 +344,7 @@ if __name__ == "__main__":
     parser.add_argument("output")
     parser.add_argument("--html", action="store_true")
     parser.add_argument("--in3dm", default=False, action="store_true")
+    parser.add_argument("--in3SSP", default=False, action="store_true")
     parser.add_argument("-d", "--debug", default=False, action="store_true")
     parser.add_argument("--final_core", help="final core file")
 
@@ -596,7 +357,7 @@ if __name__ == "__main__":
     try:
         quality_data = calculate_aln_quality(args.golden_dir,
                                              args.test_aln_path, args.output,
-                                             args.in3dm, args.html,
+                                             args.in3dm, args.in3SSP, args.html,
                                              args.final_core)
         if args.html:
             write_html(quality_data, args.output + ".html")

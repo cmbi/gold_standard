@@ -1,7 +1,8 @@
 import logging
 import re
 
-from custom_exceptions import CustomException
+from error_types import ParserError
+from aln_quality.aln_quality.num_seq import aln_seq_to_num
 
 _log = logging.getLogger(__name__)
 
@@ -33,12 +34,25 @@ def convert_var_to_aln(var_file):
                 var1[i].isupper() and var2[j].isupper()):
             # both segments are cores
             if len(var2[j]) != len(var1[i]):
-                raise CustomException("Core {} and {} have different "
-                                      "lengths".format(var1[i], var2[j]))
+                raise ParserError("Core {} and {} have different "
+                                  "lengths".format(var1[i], var2[j]))
             aln_seq2 += var2[j]
             aln_seq1 += var1[i]
             i += 1
             j += 1
         else:
-            raise CustomException("Incorrect Var file: check number of cores")
+            raise ParserError("Incorrect Var file: check number of cores")
     return {id1: aln_seq1, id2: aln_seq2}
+
+
+def parse_var_file(file_path):
+    _log.debug("Parsing var file: {}".format(file_path))
+    with open(file_path) as a:
+        var_file = a.read().splitlines()
+    ids = [i.split(',')[0] for i in var_file]
+    aln = convert_var_to_aln(var_file)
+    full = {}
+    full[ids[0]] = re.sub('-', '', aln[ids[0]])
+    full[ids[1]] = re.sub('-', '', aln[ids[1]])
+    num_aln = {seq_id: aln_seq_to_num(seq) for seq_id, seq in aln.iteritems()}
+    return {'ids': ids, 'aln': num_aln, 'full': full}
