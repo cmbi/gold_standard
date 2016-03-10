@@ -1,12 +1,11 @@
 from nose.tools import eq_
 from mock import patch, mock_open
 
-from aln_quality.aln_quality import calc_alignment_quality as ca
-from aln_quality.aln_quality import num_seq
-from aln_quality.aln_quality.parsers.fasta import parse_fasta
-from aln_quality.aln_quality.parsers.var_file import (parse_var_file,
-                                                      convert_var_to_aln)
-from aln_quality.aln_quality.num_seq import get_var_pos
+from aln_quality import calc_alignment_quality as ca
+from aln_quality import num_seq
+from aln_quality.parsers.fasta import parse_fasta
+from aln_quality.parsers.var_file import (parse_var_file, convert_var_to_aln)
+from aln_quality.num_seq import get_var_pos
 
 
 def test_convert_var_to_aln():
@@ -27,9 +26,9 @@ def test_parse_var_file():
     eq_(var['ids'], ['1HVXA', '1E43A'])
 
 
-@patch('aln_quality.aln_quality.parsers.fasta.open',
-       mock_open(read_data=">ID1\nA-C\nDEF\n>ID2\nGHI\n"), create=True)
-@patch('aln_quality.aln_quality.parsers.fasta.os.path.exists')
+@patch('aln_quality.parsers.fasta.open', mock_open(
+    read_data=">ID1\nA-C\nDEF\n>ID2\nGHI\n"), create=True)
+@patch('aln_quality.parsers.fasta.os.path.exists')
 def test_parse_fasta(mock_path_exists):
     mock_path_exists.return_value = True
     aln = parse_fasta("path", ["ID1", "ID2"])
@@ -37,9 +36,9 @@ def test_parse_fasta(mock_path_exists):
     eq_(aln, expected)
 
 
-@patch('aln_quality.aln_quality.parsers.golden.os.path.exists')
-@patch('aln_quality.aln_quality.parsers.golden.os.listdir')
-@patch('aln_quality.aln_quality.parsers.golden.parse_var_file')
+@patch('aln_quality.parsers.golden.os.path.exists')
+@patch('aln_quality.parsers.golden.os.listdir')
+@patch('aln_quality.parsers.golden.parse_var_file')
 def test_parse_golden_alns(mock_parse, mock_listdir, mock_path_exists):
     mock_parse.side_effect = [{"ids": ["id1", "id2"], "aln": "test_aln",
                                "full": {'id1': 'seq1', 'id2': 'seq2'}},
@@ -124,7 +123,7 @@ def test_core_to_num_seq_known_cores():
     eq_(result, expected)
 
 
-@patch('aln_quality.aln_quality.num_seq.open',
+@patch('aln_quality.num_seq.open',
        mock_open(read_data="1ABCA ABCD ABC ABC-- DFGJH"), create=True)
 def test_get_core_indexes():
     result = num_seq.get_core_indexes('testfile')
