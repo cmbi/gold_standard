@@ -1,3 +1,8 @@
+import os
+
+from paths import CSS, TEMPLATE
+
+
 def aln_to_html(quality_data):
     aa_aln = quality_data["aln"]
     wrong = quality_data["wrong_cols"]
@@ -12,8 +17,6 @@ def aln_to_html(quality_data):
                     new_res = "<span class=featWRONG{}>{}</span>".format(level,
                                                                          res)
                 else:
-                    # new_res = "<span class=feat{}>{}</span>".format(res.upper(),
-                    #                                                 res)
                     new_res = "<span class=featOK>{}</span>".format(res)
             else:
                 new_res = res
@@ -34,3 +37,18 @@ def get_level(number, aln_length):
         return 2
     elif n >= 0:
         return 1
+
+
+def write_html(quality_data, outname):
+    outtxt = aln_to_html(quality_data)
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    css_full_path = os.path.join(script_dir, CSS)
+    with open(os.path.join(script_dir, TEMPLATE)) as a:
+        template_fmt = a.read()
+    with open(outname, 'w') as out:
+        out.write(template_fmt.format(css_full_path, outtxt))
+
+
+def write_html_comparison(comparison_result):
+    # TODO: implement
+    pass

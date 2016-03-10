@@ -2,7 +2,7 @@ import logging
 import re
 
 from error_types import ParserError
-from aln_quality.num_seq import aln_seq_to_num
+from num_seq import aln_seq_to_num
 
 _log = logging.getLogger(__name__)
 

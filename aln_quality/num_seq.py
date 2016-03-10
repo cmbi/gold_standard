@@ -16,7 +16,7 @@ def aln_3SSP_to_num(aln_dict, full_seq):
     return aln
 
 
-def aln_3dm_to_num(aln_dict, full_seq, golden_ids, final_core):
+def core_aln_to_num(aln_dict, full_seq, final_core):
     """
     :param aln_path: path to the core alignment file
     :param full_seq_path: path to the full plain sequences in fasta format

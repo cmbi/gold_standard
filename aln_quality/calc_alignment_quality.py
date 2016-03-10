@@ -1,15 +1,13 @@
 #!/usr/bin/python
 import argparse
 import logging
-import os
 
 from custom_exceptions import CustomException
-from html_handler import aln_to_html
-from paths import CSS, TEMPLATE
+from html_handler import write_html
 from parsers.aln3SSP import parse_3SSP
 from parsers.golden import parse_golden_alns
 from parsers.fasta import parse_fasta
-from num_seq import aln_seq_to_num, aln_3dm_to_num, aln_3SSP_to_num
+from num_seq import aln_seq_to_num, core_aln_to_num, aln_3SSP_to_num
 
 
 fs = frozenset
@@ -301,8 +299,8 @@ def calculate_aln_quality(golden_dir, test_aln_path, output, in3dm, in3SSP,
     if in3dm:
         _log.info("Calculating alignment quality in 3DM mode")
         aln_dict = parse_fasta(test_aln_path, golden_ids)
-        num_aln_dict = aln_3dm_to_num(aln_dict, full_seq, golden_ids,
-                                      final_core)
+        num_aln_dict = core_aln_to_num(aln_dict, full_seq, golden_ids,
+                                       final_core)
         scores = calc_scores_3dm(golden_alns, num_aln_dict)
     elif in3SSP:
         aln_dict = parse_3SSP(test_aln_path)
@@ -321,16 +319,6 @@ def calculate_aln_quality(golden_dir, test_aln_path, output, in3dm, in3SSP,
             'wrong_cols': scores["wrong_cols"],
             'aln': aln_dict,
         }
-
-
-def write_html(quality_data, outname):
-    outtxt = aln_to_html(quality_data)
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    css_full_path = os.path.join(script_dir, CSS)
-    with open(os.path.join(script_dir, TEMPLATE)) as a:
-        template_fmt = a.read()
-    with open(outname, 'w') as out:
-        out.write(template_fmt.format(css_full_path, outtxt))
 
 
 if __name__ == "__main__":

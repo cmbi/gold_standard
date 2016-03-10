@@ -1,4 +1,5 @@
 import os
+import re
 
 from error_types import ParserError
 
@@ -11,6 +12,6 @@ def parse_3SSP(aln_path):
     seq_dict = {}
     for l in infile:
         seq_id = ''.join(l.split()[0:2])
-        sequence = l.split()[2]
+        sequence = re.sub('\?', '-', l.split()[2])
         seq_dict[seq_id] = sequence
     return seq_dict
