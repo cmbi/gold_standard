@@ -1,6 +1,7 @@
 import argparse
 import logging
 
+from aln_analyzer import compare_alignments
 from html_handler import write_html_comparison
 from num_seq import core_aln_to_num
 from parsers.fasta import parse_fasta
@@ -9,11 +10,6 @@ from parsers.fasta import parse_fasta
 FORMAT = '%(asctime)s:%(levelname)s:%(funcName)s - %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT)
 _log = logging.getLogger(__name__)
-
-
-def compare_alignments(aln1, aln2):
-    # TODO: implement
-    pass
 
 
 def run_comparison(aln1_path, aln2_path, outpath, full_seq_path):

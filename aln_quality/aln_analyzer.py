@@ -9,6 +9,44 @@ fs = frozenset
 _log = logging.getLogger(__name__)
 
 
+def compare_pairwise(id1, cores1_aln1, cores2_aln1, var1_aln1, var2_aln1,
+                     id2, cores1_aln2, cores2_aln2, var1_aln2, var2_aln2):
+    # TODO: implement
+    pass
+
+
+def compare_alignments(aln1, aln2):
+    diff_cols1 = {seq_id: {} for seq_id in aln1["cores"].keys()}
+    diff_cols2 = {seq_id: {} for seq_id in aln2["cores"].keys()}
+    checked = set()
+    for id1, cores1_aln1 in aln1["cores"].iteritems():
+        for id2, cores2_aln1 in aln1["cores"].iteritems():
+            id_set = fs([id1, id2])
+            if (id1 != id2 and id_set not in checked and
+                    id1 in aln2["cores"].keys() and
+                    id2 in aln1["cores"].keys()):
+                cores1_aln2 = aln2["cores"][id1]
+                cores2_aln2 = aln2["cores"][id2]
+                var1_aln2 = aln2["vars"][id1]
+                var2_aln2 = aln2["vars"][id2]
+                var1_aln1 = aln1["vars"][id1]
+                var2_aln1 = aln1["vars"][id2]
+                scores = compare_pairwise(id1, cores1_aln1, cores2_aln1,
+                                          var1_aln1, var2_aln1, id2,
+                                          cores1_aln2, cores2_aln2, var1_aln2,
+                                          var2_aln2)
+                diff_cols1[id1] = merge_dicts(diff_cols1[id1],
+                                              scores["diff_cols1"][id1])
+                diff_cols1[id2] = merge_dicts(diff_cols1[id2],
+                                              scores["diff_cols1"][id2])
+                diff_cols2[id1] = merge_dicts(diff_cols2[id1],
+                                              scores["diff_cols2"][id1])
+                diff_cols2[id2] = merge_dicts(diff_cols2[id2],
+                                              scores["diff_cols2"][id2])
+                checked.add(id_set)
+    return {'diff_cols1': diff_cols1, "diff_cols2": diff_cols2}
+
+
 def get_max_sp_score(golden_aln):
     seq1, seq2 = golden_aln.values()
     id1, id2 = golden_aln.keys()
