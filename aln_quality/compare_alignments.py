@@ -2,7 +2,7 @@ import argparse
 import logging
 
 from aln_analyzer import compare_alignments
-from html_handler import write_html_comparison
+from html_handler import write_html
 from num_seq import core_aln_to_num
 from parsers.fasta import parse_fasta
 
@@ -12,14 +12,15 @@ logging.basicConfig(level=logging.INFO, format=FORMAT)
 _log = logging.getLogger(__name__)
 
 
-def run_comparison(aln1_path, aln2_path, outpath, full_seq_path):
+def run_comparison(aln1_path, aln2_path, outprefix, full_seq_path):
     aln_dict1 = parse_fasta(aln1_path)
     aln_dict2 = parse_fasta(aln2_path)
     full_seq = parse_fasta(full_seq_path)
     num_aln_dict1 = core_aln_to_num(aln_dict1, full_seq, final_core=None)
     num_aln_dict2 = core_aln_to_num(aln_dict2, full_seq, final_core=None)
     comp_result = compare_alignments(num_aln_dict1, num_aln_dict2)
-    write_html_comparison(comp_result)
+    write_html(aln_dict1, comp_result["diff_cols1"], outprefix + '1')
+    write_html(aln_dict2, comp_result["diff_cols2"], outprefix + '2')
 
 
 if __name__ == "__main__":
@@ -29,7 +30,7 @@ if __name__ == "__main__":
     parser.add_argument("aln1")
     parser.add_argument("aln2")
     parser.add_argument("full_seq")
-    parser.add_argument("out")
+    parser.add_argument("outprefix")
     args = parser.parse_args()
 
-    run_comparison(args.aln1, args.aln2, args.out, args.full_seq)
+    run_comparison(args.aln1, args.aln2, args.outprefix, args.full_seq)

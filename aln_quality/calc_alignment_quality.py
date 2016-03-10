@@ -138,7 +138,8 @@ if __name__ == "__main__":
                                              args.in3dm, args.in3SSP, args.html,
                                              args.final_core)
         if args.html:
-            write_html(quality_data, args.output + ".html")
+            write_html(quality_data["aln"], quality_data["wrong_cols"],
+                       args.output)
     except CustomException as e:
         _log.error("{}".format(e.message))
         exit(1)

@@ -9,10 +9,23 @@ fs = frozenset
 _log = logging.getLogger(__name__)
 
 
-def compare_pairwise(id1, cores1_aln1, cores2_aln1, var1_aln1, var2_aln1,
-                     id2, cores1_aln2, cores2_aln2, var1_aln2, var2_aln2):
-    # TODO: implement
-    pass
+def compare_pairwise(id1, cores1_aln1, cores2_aln1, id2, cores1_aln2,
+                     cores2_aln2):
+    diff_cols1 = {id1: {}, id2: {}}
+    diff_cols2 = {id1: {}, id2: {}}
+    for i, res_i1 in enumerate(cores1_aln1):
+        res_j1 = cores2_aln1[i]
+        if res_i1 == '-' and res_j1 == '-':
+            continue
+        if res_i1 in cores1_aln2 and res_j1 in cores2_aln2:
+            aln2_index = cores1_aln2.index(res_i1)
+            res_j2 = cores2_aln2[aln2_index]
+            if res_j2 != res_j1:
+                diff_cols1[id1][i] = 1
+                diff_cols1[id2][i] = 1
+                diff_cols2[id1][aln2_index] = 1
+                diff_cols2[id2][aln2_index] = 1
+    return {"diff_cols1": diff_cols1, "diff_cols2": diff_cols2}
 
 
 def compare_alignments(aln1, aln2):
@@ -27,14 +40,8 @@ def compare_alignments(aln1, aln2):
                     id2 in aln1["cores"].keys()):
                 cores1_aln2 = aln2["cores"][id1]
                 cores2_aln2 = aln2["cores"][id2]
-                var1_aln2 = aln2["vars"][id1]
-                var2_aln2 = aln2["vars"][id2]
-                var1_aln1 = aln1["vars"][id1]
-                var2_aln1 = aln1["vars"][id2]
-                scores = compare_pairwise(id1, cores1_aln1, cores2_aln1,
-                                          var1_aln1, var2_aln1, id2,
-                                          cores1_aln2, cores2_aln2, var1_aln2,
-                                          var2_aln2)
+                scores = compare_pairwise(id1, cores1_aln1, cores2_aln1, id2,
+                                          cores1_aln2, cores2_aln2)
                 diff_cols1[id1] = merge_dicts(diff_cols1[id1],
                                               scores["diff_cols1"][id1])
                 diff_cols1[id2] = merge_dicts(diff_cols1[id2],
