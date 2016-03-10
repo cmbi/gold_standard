@@ -24,7 +24,9 @@ def compare_pairwise(id1, cores1_aln1, cores2_aln1, id2, cores1_aln2,
                 diff_cols1[id1][i] = 1
                 diff_cols1[id2][i] = 1
                 diff_cols2[id1][aln2_index] = 1
-                diff_cols2[id2][aln2_index] = 1
+                if res_j1 in cores2_aln2:
+                    j1_index = cores2_aln2.index(res_j1)
+                    diff_cols2[id2][j1_index] = 1
     return {"diff_cols1": diff_cols1, "diff_cols2": diff_cols2}
 
 
