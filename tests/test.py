@@ -6,6 +6,7 @@ from aln_quality import num_seq
 from aln_quality.parsers.fasta import parse_fasta
 from aln_quality.parsers.var_file import (parse_var_file, convert_var_to_aln)
 from aln_quality.num_seq import get_var_pos
+from aln_quality.aln_analyzer import score_var_regions
 
 
 def test_convert_var_to_aln():
@@ -101,7 +102,7 @@ def test_score_var_regions():
               }
 
     var = [1, 2, 3, 4]
-    matrix = ca.score_var_regions(golden, '1', '2', var)
+    matrix = score_var_regions(golden, '1', '2', var)
     eq_({"TN": 3, "FN": 1}, matrix)
 
 
