@@ -13,32 +13,29 @@ def compare_pairwise(id1, cores1_aln1, cores2_aln1, id2, cores1_aln2,
                      cores2_aln2):
     diff_cols1 = {id1: {}, id2: {}}
     diff_cols2 = {id1: {}, id2: {}}
+    # res_i1 seq1 aln1
+    # res_j1 seq2 aln1
+    # res_i2 seq1 aln2
+    # res_j2 seq2 aln2
     for i, res_i1 in enumerate(cores1_aln1):
         res_j1 = cores2_aln1[i]
-        if res_i1 == '-' and res_j1 == '-':
+        if res_i1 == '-':
             continue
         if res_i1 in cores1_aln2 and res_j1 in cores2_aln2:
             aln2_index = cores1_aln2.index(res_i1)
             res_j2 = cores2_aln2[aln2_index]
             if res_j2 != res_j1:
                 diff_cols1[id1][i] = 1
-                diff_cols1[id2][i] = 1
                 diff_cols2[id1][aln2_index] = 1
-                if res_j1 in cores2_aln2:
-                    j1_index = cores2_aln2.index(res_j1)
-                    diff_cols2[id2][j1_index] = 1
     return {"diff_cols1": diff_cols1, "diff_cols2": diff_cols2}
 
 
 def compare_alignments(aln1, aln2):
     diff_cols1 = {seq_id: {} for seq_id in aln1["cores"].keys()}
     diff_cols2 = {seq_id: {} for seq_id in aln2["cores"].keys()}
-    checked = set()
     for id1, cores1_aln1 in aln1["cores"].iteritems():
         for id2, cores2_aln1 in aln1["cores"].iteritems():
-            id_set = fs([id1, id2])
-            if (id1 != id2 and id_set not in checked and
-                    id1 in aln2["cores"].keys() and
+            if (id1 != id2 and id1 in aln2["cores"].keys() and
                     id2 in aln1["cores"].keys()):
                 cores1_aln2 = aln2["cores"][id1]
                 cores2_aln2 = aln2["cores"][id2]
@@ -52,7 +49,6 @@ def compare_alignments(aln1, aln2):
                                               scores["diff_cols2"][id1])
                 diff_cols2[id2] = merge_dicts(diff_cols2[id2],
                                               scores["diff_cols2"][id2])
-                checked.add(id_set)
     return {'diff_cols1': diff_cols1, "diff_cols2": diff_cols2}
 
 

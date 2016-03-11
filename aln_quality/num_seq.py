@@ -112,6 +112,7 @@ def core_to_num_seq_3SSP(aligned_seq, full_seq):
     grounded_seq = []
     start = 0
     finished = False
+    prev_core = 0
     while not finished:
         c = get_next_core_lowercase(aligned_seq, start)
         core = c["core"]
@@ -123,7 +124,8 @@ def core_to_num_seq_3SSP(aligned_seq, full_seq):
         grounded_seq += '-' * (core_aligned_start - start)
         start = core_aligned_start + len(core)
         # position of the core in the full sequence
-        core_full_start = full_seq.find(core)
+        core_full_start = full_seq[prev_core:].find(core) + prev_core
+        prev_core = core_full_start + len(core)
         if core_full_start == -1:
             raise CustomException("Core not found: {}".format(core))
         grounded_seq.extend([core_full_start + i + 1
@@ -149,6 +151,7 @@ def core_to_num_seq(aligned_seq, full_seq):
     grounded_seq = []
     start = 0
     finished = False
+    prev_core = 0
     while not finished:
         c = get_next_core(aligned_seq, start)
         core = c["core"]
@@ -160,20 +163,22 @@ def core_to_num_seq(aligned_seq, full_seq):
         grounded_seq += '-' * (core_aligned_start - start)
         start = core_aligned_start + len(core)
         # position of the core in the full sequence
-        core_full_start = full_seq.find(core)
-        is_single_core = core_full_start != -1
+        core_full_start = full_seq[prev_core:].find(core) + prev_core
+        is_single_core = core_full_start != (-1 + prev_core)
         # the next 'core' actually consists of multiple cores, thus we need to
         # split them up
         if not is_single_core:
-            cores = split_core(core, full_seq)
+            cores = split_core(core, full_seq[prev_core:])
             cores = sorted(cores, key=lambda x: x["pos"])
             for c in cores:
-                grounded_seq.extend([c['pos'] + i + 1
+                grounded_seq.extend([c['pos'] + i + 1 + prev_core
                                      for i in range(len(c['seq']))])
+            prev_core = cores[-1]['pos'] + len(cores[-1]['seq'])
 
         else:
             grounded_seq.extend([core_full_start + i + 1
                                  for i in range(len(core))])
+            prev_core = core_full_start + len(core)
     # fill in the c-terminal gaps
     grounded_seq += '-' * (len(aligned_seq) - len(grounded_seq))
     return grounded_seq

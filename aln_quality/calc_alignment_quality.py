@@ -95,7 +95,6 @@ def calculate_aln_quality(golden_dir, test_aln_path, output, in3dm, in3SSP,
     elif in3SSP:
         aln_dict = parse_3SSP(test_aln_path)
         num_aln_dict = aln_3SSP_to_num(aln_dict, full_seq)
-        print aln_dict.keys()
         scores = calc_scores_3dm(golden_alns, num_aln_dict)
     else:
         _log.info("Calculating alignment quality")

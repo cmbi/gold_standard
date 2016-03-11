@@ -57,7 +57,6 @@ def merge_alignments(aln_list, ref_seq):
 def merge_goldies(input_dir, ref_seq, output):
     file_list = get_var_files(input_dir, ref_seq)
     aln_list = [convert_var_to_aln(i) for i in file_list]
-    print aln_list[0]
     final_aln = merge_alignments(aln_list, ref_seq)
     final_aln_text = [">{}\n{}\n".format(ref_seq, aln_list[0][ref_seq])]
     final_aln_text.extend([">{}\n{}\n".format(seq_id, seq)
