@@ -108,7 +108,8 @@ def calculate_aln_quality(golden_dir, test_aln_path, output, in3dm, in3SSP,
         return {
             'wrong_cols': scores["wrong_cols"],
             'aln': aln_dict,
-            'num_aln': num_aln_dict
+            'num_aln': num_aln_dict,
+            'full_seq': full_seq
         }
 
 
