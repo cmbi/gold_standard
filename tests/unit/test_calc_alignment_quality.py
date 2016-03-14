@@ -1,6 +1,6 @@
 from nose.tools import eq_
 
-from aln_quality.calc_alignment_quality import calc_stats
+from gold_standard.aln_quality.calc_alignment_quality import calc_stats
 
 
 def test_calc_stats():

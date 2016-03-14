@@ -103,10 +103,12 @@ def calculate_aln_quality(golden_dir, test_aln_path, output, in3dm, in3SSP,
                         for seq_id, seq in aln_dict.iteritems()}
         scores = calc_scores(golden_alns, num_aln_dict)
     process_results(scores['pairwise'], scores['full'], scores['SP'], output)
+    print aln_dict
     if html:
         return {
             'wrong_cols': scores["wrong_cols"],
             'aln': aln_dict,
+            'num_aln': num_aln_dict
         }
 
 
