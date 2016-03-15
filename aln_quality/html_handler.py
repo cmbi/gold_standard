@@ -86,11 +86,10 @@ def make_html_var_seq(corvar_seq, wrong, max_lengths, aln_length):
         var = corvar_seq["var"][c].lower()
         var = " " + var + " " * (max_lengths[c] - len(var)) + " "
         html_seq += var
-        r_index += len(var)
         for r, res in enumerate(core):
             if res != "-" and res != " ":
-                if r in wrong.keys():
-                    level = get_level(wrong[r], aln_length)
+                if r_index in wrong.keys():
+                    level = get_level(wrong[r_index], aln_length)
                     new_res = "<span class=featWRONG{}>{}</span>".format(
                         level, res)
                 else:
