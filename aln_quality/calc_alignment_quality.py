@@ -89,8 +89,8 @@ def calculate_aln_quality(golden_dir, test_aln_path, output, in3dm, in3SSP,
     if in3dm:
         _log.info("Calculating alignment quality in 3DM mode")
         aln_dict = parse_fasta(test_aln_path, golden_ids)
-        num_aln_dict = core_aln_to_num(aln_dict, full_seq, golden_ids,
-                                       final_core)
+        num_aln_dict = core_aln_to_num(aln_dict, full_seq, final_core,
+                                       golden_ids=golden_ids)
         scores = calc_scores_3dm(golden_alns, num_aln_dict)
     elif in3SSP:
         aln_dict = parse_3SSP(test_aln_path)

@@ -16,7 +16,7 @@ def aln_3SSP_to_num(aln_dict, full_seq):
     return aln
 
 
-def core_aln_to_num(aln_dict, full_seq, final_core):
+def core_aln_to_num(aln_dict, full_seq, final_core, golden_ids=[]):
     """
     :param aln_path: path to the core alignment file
     :param full_seq_path: path to the full plain sequences in fasta format
@@ -31,6 +31,8 @@ def core_aln_to_num(aln_dict, full_seq, final_core):
     else:
         core_indexes = None
     for seq_id, seq in aln_dict.iteritems():
+        if golden_ids and seq_id not in golden_ids:
+            continue
         if final_core:
             aln_3dm["cores"][seq_id] = core_to_num_seq_known_cores(
                 seq, full_seq[seq_id], core_indexes)
