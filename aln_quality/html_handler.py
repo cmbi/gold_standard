@@ -45,7 +45,7 @@ def aln_to_html_var(num_aln, aa_aln, wrong, full_seq, core_indexes):
     num_aln_c = split_cores(num_aln, core_indexes)
     num_aln_v = split_vars(num_aln_c)
 
-    aa_aln_corvar = make_corvar(full_seq, num_aln_v, core_indexes)
+    aa_aln_corvar = make_corvar(full_seq, num_aln_v)
     var_lengths = get_max_var_lengths(num_aln_v)
     for seq_id, seq in aa_aln_corvar.iteritems():
         html_seq = make_html_var_seq(
@@ -104,8 +104,8 @@ def make_html_var_seq(corvar_seq, wrong, max_lengths, aln_length):
     return html_seq
 
 
-def make_corvar(full_seq, num_aln, core_indexes):
-    corvar_aln = {seq_id: {'cores': [], "var": []} for
+def make_corvar(full_seq, num_aln):
+    corvar_aln = {seq_id: {'cores': [], 'var': []} for
                   seq_id in num_aln['cores'].keys()}
     for seq_id, cores in num_aln['cores'].iteritems():
         for c in cores:
