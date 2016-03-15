@@ -123,6 +123,7 @@ if __name__ == "__main__":
     parser.add_argument("test_aln_path")
     parser.add_argument("output")
     parser.add_argument("--html", action="store_true")
+    parser.add_argument("--htmlvar", action="store_true")
     parser.add_argument("--in3dm", default=False, action="store_true")
     parser.add_argument("--in3SSP", default=False, action="store_true")
     parser.add_argument("-d", "--debug", default=False, action="store_true")
@@ -135,13 +136,12 @@ if __name__ == "__main__":
         _log.setLevel(logging.DEBUG)
 
     try:
-        quality_data = calculate_aln_quality(args.golden_dir,
-                                             args.test_aln_path, args.output,
-                                             args.in3dm, args.in3SSP, args.html,
-                                             args.final_core)
-        if args.html:
+        quality_data = calculate_aln_quality(
+            args.golden_dir, args.test_aln_path, args.output, args.in3dm,
+            args.in3SSP, args.html, args.final_core)
+        if args.html or args.htmlvar:
             write_html(quality_data["aln"], quality_data["wrong_cols"],
-                       args.output)
+                       args.output, var=args.htmlvar)
     except CustomException as e:
         _log.error("{}".format(e.message))
         exit(1)
