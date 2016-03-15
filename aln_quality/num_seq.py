@@ -40,7 +40,7 @@ def core_aln_to_num(aln_dict, full_seq, final_core, golden_ids=[]):
             aln_3dm["cores"][seq_id] = core_to_num_seq(seq, full_seq[seq_id])
         aln_3dm["var"][seq_id] = get_var_pos(aln_3dm["cores"][seq_id],
                                              full_seq[seq_id])
-    return aln_3dm
+    return aln_3dm, core_indexes
 
 
 def get_var_pos(num_seq, full_seq):

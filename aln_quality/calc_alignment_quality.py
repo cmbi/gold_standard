@@ -89,8 +89,8 @@ def calculate_aln_quality(golden_dir, test_aln_path, output, in3dm, in3SSP,
     if in3dm:
         _log.info("Calculating alignment quality in 3DM mode")
         aln_dict = parse_fasta(test_aln_path, golden_ids)
-        num_aln_dict = core_aln_to_num(aln_dict, full_seq, final_core,
-                                       golden_ids=golden_ids)
+        num_aln_dict, core_indexes = core_aln_to_num(
+            aln_dict, full_seq, final_core, golden_ids=golden_ids)
         scores = calc_scores_3dm(golden_alns, num_aln_dict)
     elif in3SSP:
         aln_dict = parse_3SSP(test_aln_path)
@@ -103,13 +103,13 @@ def calculate_aln_quality(golden_dir, test_aln_path, output, in3dm, in3SSP,
                         for seq_id, seq in aln_dict.iteritems()}
         scores = calc_scores(golden_alns, num_aln_dict)
     process_results(scores['pairwise'], scores['full'], scores['SP'], output)
-    print aln_dict
     if html:
         return {
             'wrong_cols': scores["wrong_cols"],
             'aln': aln_dict,
             'num_aln': num_aln_dict,
-            'full_seq': full_seq
+            'full_seq': full_seq,
+            'core_indexes': core_indexes
         }
 
 
@@ -138,12 +138,13 @@ if __name__ == "__main__":
     try:
         quality_data = calculate_aln_quality(
             args.golden_dir, args.test_aln_path, args.output, args.in3dm,
-            args.in3SSP, args.html, args.final_core)
+            args.in3SSP, (args.html or args.htmlvar), args.final_core)
         if args.html or args.htmlvar:
             write_html(
                 quality_data["aln"], quality_data["wrong_cols"], args.output,
                 var=args.htmlvar, num_aln=quality_data["num_aln"],
-                full_seq=quality_data["full_seq"])
+                full_seq=quality_data["full_seq"],
+                core_indexes=quality_data["core_indexes"])
     except CustomException as e:
         _log.error("{}".format(e.message))
         exit(1)

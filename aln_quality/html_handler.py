@@ -1,3 +1,4 @@
+import copy
 import os
 
 from paths import CSS, TEMPLATE
@@ -37,11 +38,15 @@ def get_level(number, aln_length):
         return 1
 
 
-def aln_to_html_var(num_aln, aa_aln, wrong, full_seq):
+def aln_to_html_var(num_aln, aa_aln, wrong, full_seq, core_indexes):
     html_out = ""
     aln_length = len(aa_aln)
-    aa_aln_corvar = make_corvar(full_seq, num_aln)
-    var_lengths = get_max_var_lengths(num_aln)
+
+    num_aln_c = split_cores(num_aln, core_indexes)
+    num_aln_v = split_vars(num_aln_c)
+
+    aa_aln_corvar = make_corvar(full_seq, num_aln_v, core_indexes)
+    var_lengths = get_max_var_lengths(num_aln_v)
     for seq_id, seq in aa_aln_corvar.iteritems():
         html_seq = make_html_var_seq(
             seq, wrong[seq_id], var_lengths, aln_length)
@@ -52,17 +57,20 @@ def aln_to_html_var(num_aln, aa_aln, wrong, full_seq):
 
 def get_max_var_lengths(num_aln):
     max_lengths = []
-    for v in range(len(num_aln.values()[0])):
-        lengths = [len(num_aln[s_id]["vars"][v]) for s_id in num_aln.keys()]
+    for v in range(len(num_aln['var'].values()[0])):
+        lengths = [len(num_aln['var'][s_id][v]) for
+                   s_id in num_aln['var'].keys()]
         max_lengths.append(max(lengths))
     return max_lengths
 
 
-def write_html(aa_aln, wrong_cols, outname, var=False, num_aln={}, full_seq={}):
+def write_html(aa_aln, wrong_cols, outname, var=False, num_aln={}, full_seq={},
+               core_indexes=[]):
     if var:
-        outtxt = aln_to_html(aa_aln, wrong_cols)
+        outtxt = aln_to_html_var(num_aln, aa_aln, wrong_cols, full_seq,
+                                 core_indexes)
     else:
-        outtxt = aln_to_html_var(num_aln, aa_aln, wrong_cols, full_seq)
+        outtxt = aln_to_html(aa_aln, wrong_cols)
     script_dir = os.path.dirname(os.path.realpath(__file__))
     css_full_path = os.path.join(script_dir, CSS)
     with open(os.path.join(script_dir, TEMPLATE)) as a:
@@ -75,8 +83,9 @@ def make_html_var_seq(corvar_seq, wrong, max_lengths, aln_length):
     html_seq = ""
     r_index = 0
     for c, core in enumerate(corvar_seq["cores"]):
-        var = corvar_seq["vars"][c]
-        html_seq += var + " " * (max_lengths[c] - len(var))
+        var = corvar_seq["var"][c].lower()
+        var = " " + var + " " * (max_lengths[c] - len(var)) + " "
+        html_seq += var
         r_index += len(var)
         for r, res in enumerate(core):
             if res != "-" and res != " ":
@@ -90,16 +99,16 @@ def make_html_var_seq(corvar_seq, wrong, max_lengths, aln_length):
                 new_res = res
             r_index += 1
             html_seq += new_res
-    var = corvar_seq["vars"][-1]
+    var = corvar_seq["var"][-1].lower()
     html_seq += var + " " * (max_lengths[-1] - len(var))
     return html_seq
 
 
-def make_corvar(full_seq, num_aln):
-    corvar_aln = {seq_id: {"cores": [], "vars": []} for
-                  seq_id in num_aln.keys()}
-    for seq_id, seq in num_aln.iteritems():
-        for c in seq["cores"]:
+def make_corvar(full_seq, num_aln, core_indexes):
+    corvar_aln = {seq_id: {'cores': [], "var": []} for
+                  seq_id in num_aln['cores'].keys()}
+    for seq_id, cores in num_aln['cores'].iteritems():
+        for c in cores:
             new_core = ""
             for res in c:
                 if res == '-':
@@ -108,10 +117,54 @@ def make_corvar(full_seq, num_aln):
                     new_res = full_seq[seq_id][res - 1]
                 new_core += new_res
             corvar_aln[seq_id]["cores"].append(new_core)
-        for c in seq["vars"]:
+        for v in num_aln['var'][seq_id]:
             new_var = ""
-            for res in c:
-                new_res = full_seq[seq_id][res - 1]
-                new_var += new_res
-            corvar_aln[seq_id]["vars"].append(new_var)
+            for res in v:
+                if res != '-':
+                    new_res = full_seq[seq_id][res - 1]
+                    new_var += new_res
+            corvar_aln[seq_id]["var"].append(new_var)
     return corvar_aln
+
+
+def split_cores(num_aln, core_indexes):
+    new_num_aln = copy.deepcopy(num_aln)
+    for seq_id, seq in num_aln['cores'].iteritems():
+        new_num_aln['cores'][seq_id] = []
+        for i, c_i in enumerate(core_indexes):
+            if i < len(core_indexes) - 1:
+                next_c = core_indexes[i + 1]
+            else:
+                next_c = len(core_indexes)
+            new_core = num_aln['cores'][seq_id][c_i:next_c]
+            new_num_aln['cores'][seq_id].append(new_core)
+    return new_num_aln
+
+
+def split_vars(num_aln):
+    new_num_aln = copy.deepcopy(num_aln)
+    for seq_id, cores in num_aln['cores'].iteritems():
+        new_num_aln['var'][seq_id] = []
+        prev = 1
+        for c, core in enumerate(cores):
+            new = get_first_res(core)
+            if new == -1:
+                new_num_aln['var'][seq_id].append([])
+            else:
+                new_var = range(prev, new)
+                new_num_aln['var'][seq_id].append(new_var)
+                prev = get_first_res(core[::-1]) + 1
+        if prev in num_aln['var'][seq_id]:
+            p_index = num_aln['var'][seq_id].index(prev)
+            new_num_aln['var'][seq_id].append(num_aln['var'][seq_id][p_index:])
+        else:
+            new_num_aln['var'][seq_id].append([])
+
+    return new_num_aln
+
+
+def get_first_res(core):
+    for i, r in enumerate(core):
+        if isinstance(r, int):
+            return r
+    return -1
