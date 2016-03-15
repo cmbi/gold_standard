@@ -26,11 +26,11 @@ def test_compare_pairwise():
     expected_result = {
         "diff_cols1": {
             id1: {1: 1},
-            id2: {1: 1}
+            id2: {}
         },
         "diff_cols2": {
             id1: {1: 1},
-            id2: {0: 1}
+            id2: {}
         }
     }
 
