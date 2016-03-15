@@ -58,8 +58,11 @@ def get_max_var_lengths(num_aln):
     return max_lengths
 
 
-def write_html(aln, wrong_cols, outname, var=False):
-    outtxt = aln_to_html(aln, wrong_cols)
+def write_html(aa_aln, wrong_cols, outname, var=False, num_aln={}, full_seq={}):
+    if var:
+        outtxt = aln_to_html(aa_aln, wrong_cols)
+    else:
+        outtxt = aln_to_html_var(num_aln, aa_aln, wrong_cols, full_seq)
     script_dir = os.path.dirname(os.path.realpath(__file__))
     css_full_path = os.path.join(script_dir, CSS)
     with open(os.path.join(script_dir, TEMPLATE)) as a:

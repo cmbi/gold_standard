@@ -15,7 +15,6 @@ def test_make_corvar():
             'vars': [[3, 4, 5],
                      [12, 13, 14, 15, 16]
                      ]}}
-
     expected = {
         '1': {
             'cores': [
@@ -27,7 +26,9 @@ def test_make_corvar():
                 "CDE",
                 "LMNOP"
             ]}}
-
     res = make_corvar(aa_aln, num_aln)
-
     eq_(res, expected)
+
+
+def test_make_html_var_seq():
+    pass

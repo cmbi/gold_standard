@@ -140,8 +140,10 @@ if __name__ == "__main__":
             args.golden_dir, args.test_aln_path, args.output, args.in3dm,
             args.in3SSP, args.html, args.final_core)
         if args.html or args.htmlvar:
-            write_html(quality_data["aln"], quality_data["wrong_cols"],
-                       args.output, var=args.htmlvar)
+            write_html(
+                quality_data["aln"], quality_data["wrong_cols"], args.output,
+                var=args.htmlvar, num_aln=quality_data["num_aln"],
+                full_seq=quality_data["full_seq"])
     except CustomException as e:
         _log.error("{}".format(e.message))
         exit(1)
