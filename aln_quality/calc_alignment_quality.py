@@ -123,7 +123,8 @@ if __name__ == "__main__":
     parser.add_argument("test_aln_path")
     parser.add_argument("output")
     parser.add_argument("--html", action="store_true")
-    parser.add_argument("--htmlvar", action="store_true")
+    parser.add_argument("--html_var", action="store_true")
+    parser.add_argument("--html_var_short", action="store_true")
     parser.add_argument("--in3dm", default=False, action="store_true")
     parser.add_argument("--in3SSP", default=False, action="store_true")
     parser.add_argument("-d", "--debug", default=False, action="store_true")
@@ -136,13 +137,15 @@ if __name__ == "__main__":
         _log.setLevel(logging.DEBUG)
 
     try:
+        html = args.html or args.html_var or args.html_var_short
         quality_data = calculate_aln_quality(
             args.golden_dir, args.test_aln_path, args.output, args.in3dm,
-            args.in3SSP, (args.html or args.htmlvar), args.final_core)
-        if args.html or args.htmlvar:
+            args.in3SSP, html, args.final_core)
+        if html:
             write_html(
                 quality_data["aln"], quality_data["wrong_cols"], args.output,
-                var=args.htmlvar, num_aln=quality_data["num_aln"],
+                var=args.htmlvar, var_short=args.html_var_short,
+                num_aln=quality_data["num_aln"],
                 full_seq=quality_data["full_seq"],
                 core_indexes=quality_data["core_indexes"])
     except CustomException as e:
