@@ -3,8 +3,8 @@ import os
 from nose.tools import eq_, ok_
 from mock import patch
 
-from aln_quality.html_handler import (make_corvar, aln_to_html_var, write_html,
-                                      split_vars)
+from aln_quality.html_handler import (make_corvar, aln_to_html_var,
+                                      make_short_var, write_html, split_vars)
 from aln_quality.num_seq import core_aln_to_num
 
 
@@ -55,10 +55,10 @@ def test_aln_to_html_var(mock_get_indexes):
                "<span class=featOK>F</span><span class=featOK>G</span> hij <s" \
                "pan class=featOK>K</span><span class=featOK>L</span><span cla" \
                "ss=featOK>M</span><span class=featOK>N</span><span class=feat" \
-               "WRONG3>O</span><span class=featWRONG3>P</span>\n2      <span " \
-               "class=featOK>A</span>   <span class=featOK>B</span><span clas" \
-               "s=featOK>C</span>---     <span class=featOK>D</span><span cla" \
-               "ss=featOK>E</span><span class=featOK>F</span>---\n"
+               "WRONG3>O</span><span class=featWRONG3>P</span> \n2      <span" \
+               " class=featOK>A</span>   <span class=featOK>B</span><span cla" \
+               "ss=featOK>C</span>---     <span class=featOK>D</span><span cl" \
+               "ass=featOK>E</span><span class=featOK>F</span>--- \n"
     res = aln_to_html_var(num_aln, aa_aln, wrong, full_seq, core_indexes)
     eq_(res, expected)
 
@@ -97,4 +97,16 @@ def test_split_vars():
         'cores': {'1': [[1, 2, 3], [5, 6], [7, 8]]}
     }
     res = split_vars(num_aln)
+    eq_(expected, res)
+
+
+def test_make_short_var():
+    l = 6
+    var = "ABCDEFGH"
+    res = make_short_var(var, l)
+    expected = "ABC 2 FGH"
+    eq_(expected, res)
+    var = "ABCFGH"
+    res = make_short_var(var, l)
+    expected = "ABCFGH"
     eq_(expected, res)
