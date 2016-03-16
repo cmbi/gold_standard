@@ -50,16 +50,15 @@ def test_aln_to_html_var(mock_get_indexes):
     mock_get_indexes.return_value = core_indexes
     final_core = 'sth'
     num_aln, indexes = core_aln_to_num(aa_aln, full_seq, final_core)
-    expected = "1      <span class=featWRONG3>A</span> b <span class=featOK>C</" \
-               "span><span class=featOK>D</span><span class=featOK>E</" \
-               "span><span class=featOK>F</span><span class=featOK>G</span>" \
-               " hij <span class=featOK>K</span><span class=featOK>L</span>" \
-               "<span class=featOK>M</span><span class=featOK>N</span><span" \
-               " class=featWRONG3>O</span><span class=featWRONG3>P</span>\n" \
-               "2      <span class=featOK>A</span>   <span class=featOK>B</span" \
-               "><span class=featOK>C</span>---     <span class=featOK>D" \
-               "</span><span class=featOK>E</span><span class=featOK>F</span>" \
-               "---\n"
+    expected = "1      <span class=featWRONG3>A</span> b <span class=featOK>C" \
+               "</span><span class=featOK>D</span><span class=featOK>E</span>" \
+               "<span class=featOK>F</span><span class=featOK>G</span> hij <s" \
+               "pan class=featOK>K</span><span class=featOK>L</span><span cla" \
+               "ss=featOK>M</span><span class=featOK>N</span><span class=feat" \
+               "WRONG3>O</span><span class=featWRONG3>P</span>\n2      <span " \
+               "class=featOK>A</span>   <span class=featOK>B</span><span clas" \
+               "s=featOK>C</span>---     <span class=featOK>D</span><span cla" \
+               "ss=featOK>E</span><span class=featOK>F</span>---\n"
     res = aln_to_html_var(num_aln, aa_aln, wrong, full_seq, core_indexes)
     eq_(res, expected)
 

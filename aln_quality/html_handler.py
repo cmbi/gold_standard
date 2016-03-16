@@ -43,26 +43,33 @@ def aln_to_html_var(num_aln, aa_aln, wrong, full_seq, core_indexes,
     # TODO: hide variable regions
     html_out = ""
     aln_length = len(aa_aln)
+    long_len = 20
 
     num_aln_c = split_cores(num_aln, core_indexes)
     num_aln_v = split_vars(num_aln_c)
 
     aa_aln_corvar = make_corvar(full_seq, num_aln_v)
-    var_lengths = get_max_var_lengths(num_aln_v, short=short)
+    var_lengths = get_max_var_lengths(num_aln_v, short=short, long_len=long_len)
     for seq_id, seq in aa_aln_corvar.iteritems():
         html_seq = make_html_var_seq(
-            seq, wrong[seq_id], var_lengths, aln_length, short=short)
+            seq, wrong[seq_id], var_lengths, aln_length, short=short,
+            long_len=long_len)
         html_sequence = "{}    {}".format(seq_id, html_seq)
         html_out += html_sequence + "\n"
     return html_out
 
 
-def get_max_var_lengths(num_aln, short=False):
+def get_max_var_lengths(num_aln, short=False, long_len=0):
     max_lengths = []
     for v in range(len(num_aln['var'].values()[0])):
         lengths = [len(num_aln['var'][s_id][v]) for
                    s_id in num_aln['var'].keys()]
-        max_lengths.append(max(lengths))
+        m_len = max(lengths)
+        if short and m_len > long_len:
+            # if max var is longer than allowed
+            m_len = long_len + len(str(m_len - long_len)) + 2
+
+        max_lengths.append(m_len)
     return max_lengths
 
 
@@ -81,13 +88,14 @@ def write_html(aa_aln, wrong_cols, outname, var=False, var_short=False,
         out.write(template_fmt.format(css_full_path, outtxt))
 
 
-def make_html_var_seq(corvar_seq, wrong, max_lengths, aln_length, short=False):
+def make_html_var_seq(corvar_seq, wrong, max_lengths, aln_length, short=False,
+                      long_len=0):
     html_seq = ""
     r_index = 0
     for c, core in enumerate(corvar_seq["cores"]):
         var = corvar_seq["var"][c].lower()
         if short:
-            var = make_short_var(var)
+            var = make_short_var(var, long_len)
         var = " " + var + " " * (max_lengths[c] - len(var)) + " "
         html_seq += var
         for r, res in enumerate(core):
@@ -103,12 +111,20 @@ def make_html_var_seq(corvar_seq, wrong, max_lengths, aln_length, short=False):
             r_index += 1
             html_seq += new_res
     var = corvar_seq["var"][-1].lower()
-    html_seq += var + " " * (max_lengths[-1] - len(var))
+    if short:
+        var = make_short_var(var, long_len)
+    html_seq += " " + var + " " * (max_lengths[-1] - len(var))
     return html_seq
 
 
-def make_short_var(var):
-    short_var = var
+def make_short_var(var, long_len):
+    if len(var) > long_len:
+        edge = long_len / 2
+        var_start = var[:edge]
+        var_end = var[-edge:]
+        short_var = var_start + " " + str(len(var) - long_len) + " " + var_end
+    else:
+        short_var = var
     return short_var
 
 

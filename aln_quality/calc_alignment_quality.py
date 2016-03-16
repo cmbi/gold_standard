@@ -144,7 +144,7 @@ if __name__ == "__main__":
         if html:
             write_html(
                 quality_data["aln"], quality_data["wrong_cols"], args.output,
-                var=args.htmlvar, var_short=args.html_var_short,
+                var=args.html_var, var_short=args.html_var_short,
                 num_aln=quality_data["num_aln"],
                 full_seq=quality_data["full_seq"],
                 core_indexes=quality_data["core_indexes"])
