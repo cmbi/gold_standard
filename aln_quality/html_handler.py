@@ -143,7 +143,8 @@ def split_cores(num_aln, core_indexes):
             if i < len(core_indexes) - 1:
                 next_c = core_indexes[i + 1]
             else:
-                next_c = len(core_indexes)
+                # add last core
+                next_c = len(num_aln['cores'][seq_id])
             new_core = num_aln['cores'][seq_id][c_i:next_c]
             new_num_aln['cores'][seq_id].append(new_core)
     return new_num_aln

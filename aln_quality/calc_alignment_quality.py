@@ -137,7 +137,7 @@ if __name__ == "__main__":
         _log.setLevel(logging.DEBUG)
 
     try:
-        html = args.html or args.html_var or args.html_var_short
+        html = (args.html or args.html_var or args.html_var_short)
         quality_data = calculate_aln_quality(
             args.golden_dir, args.test_aln_path, args.output, args.in3dm,
             args.in3SSP, html, args.final_core)
