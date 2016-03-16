@@ -40,7 +40,6 @@ def get_level(number, aln_length):
 
 def aln_to_html_var(num_aln, aa_aln, wrong, full_seq, core_indexes,
                     short=False):
-    # TODO: hide variable regions
     html_out = ""
     aln_length = len(aa_aln)
     long_len = 20
