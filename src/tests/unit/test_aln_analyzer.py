@@ -1,13 +1,11 @@
 from nose.tools import eq_
 
-from aln_quality.aln_analyzer import score_var_regions, compare_pairwise
+from src.gold_standard.aln_analyzer import score_var_regions, compare_pairwise
 
 
 def test_score_var_regions():
     golden = {"1": [1, 2, 3, '-', '-', 4, 5, 6, '-', '-'],
-              "2": ['-', '-', '-', 1, 2, 3, 4, 5, '-', '-']
-              }
-
+              "2": ['-', '-', '-', 1, 2, 3, 4, 5, '-', '-']}
     var = [1, 2, 3, 4]
     matrix = score_var_regions(golden, '1', '2', var)
     eq_({"TN": 3, "FN": 1}, matrix)

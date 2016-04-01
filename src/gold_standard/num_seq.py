@@ -1,7 +1,7 @@
 import logging
 import re
 
-from custom_exceptions import CustomException
+from src.gold_standard.custom_exceptions import CustomException
 
 
 _log = logging.getLogger(__name__)

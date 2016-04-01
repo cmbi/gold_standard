@@ -3,9 +3,10 @@ import os
 from nose.tools import eq_, ok_
 from mock import patch
 
-from aln_quality.html_handler import (make_corvar, aln_to_html_var,
-                                      make_short_var, write_html, split_vars)
-from aln_quality.num_seq import core_aln_to_num
+from src.gold_standard.html_handler import (make_corvar, aln_to_html_var,
+                                            make_short_var, write_html,
+                                            split_vars)
+from src.gold_standard.num_seq import core_aln_to_num
 
 
 def test_make_corvar():
@@ -20,8 +21,9 @@ def test_make_corvar():
         },
         'var': {
             '1': [[3, 4, 5],
-                  [12, 13, 14, 15, 16]
-                  ]}}
+                  [12, 13, 14, 15, 16]]
+        }
+    }
     expected = {
         '1': {
             'cores':
@@ -49,7 +51,7 @@ def test_aln_to_html_var(mock_get_indexes):
     core_indexes = [0, 1, 6]
     mock_get_indexes.return_value = core_indexes
     final_core = 'sth'
-    num_aln, indexes = core_aln_to_num(aa_aln, full_seq, final_core)
+    num_aln = core_aln_to_num(aa_aln, full_seq, final_core)[0]
     expected = "1      <span class=featWRONG3>A</span> b <span class=featOK>C" \
                "</span><span class=featOK>D</span><span class=featOK>E</span>" \
                "<span class=featOK>F</span><span class=featOK>G</span> hij <s" \

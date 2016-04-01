@@ -1,7 +1,7 @@
 import logging
 
-from custom_exceptions import CustomException
-from dict_utils import merge_dicts
+from src.gold_standard.custom_exceptions import CustomException
+from src.gold_standard.dict_utils import merge_dicts
 
 
 fs = frozenset

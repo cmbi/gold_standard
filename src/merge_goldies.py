@@ -4,7 +4,7 @@ import logging
 import os
 import re
 
-from var_parser import convert_var_to_aln
+from src.gold_standard.parsers.var_file import convert_var_to_aln
 
 FORMAT = '%(asctime)s:%(levelname)s:%(funcName)s - %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT)

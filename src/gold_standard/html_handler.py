@@ -1,7 +1,7 @@
 import copy
 import os
 
-from paths import CSS, TEMPLATE
+from src.gold_standard.paths import CSS, TEMPLATE
 
 
 def aln_to_html(aa_aln, wrong):

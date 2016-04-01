@@ -1,19 +1,17 @@
 from nose.tools import eq_
 from mock import mock_open, patch
 
-from aln_quality.parsers.golden import parse_golden_alns
-from aln_quality.parsers.fasta import parse_fasta
-from aln_quality.parsers.var_file import (parse_var_file, convert_var_to_aln)
+from src.gold_standard.parsers.golden import parse_golden_alns
+from src.gold_standard.parsers.fasta import parse_fasta
+from src.gold_standard.parsers.var_file import (parse_var_file,
+                                                convert_var_to_aln)
 
 
 def test_convert_var_to_aln():
     var_file = ["ID1, sdfg SFG 0 DFG abc",
-                "ID2, GFG g VBF bc"
-                ]
+                "ID2, GFG g VBF bc"]
     expected = {"ID1": "SDFGSFG-DFGABC--",
-                "ID2": "----GFGGVBF---BC"
-                }
-
+                "ID2": "----GFGGVBF---BC"}
     eq_(convert_var_to_aln(var_file), expected)
 
 

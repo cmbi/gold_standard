@@ -1,8 +1,9 @@
 from nose.tools import eq_
 from mock import mock_open, patch
 
-from aln_quality.num_seq import (core_to_num_seq_known_cores, core_to_num_seq,
-                                 get_core_indexes, get_next_core, get_var_pos)
+from src.gold_standard.num_seq import (core_to_num_seq_known_cores,
+                                       core_to_num_seq, get_core_indexes,
+                                       get_next_core, get_var_pos)
 
 
 def test_core_to_num_seq():

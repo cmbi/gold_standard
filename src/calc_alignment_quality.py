@@ -2,13 +2,14 @@
 import argparse
 import logging
 
-from custom_exceptions import CustomException
-from html_handler import write_html
-from parsers.aln3SSP import parse_3SSP
-from parsers.golden import parse_golden_alns
-from parsers.fasta import parse_fasta
-from num_seq import aln_seq_to_num, core_aln_to_num, aln_3SSP_to_num
-from aln_analyzer import calc_scores, calc_scores_3dm
+from src.gold_standard.custom_exceptions import CustomException
+from src.gold_standard.html_handler import write_html
+from src.gold_standard.parsers.aln3SSP import parse_3SSP
+from src.gold_standard.parsers.golden import parse_golden_alns
+from src.gold_standard.parsers.fasta import parse_fasta
+from src.gold_standard.num_seq import (aln_seq_to_num, core_aln_to_num,
+                                       aln_3SSP_to_num)
+from src.gold_standard.aln_analyzer import calc_scores, calc_scores_3dm
 
 
 fs = frozenset

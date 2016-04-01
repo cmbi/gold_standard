@@ -1,5 +1,5 @@
 PROJECT = gold-standard
-PACKAGE = aln_quality
+PACKAGE = src/
 PYTHON_FILES = $(PACKAGE)/*.py
 
 # Build environment
@@ -47,7 +47,7 @@ $(PEP8): $(PACKAGE) $(VIRTUALENV) $(TARGET)
 	-. $(VENVACTIVATE) && pep8 --max-line-length=150 $< > $@
 
 $(NOSE): $(PACKAGE) $(VIRTUALENV) $(TARGET)
-	. $(VENVACTIVATE) && nosetests --traverse-namespace tests --verbosity=3 --with-coverage --cover-xml --with-xunit --xunit-file=$@
+	. $(VENVACTIVATE) && nosetests --traverse-namespace src/tests --verbosity=3 --with-coverage --cover-xml --with-xunit --xunit-file=$@
 
 $(COVERAGE): $(NOSE) $(VIRTUALENV) $(TARGET)
 	-. $(VENVACTIVATE) && coverage xml -o $@
