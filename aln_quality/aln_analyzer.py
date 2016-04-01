@@ -54,7 +54,7 @@ def compare_alignments(aln1, aln2):
 
 def get_max_sp_score(golden_aln):
     seq1, seq2 = golden_aln.values()
-    id1, id2 = golden_aln.keys()
+    id1 = golden_aln.keys()[0]
     score = 0
     for i in range(len(golden_aln[id1])):
         if seq1[i] != '-' and seq2[i] != '-':
@@ -126,7 +126,7 @@ def calc_pairwise_score_3dm(golden_aln, id1, seq1, var1, id2, seq2, var2):
     matrix = merge_dicts(matrix, var_matrix)
 
     # check output sanity
-    res_only = filter(lambda x: x != "-", seq1 + seq2 + var1 + var2)
+    res_only = [x for x in seq1 + seq2 + var1 + var2 if x != '-']
     if len(res_only) != sum(matrix.values()):
         raise CustomException("Sum of values in the confusion matrix({}) should"
                               " be equal to the total number of"
@@ -188,7 +188,7 @@ def calc_pairwise_score(golden_aln, id1, seq1, id2, seq2):
         # if both are gaps do nothing
 
     # check output sanity
-    res_only = filter(lambda x: x != "-", seq1 + seq2)
+    res_only = [x for x in seq1 + seq2 if x != '-']
     if len(res_only) != sum(matrix.values()):
         raise CustomException("Sum of values in the confusion matrix({}) should"
                               " be equal to the total number of"
@@ -211,8 +211,8 @@ def calc_scores_3dm(golden_alns, test_aln):
             id_set = fs([id1, id2])
             if (id1 != id2 and id_set not in matrices_dict.keys() and
                     id_set in golden_alns.keys()):
-                _log.debug("Calculating confusion matrix for sequences {} "
-                           "and {}".format(id1, id2))
+                _log.debug("Calculating confusion matrix for sequences %s "
+                           "and %s", id1, id2)
                 scores = calc_pairwise_score_3dm(
                     golden_alns[id_set], id1, seq1, test_aln["var"][id1],
                     id2, seq2, test_aln["var"][id2])
@@ -234,7 +234,7 @@ def calc_scores(golden_alns, test_aln):
     # full matrix holds scores summed up from all sequence pairs
     full_matrix = {'TP': 0, 'FP': 0, 'TN': 0, 'FN': 0}
     sp_scores = {}
-    wrong_cols = set()
+    wrong_cols = dict()
     for id1, seq1 in test_aln.iteritems():
         for id2, seq2 in test_aln.iteritems():
             id_set = fs([id1, id2])

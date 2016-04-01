@@ -79,29 +79,31 @@ def process_results(matrices, full_matrix, sp_scores, output):
 
     with open(output, 'w') as out:
         out.write(out_txt)
-    _log.info("Created the output file: {}".format(output))
+    _log.info("Created the output file: %s", output)
 
 
-def calculate_aln_quality(golden_dir, test_aln_path, output, in3dm, in3SSP,
+def calculate_aln_quality(golden_dir, test_aln_path, output, input_format,
                           html, final_core=None):
     golden_alns, golden_ids, full_seq = parse_golden_alns(golden_dir)
 
-    if in3dm:
+    if input_format == '3dm':
         _log.info("Calculating alignment quality in 3DM mode")
         aln_dict = parse_fasta(test_aln_path, golden_ids)
         num_aln_dict, core_indexes = core_aln_to_num(
             aln_dict, full_seq, final_core, golden_ids=golden_ids)
         scores = calc_scores_3dm(golden_alns, num_aln_dict)
-    elif in3SSP:
+    elif input_format == '3SSP':
         aln_dict = parse_3SSP(test_aln_path)
         num_aln_dict = aln_3SSP_to_num(aln_dict, full_seq)
         scores = calc_scores_3dm(golden_alns, num_aln_dict)
-    else:
+    elif input_format == 'fasta':
         _log.info("Calculating alignment quality")
         aln_dict = parse_fasta(test_aln_path, golden_ids)
         num_aln_dict = {seq_id: aln_seq_to_num(seq)
                         for seq_id, seq in aln_dict.iteritems()}
         scores = calc_scores(golden_alns, num_aln_dict)
+    else:
+        raise Exception("Invalid input format: {}".format(input_format))
     process_results(scores['pairwise'], scores['full'], scores['SP'], output)
     if html:
         return {
@@ -135,12 +137,16 @@ if __name__ == "__main__":
     # change logging level in debug mode
     if args.debug:
         _log.setLevel(logging.DEBUG)
-
+    input_format = "fasta"
+    if args.in3dm:
+        input_format = "3dm"
+    elif args.in3SSP:
+        input_format = "3SSP"
     try:
         html = (args.html or args.html_var or args.html_var_short)
         quality_data = calculate_aln_quality(
-            args.golden_dir, args.test_aln_path, args.output, args.in3dm,
-            args.in3SSP, html, args.final_core)
+            args.golden_dir, args.test_aln_path, args.output, input_format,
+            html, args.final_core)
         if html:
             write_html(
                 quality_data["aln"], quality_data["wrong_cols"], args.output,
@@ -149,5 +155,5 @@ if __name__ == "__main__":
                 full_seq=quality_data["full_seq"],
                 core_indexes=quality_data["core_indexes"])
     except CustomException as e:
-        _log.error("{}".format(e.message))
+        _log.error("%s", e.message)
         exit(1)
