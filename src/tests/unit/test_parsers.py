@@ -16,7 +16,7 @@ def test_convert_var_to_aln():
 
 
 def test_parse_var_file():
-    test_path = "tests/testdata/test.Var"
+    test_path = "src/tests/testdata/test.Var"
     var = parse_var_file(test_path)
     eq_(len(var['aln']), 2)
     eq_(var['ids'], ['1HVXA', '1E43A'])

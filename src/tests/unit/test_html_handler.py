@@ -64,11 +64,11 @@ def test_aln_to_html_var(mock_get_indexes):
     res = aln_to_html_var(num_aln, aa_aln, wrong, full_seq, core_indexes)
     eq_(res, expected)
 
-    expected_path = "tests/testdata/expected.html"
+    expected_path = "src/tests/testdata/expected.html"
     with open(expected_path) as a:
         expected = a.read()
-    res_path = "tests/testdata/test.html"
-    write_html(aa_aln, wrong, "tests/testdata/test", var=True, var_short=False,
+    res_path = "src/tests/testdata/test.html"
+    write_html(aa_aln, wrong, "src/tests/testdata/test", var=True, var_short=False,
                num_aln=num_aln, full_seq=full_seq, core_indexes=core_indexes)
 
     ok_(os.path.exists(res_path))
