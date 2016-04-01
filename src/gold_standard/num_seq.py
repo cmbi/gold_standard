@@ -22,7 +22,7 @@ def core_aln_to_num(aln_dict, full_seq, final_core, golden_ids=None):
     :param full_seq_path: path to the full plain sequences in fasta format
     :param final_core: path to the final_core.txt file
     :return: dict with core alignment (num), and var - a dict of the positions
-        in the variable regions
+    in the variable regions
     """
     _log.info("Converting 3DM alignment to grounded sequences")
     aln_3dm = {"cores": {}, "var": {}}
@@ -237,10 +237,10 @@ def split_core(core, full_seq, add_index=0):
     :param core: core to split up
     :param full_seq: sequence in which we want find the cores
     :param add_index: only changed when called from inside this function,
-        indicates by how many residues was the full_seq trimmed to adjust
-        the position accordingly
+    indicates by how many residues was the full_seq trimmed to adjust
+    the position accordingly
     :return: list of dicts cores [{"core": string [core's aa seq],
-                                   "pos": int [position in the full sequence]}]
+    "pos": int [position in the full sequence]}]
     """
     _log.debug("Splitting up a core: %s\n full seq: %s", core, full_seq)
     new_cores = []
