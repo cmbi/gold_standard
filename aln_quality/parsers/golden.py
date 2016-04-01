@@ -13,8 +13,8 @@ def parse_golden_alns(golden_dir):
     if not os.path.exists(golden_dir):
         raise ParserError("No such directory: {}".format(golden_dir))
     # get all ".Var" files in the given directory
-    var_list = filter(lambda x: x.endswith(".Var"), os.listdir(golden_dir))
-    _log.info("Got {} var files".format(len(var_list)))
+    var_list = [x for x in os.listdir(golden_dir) if x.endswith(".Var")]
+    _log.info("Got %s var files", len(var_list))
     golden_alns = {}
     golden_ids = set()
     full_seq = {}

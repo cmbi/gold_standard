@@ -16,7 +16,7 @@ def aln_3SSP_to_num(aln_dict, full_seq):
     return aln
 
 
-def core_aln_to_num(aln_dict, full_seq, final_core, golden_ids=[]):
+def core_aln_to_num(aln_dict, full_seq, final_core, golden_ids=None):
     """
     :param aln_path: path to the core alignment file
     :param full_seq_path: path to the full plain sequences in fasta format
@@ -98,7 +98,7 @@ def core_to_num_seq_known_cores(aligned_seq, full_seq, core_indexes):
             raise CustomException("Didn't find the {} core in the full "
                                   "sequence".format(core))
         res_count = 0
-        for j, res in enumerate(core):
+        for res in core:
             if res == '-':
                 grounded.append('-')
             else:
@@ -109,6 +109,7 @@ def core_to_num_seq_known_cores(aligned_seq, full_seq, core_indexes):
 
 def core_to_num_seq_3SSP(aligned_seq, full_seq):
     """
+    Converts cores in 3SSP format to a numerical sequence
     """
     # 1-based!!!
     grounded_seq = []
@@ -241,7 +242,7 @@ def split_core(core, full_seq, add_index=0):
     :return: list of dicts cores [{"core": string [core's aa seq],
                                    "pos": int [position in the full sequence]}]
     """
-    _log.debug("Splitting up a core: {}\n full seq: {}".format(core, full_seq))
+    _log.debug("Splitting up a core: %s\n full seq: %s", core, full_seq)
     new_cores = []
     for i in xrange(1, len(core)):
         if full_seq.find(core[:-i]) != -1 and full_seq.find(core[-i:]) != -1:
@@ -258,7 +259,7 @@ def split_core(core, full_seq, add_index=0):
             new_cores.extend(split_core(core[-i:], full_seq))
 
             break
-    _log.debug("Split up core {} in two cores: {}".format(core, new_cores))
+    _log.debug("Split up core %s in two cores: %s", core, new_cores)
     if not new_cores:
         raise CustomException("Didn't find a way to split up the "
                               "core {}".format(core))

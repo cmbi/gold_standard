@@ -97,7 +97,7 @@ def make_html_var_seq(corvar_seq, wrong, max_lengths, aln_length, short=False,
             var = make_short_var(var, long_len)
         var = " " + var + " " * (max_lengths[c] - len(var)) + " "
         html_seq += var
-        for r, res in enumerate(core):
+        for res in core:
             if res != "-" and res != " ":
                 if r_index in wrong.keys():
                     level = get_level(wrong[r_index], aln_length)
@@ -152,7 +152,7 @@ def make_corvar(full_seq, num_aln):
 
 def split_cores(num_aln, core_indexes):
     new_num_aln = copy.deepcopy(num_aln)
-    for seq_id, seq in num_aln['cores'].iteritems():
+    for seq_id in num_aln['cores'].keys():
         new_num_aln['cores'][seq_id] = []
         for i, c_i in enumerate(core_indexes):
             if i < len(core_indexes) - 1:
@@ -170,7 +170,7 @@ def split_vars(num_aln):
     for seq_id, cores in num_aln['cores'].iteritems():
         new_num_aln['var'][seq_id] = []
         prev = 1
-        for c, core in enumerate(cores):
+        for core in cores:
             new = get_first_res(core)
             if new == -1:
                 new_num_aln['var'][seq_id].append([])
@@ -188,7 +188,7 @@ def split_vars(num_aln):
 
 
 def get_first_res(core):
-    for i, r in enumerate(core):
+    for r in core:
         if isinstance(r, int):
             return r
     return -1

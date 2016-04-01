@@ -6,8 +6,8 @@ from error_types import ParserError
 _log = logging.getLogger(__name__)
 
 
-def parse_fasta(aln_path, golden_ids=[]):
-    _log.info("Parsing FASTA: {}".format(aln_path))
+def parse_fasta(aln_path, golden_ids=None):
+    _log.info("Parsing FASTA: %s", aln_path)
     if not os.path.exists(aln_path):
         raise ParserError("FASTA file doesn't exist: {}".format(aln_path))
     with open(aln_path) as a:

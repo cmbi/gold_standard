@@ -31,7 +31,7 @@ def convert_var_to_aln(var_file):
             aln_seq1 += "-" * len(var2[j])
             j += 1
         elif (i < len(var1) and j < len(var2) and
-                var1[i].isupper() and var2[j].isupper()):
+              var1[i].isupper() and var2[j].isupper()):
             # both segments are cores
             if len(var2[j]) != len(var1[i]):
                 raise ParserError("Core {} and {} have different "
@@ -46,7 +46,7 @@ def convert_var_to_aln(var_file):
 
 
 def parse_var_file(file_path):
-    _log.debug("Parsing var file: {}".format(file_path))
+    _log.debug("Parsing var file: %s", file_path)
     with open(file_path) as a:
         var_file = a.read().splitlines()
     ids = [i.split(',')[0] for i in var_file]

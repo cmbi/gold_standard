@@ -16,13 +16,13 @@ def get_var_files(input_dir, ref_seq):
     Get all var files from the input_dir that contain the reference sequence
     """
     if not os.path.exists(input_dir):
-        _log.error("Directory not found: {}".format(input_dir))
+        _log.error("Directory not found: %s", input_dir)
 
     filenames_list = os.listdir(input_dir)
     # filter out files not containing the reference sequence and without a .Var
     # extension
-    filenames_list = filter(lambda x: ref_seq in x and x.endswith('.Var'),
-                            filenames_list)
+    filenames_list = [x for x in filenames_list if
+                      ref_seq in x and x.endswith('.Var')]
     file_list = []
     for i in filenames_list:
         with open(os.path.join(input_dir, i)) as a:
