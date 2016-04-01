@@ -22,9 +22,9 @@ def test_parse_var_file():
     eq_(var['ids'], ['1HVXA', '1E43A'])
 
 
-@patch('aln_quality.parsers.fasta.open', mock_open(
+@patch('src.gold_standard.parsers.fasta.open', mock_open(
     read_data=">ID1\nA-C\nDEF\n>ID2\nGHI\n"), create=True)
-@patch('aln_quality.parsers.fasta.os.path.exists')
+@patch('src.gold_standard.parsers.fasta.os.path.exists')
 def test_parse_fasta(mock_path_exists):
     mock_path_exists.return_value = True
     aln = parse_fasta("path", ["ID1", "ID2"])
@@ -32,9 +32,9 @@ def test_parse_fasta(mock_path_exists):
     eq_(aln, expected)
 
 
-@patch('aln_quality.parsers.golden.os.path.exists')
-@patch('aln_quality.parsers.golden.os.listdir')
-@patch('aln_quality.parsers.golden.parse_var_file')
+@patch('src.gold_standard.parsers.golden.os.path.exists')
+@patch('src.gold_standard.parsers.golden.os.listdir')
+@patch('src.gold_standard.parsers.golden.parse_var_file')
 def test_parse_golden_alns(mock_parse, mock_listdir, mock_path_exists):
     mock_parse.side_effect = [{"ids": ["id1", "id2"], "aln": "test_aln",
                                "full": {'id1': 'seq1', 'id2': 'seq2'}},

@@ -41,7 +41,7 @@ def test_make_corvar():
     eq_(res, expected)
 
 
-@patch('aln_quality.num_seq.get_core_indexes')
+@patch('src.gold_standard.num_seq.get_core_indexes')
 def test_aln_to_html_var(mock_get_indexes):
     aa_aln = {'1': 'ACDEFGKLMNOP',
               '2': 'ABC---DEF---'}

@@ -49,7 +49,7 @@ def test_get_next_core():
     eq_(r["core_start"], expected_start)
 
 
-@patch('aln_quality.num_seq.open',
+@patch('src.gold_standard.num_seq.open',
        mock_open(read_data="1ABCA ABCD ABC ABC-- DFGJH"), create=True)
 def test_get_core_indexes():
     result = get_core_indexes('testfile')
