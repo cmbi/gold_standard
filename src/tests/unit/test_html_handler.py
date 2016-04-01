@@ -67,15 +67,18 @@ def test_aln_to_html_var(mock_get_indexes):
     expected_path = "src/tests/testdata/expected.html"
     with open(expected_path) as a:
         expected = a.read()
+    expected_excerpt = expected.splitlines()[3:]
     res_path = "src/tests/testdata/test.html"
-    write_html(aa_aln, wrong, "src/tests/testdata/test", var=True, var_short=False,
-               num_aln=num_aln, full_seq=full_seq, core_indexes=core_indexes)
+    write_html(aa_aln, wrong, "src/tests/testdata/test", var=True,
+               var_short=False, num_aln=num_aln, full_seq=full_seq,
+               core_indexes=core_indexes)
 
     ok_(os.path.exists(res_path))
     with open(res_path) as a:
         res = a.read()
+    result_excerpt = res.splitlines()[3:]
     os.remove(res_path)
-    eq_(expected, res)
+    eq_(expected_excerpt, result_excerpt)
 
 
 def test_split_vars():
