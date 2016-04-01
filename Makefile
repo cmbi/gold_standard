@@ -1,5 +1,5 @@
 PROJECT = gold-standard
-PACKAGE = src/
+PACKAGE = src/gold_standard
 PYTHON_FILES = $(PACKAGE)/*.py
 
 # Build environment
