@@ -109,9 +109,9 @@ def calculate_aln_quality(golden_dir, test_aln_path, output, input_format,
     if html:
         return {
             'wrong_cols': scores["wrong_cols"],
-            'aln': aln_dict,
+            'aa_aln': aln_dict,
             'num_aln': num_aln_dict,
-            'full_seq': full_seq,
+            'full': full_seq,
             'core_indexes': core_indexes
         }
 
@@ -150,11 +150,7 @@ if __name__ == "__main__":
             html, args.final_core)
         if html:
             hh = HtmlHandler(var=args.html_var, var_short=args.html_var_short)
-            hh.write_html(
-                quality_data["aln"], quality_data["wrong_cols"], args.output,
-                num_aln=quality_data["num_aln"],
-                full_seq=quality_data["full_seq"],
-                core_indexes=quality_data["core_indexes"])
+            hh.write_html(quality_data, args.output)
     except CustomException as e:
         _log.error("%s", e.message)
         exit(1)

@@ -20,8 +20,12 @@ def run_comparison(aln1_path, aln2_path, outprefix, full_seq_path):
     num_aln_dict2 = core_aln_to_num(aln_dict2, full_seq, final_core=None)[0]
     comp_result = compare_alignments(num_aln_dict1, num_aln_dict2)
     hh = HtmlHandler()
-    hh.write_html(aln_dict1, comp_result["diff_cols1"], outprefix + '1')
-    hh.write_html(aln_dict2, comp_result["diff_cols2"], outprefix + '2')
+    quality_data = {'aa_aln': aln_dict1,
+                    'wrong_cols': comp_result['diff_cols1']}
+    hh.write_html(quality_data, outprefix + '1')
+    quality_data = {'aa_aln': aln_dict2,
+                    'wrong_cols': comp_result['diff_cols2']}
+    hh.write_html(quality_data, outprefix + '2')
 
 
 if __name__ == "__main__":

@@ -61,7 +61,12 @@ def test_aln_to_html_var(mock_get_indexes):
                "ss=featOK>C</span>---     <span class=featOK>D</span><span cl" \
                "ass=featOK>E</span><span class=featOK>F</span>--- \n"
     hh = HtmlHandler()
-    res = hh.aln_to_html_var(num_aln, aa_aln, wrong, full_seq, core_indexes)
+    quality_data = {'num_aln': num_aln,
+                    'aa_aln': aa_aln,
+                    'wrong_cols': wrong,
+                    'full': full_seq,
+                    'core_indexes': core_indexes}
+    res = hh.aln_to_html_var(quality_data)
     eq_(res, expected)
 
     expected_path = "src/tests/testdata/expected.html"
@@ -70,8 +75,7 @@ def test_aln_to_html_var(mock_get_indexes):
     expected_excerpt = expected.splitlines()[3:]
     res_path = "src/tests/testdata/test.html"
     hh.var = True
-    hh.write_html(aa_aln, wrong, "src/tests/testdata/test", num_aln=num_aln,
-                  full_seq=full_seq, core_indexes=core_indexes)
+    hh.write_html(quality_data, "src/tests/testdata/test")
     ok_(os.path.exists(res_path))
     with open(res_path) as a:
         res = a.read()

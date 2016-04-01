@@ -11,13 +11,12 @@ class HtmlHandler(object):
         self.short = short
         self.long_len = long_len
 
-    def write_html(self, aa_aln, wrong_cols, outname, num_aln=None,
-                   full_seq=None, core_indexes=None):
+    def write_html(self, quality_data, outname):
         if self.var or self.var_short:
-            outtxt = self.aln_to_html_var(num_aln, aa_aln, wrong_cols, full_seq,
-                                          core_indexes)
+            outtxt = self.aln_to_html_var(quality_data)
         else:
-            outtxt = self.aln_to_html(aa_aln, wrong_cols)
+            outtxt = self.aln_to_html(quality_data['aa_aln'],
+                                      quality_data['wrong_cols'])
         script_dir = os.path.dirname(os.path.realpath(__file__))
         css_full_path = '/'.join(list(os.path.split(script_dir)[:-2]) + [CSS])
         tmpl_full_path = '/'.join(list(os.path.split(script_dir)[:-2]) +
@@ -27,18 +26,20 @@ class HtmlHandler(object):
         with open(outname + ".html", 'w') as out:
             out.write(template_fmt.format(css_full_path, outtxt))
 
-    def aln_to_html_var(self, num_aln, aa_aln, wrong, full_seq, core_indexes):
+    def aln_to_html_var(self, quality_data):
         html_out = ""
-        aln_length = len(aa_aln)
+        aln_length = len(quality_data['aa_aln'])
 
-        num_aln_c = self.split_cores(num_aln, core_indexes)
+        num_aln_c = self.split_cores(quality_data['num_aln'],
+                                     quality_data['core_indexes'])
         num_aln_v = self.split_vars(num_aln_c)
 
-        aa_aln_corvar = self.make_corvar(full_seq, num_aln_v)
+        aa_aln_corvar = self.make_corvar(quality_data['full'], num_aln_v)
         var_lengths = self.get_max_var_lengths(num_aln_v)
         for seq_id, seq in aa_aln_corvar.iteritems():
             html_seq = self.make_html_var_seq(
-                seq, wrong[seq_id], var_lengths, aln_length)
+                seq, quality_data['wrong_cols'][seq_id], var_lengths,
+                aln_length)
             html_sequence = "{}    {}".format(seq_id, html_seq)
             html_out += html_sequence + "\n"
         return html_out
