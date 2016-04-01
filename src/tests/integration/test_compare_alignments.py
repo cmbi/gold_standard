@@ -2,15 +2,14 @@ import os
 
 from nose.tools import eq_, ok_
 
-from aln_quality.compare_alignments import run_comparison
+from src.compare_alignments import run_comparison
 
 
 def test_compare_alignments():
-    # toy example
-    aln1 = "tests/testdata/comp_aln1.fasta"
-    aln2 = "tests/testdata/comp_aln2.fasta"
-    full = "tests/testdata/comp_full.fasta"
-    outprefix = "tests/testdata/comp_out"
+    aln1 = "src/tests/testdata/comp_aln1.fasta"
+    aln2 = "src/tests/testdata/comp_aln2.fasta"
+    full = "src/tests/testdata/comp_full.fasta"
+    outprefix = "src/tests/testdata/comp_out"
     run_comparison(aln1, aln2, outprefix, full)
     out1_path = outprefix + '1.html'
     out2_path = outprefix + '2.html'
@@ -34,10 +33,10 @@ def test_compare_alignments():
     os.remove(out2_path)
 
     # big test set
-    aln1 = "tests/testdata/filtered_amylase_mafft.fasta"
-    aln2 = "tests/testdata/filtered_amylase_muscle.fasta"
-    full = "tests/testdata/filtered_amylase_plain.fasta"
-    outprefix = "tests/testdata/comp_mafft_muscle_out"
+    aln1 = "src/tests/testdata/filtered_amylase_mafft.fasta"
+    aln2 = "src/tests/testdata/filtered_amylase_muscle.fasta"
+    full = "src/tests/testdata/filtered_amylase_plain.fasta"
+    outprefix = "src/tests/testdata/comp_mafft_muscle_out"
     run_comparison(aln1, aln2, outprefix, full)
     out1_path = outprefix + '1.html'
     out2_path = outprefix + '2.html'
