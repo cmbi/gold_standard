@@ -3,9 +3,7 @@ import os
 from nose.tools import eq_, ok_
 from mock import patch
 
-from src.gold_standard.html_handler import (make_corvar, aln_to_html_var,
-                                            make_short_var, write_html,
-                                            split_vars)
+from src.gold_standard.html_handler import HtmlHandler
 from src.gold_standard.num_seq import core_aln_to_num
 
 
@@ -36,7 +34,8 @@ def test_make_corvar():
                 "CDE",
                 "LMNOP"
             ]}}
-    res = make_corvar(aa_aln, num_aln)
+    hh = HtmlHandler()
+    res = hh.make_corvar(aa_aln, num_aln)
 
     eq_(res, expected)
 
@@ -61,7 +60,8 @@ def test_aln_to_html_var(mock_get_indexes):
                " class=featOK>A</span>   <span class=featOK>B</span><span cla" \
                "ss=featOK>C</span>---     <span class=featOK>D</span><span cl" \
                "ass=featOK>E</span><span class=featOK>F</span>--- \n"
-    res = aln_to_html_var(num_aln, aa_aln, wrong, full_seq, core_indexes)
+    hh = HtmlHandler()
+    res = hh.aln_to_html_var(num_aln, aa_aln, wrong, full_seq, core_indexes)
     eq_(res, expected)
 
     expected_path = "src/tests/testdata/expected.html"
@@ -69,10 +69,9 @@ def test_aln_to_html_var(mock_get_indexes):
         expected = a.read()
     expected_excerpt = expected.splitlines()[3:]
     res_path = "src/tests/testdata/test.html"
-    write_html(aa_aln, wrong, "src/tests/testdata/test", var=True,
-               var_short=False, num_aln=num_aln, full_seq=full_seq,
-               core_indexes=core_indexes)
-
+    hh.var = True
+    hh.write_html(aa_aln, wrong, "src/tests/testdata/test", num_aln=num_aln,
+                  full_seq=full_seq, core_indexes=core_indexes)
     ok_(os.path.exists(res_path))
     with open(res_path) as a:
         res = a.read()
@@ -90,7 +89,8 @@ def test_split_vars():
         'var': {'1': [[1], [], [4], [], [9, 10]]},
         'cores': {'1': [[2, 3], ['-'], ['-', 5, 6], [7, 8]]}
     }
-    res = split_vars(num_aln)
+    hh = HtmlHandler()
+    res = hh.split_vars(num_aln)
     eq_(expected, res)
 
     num_aln = {
@@ -101,17 +101,18 @@ def test_split_vars():
         'var': {'1': [[], [4], [], []]},
         'cores': {'1': [[1, 2, 3], [5, 6], [7, 8]]}
     }
-    res = split_vars(num_aln)
+    res = hh.split_vars(num_aln)
     eq_(expected, res)
 
 
 def test_make_short_var():
     l = 6
     var = "ABCDEFGH"
-    res = make_short_var(var, l)
+    hh = HtmlHandler(long_len=l)
+    res = hh.make_short_var(var)
     expected = "ABC 2 FGH"
     eq_(expected, res)
     var = "ABCFGH"
-    res = make_short_var(var, l)
+    res = hh.make_short_var(var)
     expected = "ABCFGH"
     eq_(expected, res)

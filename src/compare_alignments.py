@@ -2,7 +2,7 @@ import argparse
 import logging
 
 from src.gold_standard.aln_analyzer import compare_alignments
-from src.gold_standard.html_handler import write_html
+from src.gold_standard.html_handler import HtmlHandler
 from src.gold_standard.num_seq import core_aln_to_num
 from src.gold_standard.parsers.fasta import parse_fasta
 
@@ -19,8 +19,9 @@ def run_comparison(aln1_path, aln2_path, outprefix, full_seq_path):
     num_aln_dict1 = core_aln_to_num(aln_dict1, full_seq, final_core=None)[0]
     num_aln_dict2 = core_aln_to_num(aln_dict2, full_seq, final_core=None)[0]
     comp_result = compare_alignments(num_aln_dict1, num_aln_dict2)
-    write_html(aln_dict1, comp_result["diff_cols1"], outprefix + '1')
-    write_html(aln_dict2, comp_result["diff_cols2"], outprefix + '2')
+    hh = HtmlHandler()
+    hh.write_html(aln_dict1, comp_result["diff_cols1"], outprefix + '1')
+    hh.write_html(aln_dict2, comp_result["diff_cols2"], outprefix + '2')
 
 
 if __name__ == "__main__":

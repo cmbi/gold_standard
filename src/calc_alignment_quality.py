@@ -3,7 +3,7 @@ import argparse
 import logging
 
 from src.gold_standard.custom_exceptions import CustomException
-from src.gold_standard.html_handler import write_html
+from src.gold_standard.html_handler import HtmlHandler
 from src.gold_standard.parsers.aln3SSP import parse_3SSP
 from src.gold_standard.parsers.golden import parse_golden_alns
 from src.gold_standard.parsers.fasta import parse_fasta
@@ -149,9 +149,9 @@ if __name__ == "__main__":
             args.golden_dir, args.test_aln_path, args.output, input_format,
             html, args.final_core)
         if html:
-            write_html(
+            hh = HtmlHandler(var=args.html_var, var_short=args.html_var_short)
+            hh.write_html(
                 quality_data["aln"], quality_data["wrong_cols"], args.output,
-                var=args.html_var, var_short=args.html_var_short,
                 num_aln=quality_data["num_aln"],
                 full_seq=quality_data["full_seq"],
                 core_indexes=quality_data["core_indexes"])
