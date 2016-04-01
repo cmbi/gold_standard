@@ -18,8 +18,11 @@ def test_compare_pairwise():
     cores2_aln1 = "-1234--"
     cores1_aln2 = "-123-4-"
     cores2_aln2 = "1-23-4-"
-    res = compare_pairwise(id1, cores1_aln1, cores2_aln1, id2, cores1_aln2,
-                           cores2_aln2)
+    cores = {'1':
+             {'id': id1, 'aln1': cores1_aln1, 'aln2': cores1_aln2},
+             '2':
+             {'id': id2, 'aln1': cores2_aln1, 'aln2': cores2_aln2}}
+    res = compare_pairwise(cores)
 
     expected_result = {
         "diff_cols1": {

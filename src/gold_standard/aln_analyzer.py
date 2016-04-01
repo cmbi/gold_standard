@@ -9,24 +9,23 @@ fs = frozenset
 _log = logging.getLogger(__name__)
 
 
-def compare_pairwise(id1, cores1_aln1, cores2_aln1, id2, cores1_aln2,
-                     cores2_aln2):
-    diff_cols1 = {id1: {}, id2: {}}
-    diff_cols2 = {id1: {}, id2: {}}
+def compare_pairwise(cores):
+    diff_cols1 = {cores['1']['id']: {}, cores['2']['id']: {}}
+    diff_cols2 = {cores['1']['id']: {}, cores['2']['id']: {}}
     # res_i1 seq1 aln1
     # res_j1 seq2 aln1
     # res_i2 seq1 aln2
     # res_j2 seq2 aln2
-    for i, res_i1 in enumerate(cores1_aln1):
-        res_j1 = cores2_aln1[i]
+    for i, res_i1 in enumerate(cores['1']['aln1']):
+        res_j1 = cores['2']['aln1'][i]
         if res_i1 == '-':
             continue
-        if res_i1 in cores1_aln2 and res_j1 in cores2_aln2:
-            aln2_index = cores1_aln2.index(res_i1)
-            res_j2 = cores2_aln2[aln2_index]
+        if res_i1 in cores['1']['aln2'] and res_j1 in cores['2']['aln2']:
+            aln2_index = cores['1']['aln2'].index(res_i1)
+            res_j2 = cores['2']['aln2'][aln2_index]
             if res_j2 != res_j1:
-                diff_cols1[id1][i] = 1
-                diff_cols2[id1][aln2_index] = 1
+                diff_cols1[cores['1']['id']][i] = 1
+                diff_cols2[cores['1']['id']][aln2_index] = 1
     return {"diff_cols1": diff_cols1, "diff_cols2": diff_cols2}
 
 
@@ -39,8 +38,11 @@ def compare_alignments(aln1, aln2):
                     id2 in aln1["cores"].keys()):
                 cores1_aln2 = aln2["cores"][id1]
                 cores2_aln2 = aln2["cores"][id2]
-                scores = compare_pairwise(id1, cores1_aln1, cores2_aln1, id2,
-                                          cores1_aln2, cores2_aln2)
+                cores = {'1':
+                         {'id': id1, 'aln1': cores1_aln1, 'aln2': cores1_aln2},
+                         '2':
+                         {'id': id2, 'aln1': cores2_aln1, 'aln2': cores2_aln2}}
+                scores = compare_pairwise(cores)
                 diff_cols1[id1] = merge_dicts(diff_cols1[id1],
                                               scores["diff_cols1"][id1])
                 diff_cols1[id2] = merge_dicts(diff_cols1[id2],
@@ -87,9 +89,9 @@ def calc_pairwise_score_3dm(golden_aln, id1, seq1, var1, id2, seq2, var2):
         id2: {}
     }
     # score core regions
-    for i in range(len(seq1)):
-        if seq1[i] != '-' and seq2[i] != '-':
-            res2_gold = get_aligned_res(seq1[i], id1, id2, golden_aln)
+    for i, res_i in enumerate(seq1):
+        if res_i != '-' and seq2[i] != '-':
+            res2_gold = get_aligned_res(res_i, id1, id2, golden_aln)
             if seq2[i] == res2_gold:
                 sp_score += 2
                 matrix["TP"] += 2
@@ -98,8 +100,8 @@ def calc_pairwise_score_3dm(golden_aln, id1, seq1, var1, id2, seq2, var2):
                 matrix["FP"] += 2
                 wrong_cols[id1][i] = 1
                 wrong_cols[id2][i] = 1
-        elif seq1[i] != '-' and seq2[i] == '-':
-            res2_gold = get_aligned_res(seq1[i], id1, id2, golden_aln)
+        elif res_i != '-' and seq2[i] == '-':
+            res2_gold = get_aligned_res(res_i, id1, id2, golden_aln)
             if res2_gold == '-':
                 sp_score += 1
                 matrix["TN"] += 1
@@ -156,9 +158,9 @@ def calc_pairwise_score(golden_aln, id1, seq1, id2, seq2):
         id2: {}
     }
 
-    for i in range(len(seq1)):
-        if seq1[i] != '-' and seq2[i] != '-':
-            res2_gold = get_aligned_res(seq1[i], id1, id2, golden_aln)
+    for i, res_i in enumerate(seq1):
+        if res_i != '-' and seq2[i] != '-':
+            res2_gold = get_aligned_res(res_i, id1, id2, golden_aln)
             if seq2[i] == res2_gold:
                 sp_score += 2
                 matrix["TP"] += 2
@@ -168,7 +170,7 @@ def calc_pairwise_score(golden_aln, id1, seq1, id2, seq2):
                 wrong_cols[id1][i] = 1
                 wrong_cols[id2][i] = 1
         elif seq1[i] != '-':
-            res2_gold = get_aligned_res(seq1[i], id1, id2, golden_aln)
+            res2_gold = get_aligned_res(res_i, id1, id2, golden_aln)
             if res2_gold == '-':
                 sp_score += 1
                 matrix["TN"] += 1
