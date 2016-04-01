@@ -5,7 +5,7 @@ from nose.tools import eq_, ok_
 from src.compare_alignments import run_comparison
 
 
-def test_compare_alignments():
+def test_compare_alignments_dummy():
     aln1 = "src/tests/testdata/comp_aln1.fasta"
     aln2 = "src/tests/testdata/comp_aln2.fasta"
     full = "src/tests/testdata/comp_full.fasta"
@@ -36,7 +36,8 @@ def test_compare_alignments():
     eq_(result_excerpt, expected_excerpt)
     os.remove(out2_path)
 
-    # big test set
+
+def test_compare_alignments_real():
     aln1 = "src/tests/testdata/filtered_amylase_mafft.fasta"
     aln2 = "src/tests/testdata/filtered_amylase_muscle.fasta"
     full = "src/tests/testdata/filtered_amylase_plain.fasta"
