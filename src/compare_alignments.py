@@ -16,8 +16,8 @@ def run_comparison(aln1_path, aln2_path, outprefix, full_seq_path):
     aln_dict1 = parse_fasta(aln1_path)
     aln_dict2 = parse_fasta(aln2_path)
     full_seq = parse_fasta(full_seq_path)
-    num_aln_dict1 = core_aln_to_num(aln_dict1, full_seq, final_core=None)
-    num_aln_dict2 = core_aln_to_num(aln_dict2, full_seq, final_core=None)
+    num_aln_dict1 = core_aln_to_num(aln_dict1, full_seq, final_core=None)[0]
+    num_aln_dict2 = core_aln_to_num(aln_dict2, full_seq, final_core=None)[0]
     comp_result = compare_alignments(num_aln_dict1, num_aln_dict2)
     write_html(aln_dict1, comp_result["diff_cols1"], outprefix + '1')
     write_html(aln_dict2, comp_result["diff_cols2"], outprefix + '2')

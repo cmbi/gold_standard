@@ -80,8 +80,9 @@ def write_html(aa_aln, wrong_cols, outname, var=False, var_short=False,
     else:
         outtxt = aln_to_html(aa_aln, wrong_cols)
     script_dir = os.path.dirname(os.path.realpath(__file__))
-    css_full_path = os.path.join(script_dir, CSS)
-    with open(os.path.join(script_dir, TEMPLATE)) as a:
+    css_full_path = '/'.join(list(os.path.split(script_dir)[:-2]) + [CSS])
+    tmpl_full_path = '/'.join(list(os.path.split(script_dir)[:-2]) + [TEMPLATE])
+    with open(tmpl_full_path) as a:
         template_fmt = a.read()
     with open(outname + ".html", 'w') as out:
         out.write(template_fmt.format(css_full_path, outtxt))

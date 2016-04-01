@@ -22,8 +22,8 @@ def parse_fasta(aln_path, golden_ids=None):
                 seq_id = l.lstrip('>')
             if seq_id in aln_dict.keys():
                 raise ParserError("Sequence {} is duplicated".format(seq_id))
-            if seq_id in golden_ids or not golden_ids:
+            if golden_ids is None or seq_id in golden_ids:
                 aln_dict[seq_id] = ""
-        elif seq_id and (seq_id in golden_ids or not golden_ids):
+        elif seq_id and (golden_ids is None or seq_id in golden_ids):
             aln_dict[seq_id] += l.upper().rstrip("*")
     return aln_dict

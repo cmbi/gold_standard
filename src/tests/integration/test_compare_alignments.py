@@ -21,7 +21,9 @@ def test_compare_alignments():
         out1 = a.read()
     with open(out1_exp_path) as a:
         out1_exp = a.read()
-    eq_(out1, out1_exp)
+    result_excerpt = out1.splitlines()[3:]
+    expected_excerpt = out1_exp.splitlines()[3:]
+    eq_(result_excerpt, expected_excerpt)
     os.remove(out1_path)
 
     ok_(os.path.exists(out2_path))
@@ -29,7 +31,9 @@ def test_compare_alignments():
         out2_exp = a.read()
     with open(out2_path) as a:
         out2 = a.read()
-    eq_(out2, out2_exp)
+    result_excerpt = out2.splitlines()[3:]
+    expected_excerpt = out2_exp.splitlines()[3:]
+    eq_(result_excerpt, expected_excerpt)
     os.remove(out2_path)
 
     # big test set
@@ -48,7 +52,9 @@ def test_compare_alignments():
         out1 = a.read()
     with open(out1_exp_path) as a:
         out1_exp = a.read()
-    eq_(out1, out1_exp)
+    result_excerpt = out1.splitlines()[3:]
+    expected_excerpt = out1_exp.splitlines()[3:]
+    eq_(result_excerpt, expected_excerpt)
     os.remove(out1_path)
 
     ok_(os.path.exists(out2_path))
@@ -56,5 +62,7 @@ def test_compare_alignments():
         out2_exp = a.read()
     with open(out2_path) as a:
         out2 = a.read()
-    eq_(out2, out2_exp)
+    result_excerpt = out2.splitlines()[3:]
+    expected_excerpt = out2_exp.splitlines()[3:]
+    eq_(result_excerpt, expected_excerpt)
     os.remove(out2_path)
