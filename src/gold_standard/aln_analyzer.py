@@ -77,68 +77,67 @@ def score_var_regions(golden_aln, id1, id2, var1):
     return matrix
 
 
-def calc_pairwise_score_3dm(golden_aln, id1, seq1, var1, id2, seq2, var2):
-    if len(seq1) != len(seq2):
-        raise CustomException("Aligned sequences {} and {} are not of the same "
-                              "length: {} and {}".format(seq1, seq2, len(seq1),
-                                                         len(seq2)))
-    matrix = {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
-    sp_score = 0
-    wrong_cols = {
-        id1: {},
-        id2: {}
-    }
+def calc_pairwise_score_3dm(golden_aln, sequences, var_regs):
+    id1, id2 = sequences.keys()
+    if len(sequences[id1]) != len(sequences[id2]):
+        raise CustomException(
+            "Aligned sequences {} and {} are not of the same length: {} and "
+            "{}".format(sequences[id1], sequences[id2], len(sequences[id1]),
+                        len(sequences[id2])))
+    result = {"matrix": {"TP": 0, "FP": 0, "FN": 0, "TN": 0},
+              "SP": 0,
+              "wrong_cols": {i: {} for i in sequences.keys()}}
     # score core regions
-    for i, res_i in enumerate(seq1):
-        if res_i != '-' and seq2[i] != '-':
+    for i, res_i in enumerate(sequences[id1]):
+        if res_i != '-' and sequences[id2][i] != '-':
             res2_gold = get_aligned_res(res_i, id1, id2, golden_aln)
-            if seq2[i] == res2_gold:
-                sp_score += 2
-                matrix["TP"] += 2
+            if sequences[id2][i] == res2_gold:
+                result['sp_score '] += 2
+                result['matrix']['TP'] += 2
             else:
-                sp_score -= 2
-                matrix["FP"] += 2
-                wrong_cols[id1][i] = 1
-                wrong_cols[id2][i] = 1
-        elif res_i != '-' and seq2[i] == '-':
+                result['sp_score'] -= 2
+                result['matrix']['FP'] += 2
+                result['wrong_cols'][id1][i] = 1
+                result['wrong_cols'][id2][i] = 1
+        elif res_i != '-' and sequences[id2][i] == '-':
             res2_gold = get_aligned_res(res_i, id1, id2, golden_aln)
             if res2_gold == '-':
-                sp_score += 1
-                matrix["TN"] += 1
+                result['sp_score'] += 1
+                result['matrix']['TN'] += 1
             else:
-                matrix["FN"] += 1
-                wrong_cols[id1][i] = 1
-                wrong_cols[id2][i] = 1
-        elif seq2[i] != '-' and seq1[i] == '-':
-            res1_gold = get_aligned_res(seq2[i], id2, id1, golden_aln)
+                result['matrix']['FN'] += 1
+                result['wrong_cols'][id1][i] = 1
+                result['wrong_cols'][id2][i] = 1
+        elif sequences[id2][i] != '-' and sequences[id1][i] == '-':
+            res1_gold = get_aligned_res(sequences[id2][i], id2, id1, golden_aln)
             if res1_gold == '-':
-                sp_score += 1
-                matrix["TN"] += 1
+                result['sp_score'] += 1
+                result['matrix']["TN"] += 1
             else:
-                matrix["FN"] += 1
-                wrong_cols[id1][i] = 1
-                wrong_cols[id2][i] = 1
+                result['matrix']["FN"] += 1
+                result['wrong_cols'][id1][i] = 1
+                result['wrong_cols'][id2][i] = 1
         # if both are gaps do nothing
     # score variable regions in seq1
-    var_matrix = score_var_regions(golden_aln, id1, id2, var1)
-    matrix = merge_dicts(matrix, var_matrix)
+    var_matrix = score_var_regions(golden_aln, id1, id2, var_regs[id1])
+    result['matrix'] = merge_dicts(result['matrix'], var_matrix)
 
     # score variable regions in seq2
-    var_matrix = score_var_regions(golden_aln, id2, id1, var2)
-    matrix = merge_dicts(matrix, var_matrix)
+    var_matrix = score_var_regions(golden_aln, id2, id1, var_regs[id2])
+    result['matrix'] = merge_dicts(result['matrix'], var_matrix)
 
     # check output sanity
-    res_only = [x for x in seq1 + seq2 + var1 + var2 if x != '-']
-    if len(res_only) != sum(matrix.values()):
-        raise CustomException("Sum of values in the confusion matrix({}) should"
-                              " be equal to the total number of"
-                              " residues({})".format(len(res_only),
-                                                     sum(matrix.values())))
+    res_only = [x for x in sequences[id1] + sequences[id2] + var_regs[id1] +
+                var_regs[id2] if x != '-']
+    if len(res_only) != sum(result['matrix'].values()):
+        raise CustomException(
+            "Sum of values in the confusion matrix({}) should be equal to the "
+            " total number of residues({})".format(
+                len(res_only), sum(result['matrix'].values())))
 
     sp_max = get_max_sp_score(golden_aln)
-    sp_score = float(sp_score) / sp_max
-
-    return {"matrix": matrix, "SP": sp_score, "wrong_cols": wrong_cols}
+    result['sp_score'] = float(result['sp_score']) / sp_max
+    return result
 
 
 def get_aligned_res(res_num, query_id, id2, golden_aln):
@@ -215,9 +214,16 @@ def calc_scores_3dm(golden_alns, test_aln):
                     id_set in golden_alns.keys()):
                 _log.debug("Calculating confusion matrix for sequences %s "
                            "and %s", id1, id2)
-                scores = calc_pairwise_score_3dm(
-                    golden_alns[id_set], id1, seq1, test_aln["var"][id1],
-                    id2, seq2, test_aln["var"][id2])
+                sequences = {
+                    id1: seq1,
+                    id2: seq2
+                }
+                var_regs = {
+                    id1: test_aln['var'][id1],
+                    id2: test_aln['var'][id2]
+                }
+                scores = calc_pairwise_score_3dm(golden_alns[id_set], sequences,
+                                                 var_regs)
                 wrong_cols[id1] = merge_dicts(wrong_cols[id1],
                                               scores["wrong_cols"][id1])
                 wrong_cols[id2] = merge_dicts(wrong_cols[id2],
