@@ -1,6 +1,5 @@
 import logging
 
-from src.gold_standard.custom_exceptions import CustomException
 from src.gold_standard.dict_utils import merge_dicts
 
 
@@ -80,10 +79,10 @@ def score_var_regions(golden_aln, id1, id2, var1):
 def calc_pairwise_score_3dm(golden_aln, sequences, var_regs):
     id1, id2 = sequences.keys()
     if len(sequences[id1]) != len(sequences[id2]):
-        raise CustomException(
-            "Aligned sequences {} and {} are not of the same length: {} and "
-            "{}".format(sequences[id1], sequences[id2], len(sequences[id1]),
-                        len(sequences[id2])))
+        raise Exception("Aligned sequences {} and {} are not of the same "
+                        "length: {} and {}".format(
+                            sequences[id1], sequences[id2], len(sequences[id1]),
+                            len(sequences[id2])))
     result = {"matrix": {"TP": 0, "FP": 0, "FN": 0, "TN": 0},
               "SP": 0,
               "wrong_cols": {i: {} for i in sequences.keys()}}
@@ -130,10 +129,9 @@ def calc_pairwise_score_3dm(golden_aln, sequences, var_regs):
     res_only = [x for x in sequences[id1] + sequences[id2] + var_regs[id1] +
                 var_regs[id2] if x != '-']
     if len(res_only) != sum(result['matrix'].values()):
-        raise CustomException(
-            "Sum of values in the confusion matrix({}) should be equal to the "
-            " total number of residues({})".format(
-                len(res_only), sum(result['matrix'].values())))
+        raise Exception("Sum of values in the confusion matrix({}) should be "
+                        "equal to the total number of residues({})".format(
+                            len(res_only), sum(result['matrix'].values())))
 
     sp_max = get_max_sp_score(golden_aln)
     result['sp_score'] = float(result['sp_score']) / sp_max
@@ -147,8 +145,8 @@ def get_aligned_res(res_num, query_id, id2, golden_aln):
 
 def calc_pairwise_score(golden_aln, id1, seq1, id2, seq2):
     if len(seq1) != len(seq2):
-        raise CustomException("Aligned sequences {} and {} are not of the same "
-                              "length")
+        raise Exception("Aligned sequences {} and {} are not of the same "
+                        "length")
 
     matrix = {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
     sp_score = 0
@@ -191,10 +189,9 @@ def calc_pairwise_score(golden_aln, id1, seq1, id2, seq2):
     # check output sanity
     res_only = [x for x in seq1 + seq2 if x != '-']
     if len(res_only) != sum(matrix.values()):
-        raise CustomException("Sum of values in the confusion matrix({}) should"
-                              " be equal to the total number of"
-                              " residues({})".format(len(res_only),
-                                                     sum(matrix.values())))
+        raise Exception("Sum of values in the confusion matrix({}) should be "
+                        "equal to the total number of residues({})".format(
+                            len(res_only), sum(matrix.values())))
     sp_max = get_max_sp_score(golden_aln)
     sp_score = float(sp_score) / sp_max
 

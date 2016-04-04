@@ -1,8 +1,6 @@
 import logging
 import re
 
-from src.gold_standard.custom_exceptions import CustomException
-
 
 _log = logging.getLogger(__name__)
 
@@ -72,7 +70,7 @@ def get_core_indexes(final_core_file):
     elif len(final_core[0]) == 4 and len(final_core[1]) == 1:
         cores = final_core[2:]
     else:
-        raise CustomException("final_core file has incorrect format")
+        raise Exception("final_core file has incorrect format")
     indexes = []
     prev_end = -1
     for i in cores:
@@ -95,8 +93,8 @@ def core_to_num_seq_known_cores(aligned_seq, full_seq, core_indexes):
         degapped = re.sub('-', '', core)
         seq_index = full_seq.find(degapped)
         if seq_index < 0:
-            raise CustomException("Didn't find the {} core in the full "
-                                  "sequence".format(core))
+            raise Exception("Didn't find the {} core in the full "
+                            "sequence".format(core))
         res_count = 0
         for res in core:
             if res == '-':
@@ -130,7 +128,7 @@ def core_to_num_seq_3SSP(aligned_seq, full_seq):
         core_full_start = full_seq[prev_core:].find(core) + prev_core
         prev_core = core_full_start + len(core)
         if core_full_start == -1:
-            raise CustomException("Core not found: {}".format(core))
+            raise Exception("Core not found: {}".format(core))
         grounded_seq.extend([core_full_start + i + 1
                              for i in range(len(core))])
     # fill in the c-terminal gaps
@@ -261,6 +259,6 @@ def split_core(core, full_seq, add_index=0):
             break
     _log.debug("Split up core %s in two cores: %s", core, new_cores)
     if not new_cores:
-        raise CustomException("Didn't find a way to split up the "
-                              "core {}".format(core))
+        raise Exception("Didn't find a way to split up the core {}".format(
+            core))
     return new_cores

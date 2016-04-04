@@ -2,7 +2,6 @@
 import argparse
 import logging
 
-from src.gold_standard.custom_exceptions import CustomException
 from src.gold_standard.html_handler import HtmlHandler
 from src.gold_standard.parsers.aln3SSP import parse_3SSP
 from src.gold_standard.parsers.golden import parse_golden_alns
@@ -143,14 +142,10 @@ if __name__ == "__main__":
         input_format = "3dm"
     elif args.in3SSP:
         input_format = "3SSP"
-    try:
-        html = (args.html or args.html_var or args.html_var_short)
-        quality_data = calculate_aln_quality(
-            args.golden_dir, args.test_aln_path, args.output, input_format,
-            html, args.final_core)
-        if html:
-            hh = HtmlHandler(var=args.html_var, var_short=args.html_var_short)
-            hh.write_html(quality_data, args.output)
-    except CustomException as e:
-        _log.error("%s", e.message)
-        exit(1)
+    html = (args.html or args.html_var or args.html_var_short)
+    quality_data = calculate_aln_quality(args.golden_dir, args.test_aln_path,
+                                         args.output, input_format, html,
+                                         args.final_core)
+    if html:
+        hh = HtmlHandler(var=args.html_var, var_short=args.html_var_short)
+        hh.write_html(quality_data, args.output)
