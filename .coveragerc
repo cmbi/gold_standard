@@ -2,3 +2,4 @@
 omit = 
 	.venv/**
 	/usr/**
+	src/tests/**
