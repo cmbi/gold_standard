@@ -1,7 +1,7 @@
 from nose.tools import eq_
 from mock import mock_open, patch
 
-from src.gold_standard.parsers.golden import parse_golden_alns
+from src.gold_standard.parsers.gold import parse_gold_pairwise
 from src.gold_standard.parsers.fasta import parse_fasta
 from src.gold_standard.parsers.var_file import (parse_var_file,
                                                 convert_var_to_aln)
@@ -32,9 +32,9 @@ def test_parse_fasta(mock_path_exists):
     eq_(aln, expected)
 
 
-@patch('src.gold_standard.parsers.golden.os.path.exists')
-@patch('src.gold_standard.parsers.golden.os.listdir')
-@patch('src.gold_standard.parsers.golden.parse_var_file')
+@patch('src.gold_standard.parsers.gold.os.path.exists')
+@patch('src.gold_standard.parsers.gold.os.listdir')
+@patch('src.gold_standard.parsers.gold.parse_var_file')
 def test_parse_golden_alns(mock_parse, mock_listdir, mock_path_exists):
     mock_parse.side_effect = [{"ids": ["id1", "id2"], "aln": "test_aln",
                                "full": {'id1': 'seq1', 'id2': 'seq2'}},
@@ -43,4 +43,5 @@ def test_parse_golden_alns(mock_parse, mock_listdir, mock_path_exists):
     mock_path_exists.return_value = True
     mock_listdir.return_value = ["file1.Var", "file2.var",
                                  "file3.fasta", "file4.Var"]
-    eq_(2, len(parse_golden_alns("test_dir")[0]))
+    res = parse_gold_pairwise("test_dir")
+    eq_(2, len(res['alns']))
