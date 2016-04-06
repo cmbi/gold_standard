@@ -15,8 +15,8 @@ def convert_var_to_aln(var_file):
     # filter out the '0' core separators and split in segments
     var1 = re.sub('0', '', var1).split()
     var2 = re.sub('0', '', var2).split()
-    aln_seq1 = ""
-    aln_seq2 = ""
+    aln_seq1 = ''
+    aln_seq2 = ''
     i = 0
     j = 0
     while i < len(var1) or j < len(var2):
@@ -45,14 +45,21 @@ def convert_var_to_aln(var_file):
     return {id1: aln_seq1, id2: aln_seq2}
 
 
-def parse_var_file(file_path):
+def convert_multi_var_to_aln(var_file):
+    return var_file
+
+
+def parse_var_file(file_path, multi=False):
     _log.debug("Parsing var file: %s", file_path)
     with open(file_path) as a:
         var_file = a.read().splitlines()
     ids = [i.split(',')[0] for i in var_file]
-    aln = convert_var_to_aln(var_file)
+    if multi:
+        aln = convert_multi_var_to_aln(var_file)
+    else:
+        aln = convert_var_to_aln(var_file)
     full = {}
     for k, v in aln.iteritems():
-        full[k] = re.sub('-', '', aln[k])
+        full[k] = re.sub('-', '', v)
     num_aln = {seq_id: aln_seq_to_num(seq) for seq_id, seq in aln.iteritems()}
-    return {'ids': ids, 'aln': num_aln, 'full_seq': full}
+    return {'ids': ids, 'alns': num_aln, 'full_seq': full}

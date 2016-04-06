@@ -4,11 +4,10 @@ import logging
 
 from src.gold_standard.html_handler import HtmlHandler
 from src.gold_standard.parsers.aln3SSP import parse_3SSP
-from src.gold_standard.parsers.gold import parse_gold_pairwise
-from src.gold_standard.parsers.var_file import parse_var_file
+from src.gold_standard.parsers.gold import parse_gold_pairwise, parse_gold_multi
 from src.gold_standard.parsers.fasta import parse_fasta
 from src.gold_standard.num_seq import (aln_seq_to_num, core_aln_to_num,
-                                       aln_3SSP_to_num)
+                                       aln_3SSP_to_num, get_core_indexes)
 from src.gold_standard.aln_analyzer import calc_scores, calc_scores_3dm
 
 
@@ -83,19 +82,23 @@ def process_results(matrices, full_matrix, sp_scores, output):
     _log.info("Created the output file: %s", output)
 
 
-def calculate_aln_quality(paths, output, in_format, html_out, multi):
-    if multi:
-        gold_in = parse_var_file(paths['gold_path'])
+def calculate_aln_quality(paths, output, in_format, multi):
+    # read the final_core file if provided
+    if paths['final_core']:
+        core_indexes = get_core_indexes(paths['final_core'])
     else:
-        gold_in = parse_gold_pairwise(
-            paths['gold_dir'])
-        print gold_in['alns']
-
+        core_indexes = None
+    # read the gold standard alignments
+    if multi:
+        gold_in = parse_gold_multi(paths['gold_path'], core_indexes)
+    else:
+        gold_in = parse_gold_pairwise(paths['gold_dir'])
+    # parse and assess test alignments
     if in_format == '3dm':
         _log.info("Calculating alignment quality in 3DM mode")
         aln_dict = parse_fasta(paths['aln_path'], gold_in['ids'])
-        num_aln_dict, core_indexes = core_aln_to_num(
-            aln_dict, gold_in['full_seq'], paths['final_core'],
+        num_aln_dict = core_aln_to_num(
+            aln_dict, gold_in['full_seq'], core_indexes,
             golden_ids=gold_in['ids'])
         scores = calc_scores_3dm(gold_in['alns'], num_aln_dict)
     elif in_format == '3SSP':
@@ -112,14 +115,13 @@ def calculate_aln_quality(paths, output, in_format, html_out, multi):
         raise Exception("Invalid input format: {}".format(in_format))
     process_results(scores['pairwise'], scores['full'], scores['sp_score'],
                     output)
-    if html_out:
-        return {
-            'wrong_cols': scores["wrong_cols"],
-            'aa_aln': aln_dict,
-            'num_aln': num_aln_dict,
-            'full': gold_in['full_seq'],
-            'core_indexes': core_indexes
-        }
+    return {
+        'wrong_cols': scores["wrong_cols"],
+        'aa_aln': aln_dict,
+        'num_aln': num_aln_dict,
+        'full': gold_in['full_seq'],
+        'core_indexes': core_indexes
+    }
 
 
 if __name__ == "__main__":
@@ -149,16 +151,15 @@ if __name__ == "__main__":
     elif not args.multi and not args.gold_dir:
         raise parser.error("In the pairwise (default) mode you must provide the"
                            " gold_dir argument")
-
     # change logging level in debug mode
     if args.debug:
         _log.setLevel(logging.DEBUG)
+    # check input format
     input_format = "fasta"
     if args.in3dm:
         input_format = "3dm"
     elif args.in3SSP:
         input_format = "3SSP"
-    html = (args.html or args.html_var or args.html_var_short)
 
     input_paths = {
         'gold_dir': args.gold_dir,
@@ -166,8 +167,10 @@ if __name__ == "__main__":
         'aln_path': args.test_aln_path,
         'final_core': args.final_core
     }
+
     quality_data = calculate_aln_quality(input_paths, args.output, input_format,
-                                         html, args.multi)
-    if html:
+                                         args.multi)
+    if args.html or args.html_var or args.html_var_short:
+        # create html output
         hh = HtmlHandler(var=args.html_var, var_short=args.html_var_short)
         hh.write_html(quality_data, args.output)

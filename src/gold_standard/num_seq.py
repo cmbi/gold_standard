@@ -14,7 +14,7 @@ def aln_3SSP_to_num(aln_dict, full_seq):
     return aln
 
 
-def core_aln_to_num(aln_dict, full_seq, final_core, golden_ids=None):
+def core_aln_to_num(aln_dict, full_seq, core_indexes, golden_ids=None):
     """
     :param aln_path: path to the core alignment file
     :param full_seq_path: path to the full plain sequences in fasta format
@@ -24,21 +24,17 @@ def core_aln_to_num(aln_dict, full_seq, final_core, golden_ids=None):
     """
     _log.info("Converting 3DM alignment to grounded sequences")
     aln_3dm = {"cores": {}, "var": {}}
-    if final_core:
-        core_indexes = get_core_indexes(final_core)
-    else:
-        core_indexes = None
     for seq_id, seq in aln_dict.iteritems():
         if golden_ids and seq_id not in golden_ids:
             continue
-        if final_core:
+        if core_indexes:
             aln_3dm["cores"][seq_id] = core_to_num_seq_known_cores(
                 seq, full_seq[seq_id], core_indexes)
         else:
             aln_3dm["cores"][seq_id] = core_to_num_seq(seq, full_seq[seq_id])
         aln_3dm["var"][seq_id] = get_var_pos(aln_3dm["cores"][seq_id],
                                              full_seq[seq_id])
-    return aln_3dm, core_indexes
+    return aln_3dm
 
 
 def get_var_pos(num_seq, full_seq):
