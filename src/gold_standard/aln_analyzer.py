@@ -84,14 +84,14 @@ def calc_pairwise_score_3dm(golden_aln, sequences, var_regs):
                             sequences[id1], sequences[id2], len(sequences[id1]),
                             len(sequences[id2])))
     result = {"matrix": {"TP": 0, "FP": 0, "FN": 0, "TN": 0},
-              "SP": 0,
+              "sp_score": 0,
               "wrong_cols": {i: {} for i in sequences.keys()}}
     # score core regions
     for i, res_i in enumerate(sequences[id1]):
         if res_i != '-' and sequences[id2][i] != '-':
             res2_gold = get_aligned_res(res_i, id1, id2, golden_aln)
             if sequences[id2][i] == res2_gold:
-                result['sp_score '] += 2
+                result['sp_score'] += 2
                 result['matrix']['TP'] += 2
             else:
                 result['sp_score'] -= 2
@@ -228,9 +228,9 @@ def calc_scores_3dm(golden_alns, test_aln):
                 matrices_dict[id_set] = scores['matrix']
                 # add the values to the matrix with overall scores
                 full_matrix = merge_dicts(full_matrix, scores['matrix'])
-                sp_scores[id_set] = scores['SP']
-    return {'pairwise': matrices_dict, 'full': full_matrix, 'SP': sp_scores,
-            'wrong_cols': wrong_cols}
+                sp_scores[id_set] = scores['sp_score']
+    return {'pairwise': matrices_dict, 'full': full_matrix,
+            'sp_score': sp_scores, 'wrong_cols': wrong_cols}
 
 
 def calc_scores(golden_alns, test_aln):
@@ -255,6 +255,6 @@ def calc_scores(golden_alns, test_aln):
                 matrices_dict[id_set] = scores['matrix']
                 # add the values to the matrix with overall scores
                 full_matrix = merge_dicts(full_matrix, scores['matrix'])
-                sp_scores[id_set] = scores['SP']
-    return {'pairwise': matrices_dict, 'full': full_matrix, 'SP': sp_scores,
-            'wrong_cols': wrong_cols}
+                sp_scores[id_set] = scores['sp_score']
+    return {'pairwise': matrices_dict, 'full': full_matrix,
+            'sp_score': sp_scores, 'wrong_cols': wrong_cols}

@@ -17,9 +17,9 @@ class HtmlHandler(object):
         else:
             outtxt = self.aln_to_html(quality_data['aa_aln'],
                                       quality_data['wrong_cols'])
-        script_dir = os.path.dirname(os.path.realpath(__file__))
-        css_full_path = '/'.join(list(os.path.split(script_dir)[:-2]) + [CSS])
-        tmpl_full_path = '/'.join(list(os.path.split(script_dir)[:-2]) +
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        css_full_path = '/'.join(list(os.path.split(script_dir)[:-1]) + [CSS])
+        tmpl_full_path = '/'.join(list(os.path.split(script_dir)[:-1]) +
                                   [TEMPLATE])
         with open(tmpl_full_path) as a:
             template_fmt = a.read()
