@@ -5,6 +5,7 @@ import logging
 from src.gold_standard.html_handler import HtmlHandler
 from src.gold_standard.parsers.aln3SSP import parse_3SSP
 from src.gold_standard.parsers.gold import parse_gold_pairwise
+from src.gold_standard.parsers.var_file import parse_var_file
 from src.gold_standard.parsers.fasta import parse_fasta
 from src.gold_standard.parsers.fasta import parse_fasta
 from src.gold_standard.num_seq import (aln_seq_to_num, core_aln_to_num,
@@ -85,9 +86,9 @@ def process_results(matrices, full_matrix, sp_scores, output):
 
 def calculate_aln_quality(paths, output, in_format, html_out, multi):
     if multi:
-        gold_in = parse_gold_multi(paths['gold_path'])
+        gold_in = parse_var_file(paths['gold_path'])
     else:
-        gold_in = parse_multi_var_file(
+        gold_in = parse_gold_pairwise(
             paths['gold_dir'])
     if in_format == '3dm':
         _log.info("Calculating alignment quality in 3DM mode")

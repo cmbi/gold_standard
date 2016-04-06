@@ -52,7 +52,7 @@ def parse_var_file(file_path):
     ids = [i.split(',')[0] for i in var_file]
     aln = convert_var_to_aln(var_file)
     full = {}
-    full[ids[0]] = re.sub('-', '', aln[ids[0]])
-    full[ids[1]] = re.sub('-', '', aln[ids[1]])
+    for k, v in aln.iteritems():
+        full[k] = re.sub('-', '', aln[k])
     num_aln = {seq_id: aln_seq_to_num(seq) for seq_id, seq in aln.iteritems()}
-    return {'ids': ids, 'aln': num_aln, 'full': full}
+    return {'ids': ids, 'aln': num_aln, 'full_seq': full}

@@ -23,7 +23,7 @@ def parse_gold_pairwise(gold_dir):
         gold_ids.update(var['ids'])
         aln_ids = fs(var['ids'])
         gold_alns[aln_ids] = var['aln']
-        full_seq.update(var['full'])
+        full_seq.update(var['full_seq'])
     _log.info("Finished parsing .Var files")
     return {
         'alns': gold_alns,
