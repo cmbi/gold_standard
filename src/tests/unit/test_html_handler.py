@@ -1,7 +1,6 @@
 import os
 
 from nose.tools import eq_, ok_
-from mock import patch
 
 from src.gold_standard.html_handler import HtmlHandler
 from src.gold_standard.num_seq import core_aln_to_num
@@ -40,17 +39,14 @@ def test_make_corvar():
     eq_(res, expected)
 
 
-@patch('src.gold_standard.num_seq.get_core_indexes')
-def test_aln_to_html_var(mock_get_indexes):
+def test_aln_to_html_var():
     aa_aln = {'1': 'ACDEFGKLMNOP',
               '2': 'ABC---DEF---'}
     wrong = {'1': {0: 1, 10: 1, 11: 1}, '2': {}}
     full_seq = {'1': 'ABCDEFGHIJKLMNOP',
                 '2': 'ABCDEF'}
     core_indexes = [0, 1, 6]
-    mock_get_indexes.return_value = core_indexes
-    final_core = 'sth'
-    num_aln = core_aln_to_num(aa_aln, full_seq, final_core)[0]
+    num_aln = core_aln_to_num(aa_aln, full_seq, core_indexes)
     expected = "1      <span class=featWRONG3>A</span> b <span class=featOK>C" \
                "</span><span class=featOK>D</span><span class=featOK>E</span>" \
                "<span class=featOK>F</span><span class=featOK>G</span> hij <s" \
