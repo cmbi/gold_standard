@@ -1,6 +1,6 @@
 from nose.tools import eq_
 
-from src.gold_standard.aln_analyzer import score_var_regions, compare_pairwise
+from gold_standard_src.gold_standard.aln_analyzer import score_var_regions, compare_pairwise
 
 
 def test_score_var_regions():
