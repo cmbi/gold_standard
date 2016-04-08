@@ -1,7 +1,7 @@
 from nose.tools import eq_
 from mock import mock_open, patch
 
-from src.gold_standard.num_seq import (core_to_num_seq_known_cores,
+from gold_standard_src.gold_standard.num_seq import (core_to_num_seq_known_cores,
                                        core_to_num_seq, get_core_indexes,
                                        get_next_core, get_var_pos)
 
@@ -49,7 +49,7 @@ def test_get_next_core():
     eq_(r["core_start"], expected_start)
 
 
-@patch('src.gold_standard.num_seq.open',
+@patch('gold_standard_src.gold_standard.num_seq.open',
        mock_open(read_data="1ABCA ABCD ABC ABC-- DFGJH"), create=True)
 def test_get_core_indexes():
     result = get_core_indexes('testfile')

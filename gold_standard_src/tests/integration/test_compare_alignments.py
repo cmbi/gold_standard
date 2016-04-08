@@ -2,14 +2,14 @@ import os
 
 from nose.tools import eq_, ok_
 
-from src.compare_alignments import run_comparison
+from gold_standard_src.compare_alignments import run_comparison
 
 
 def test_compare_alignments_dummy():
-    aln1 = "src/tests/testdata/comp_aln1.fasta"
-    aln2 = "src/tests/testdata/comp_aln2.fasta"
-    full = "src/tests/testdata/comp_full.fasta"
-    outprefix = "src/tests/testdata/comp_out"
+    aln1 = "gold_standard_src/tests/testdata/comp_aln1.fasta"
+    aln2 = "gold_standard_src/tests/testdata/comp_aln2.fasta"
+    full = "gold_standard_src/tests/testdata/comp_full.fasta"
+    outprefix = "gold_standard_src/tests/testdata/comp_out"
     run_comparison(aln1, aln2, outprefix, full)
     out1_path = outprefix + '1.html'
     out2_path = outprefix + '2.html'
@@ -38,10 +38,10 @@ def test_compare_alignments_dummy():
 
 
 def test_compare_alignments_real():
-    aln1 = "src/tests/testdata/filtered_amylase_mafft.fasta"
-    aln2 = "src/tests/testdata/filtered_amylase_muscle.fasta"
-    full = "src/tests/testdata/filtered_amylase_plain.fasta"
-    outprefix = "src/tests/testdata/comp_mafft_muscle_out"
+    aln1 = "gold_standard_src/tests/testdata/filtered_amylase_mafft.fasta"
+    aln2 = "gold_standard_src/tests/testdata/filtered_amylase_muscle.fasta"
+    full = "gold_standard_src/tests/testdata/filtered_amylase_plain.fasta"
+    outprefix = "gold_standard_src/tests/testdata/comp_mafft_muscle_out"
     run_comparison(aln1, aln2, outprefix, full)
     out1_path = outprefix + '1.html'
     out2_path = outprefix + '2.html'

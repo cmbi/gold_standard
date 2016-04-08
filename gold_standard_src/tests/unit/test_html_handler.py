@@ -2,8 +2,8 @@ import os
 
 from nose.tools import eq_, ok_
 
-from src.gold_standard.html_handler import HtmlHandler
-from src.gold_standard.num_seq import core_aln_to_num
+from gold_standard_src.gold_standard.html_handler import HtmlHandler
+from gold_standard_src.gold_standard.num_seq import core_aln_to_num
 
 
 def test_make_corvar():
@@ -65,13 +65,13 @@ def test_aln_to_html_var():
     res = hh.aln_to_html_var(quality_data)
     eq_(res, expected)
 
-    expected_path = "src/tests/testdata/expected.html"
+    expected_path = "gold_standard_src/tests/testdata/expected.html"
     with open(expected_path) as a:
         expected = a.read()
     expected_excerpt = expected.splitlines()[3:]
-    res_path = "src/tests/testdata/test.html"
+    res_path = "gold_standard_src/tests/testdata/test.html"
     hh.var = True
-    hh.write_html(quality_data, "src/tests/testdata/test")
+    hh.write_html(quality_data, "gold_standard_src/tests/testdata/test")
     ok_(os.path.exists(res_path))
     with open(res_path) as a:
         res = a.read()

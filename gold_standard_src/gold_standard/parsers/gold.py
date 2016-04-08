@@ -1,9 +1,10 @@
 import logging
 import os
+import re
 
-from src.gold_standard.num_seq import core_aln_to_num
-from src.gold_standard.parsers.error_types import ParserError
-from src.gold_standard.parsers.var_file import parse_var_file
+from gold_standard_src.gold_standard.num_seq import core_aln_to_num
+from gold_standard_src.gold_standard.parsers.error_types import ParserError
+from gold_standard_src.gold_standard.parsers.var_file import parse_multi_var, parse_var_file
 
 _log = logging.getLogger(__name__)
 fs = frozenset
@@ -34,19 +35,21 @@ def parse_gold_pairwise(gold_dir):
 
 
 def parse_gold_multi(gold_path, core_indexes):
-    corvar = parse_var_file(gold_path)
-    full_seq = get_full_seq(corvar)
+    corvar = parse_multi_var(gold_path)
+    full_seq = {k: re.sub(r'[-\s]', '', v.upper()) for
+                k, v in corvar.iteritems()}
+    print corvar, full_seq
     core_aln = remove_vars(corvar)
     num_aln = core_aln_to_num(core_aln, full_seq, core_indexes)
-    return {'alns': num_aln, 'full_seq': full_seq,
-            'ids': num_aln.keys()}
+    return {
+        'alns': num_aln,
+        'full_seq': full_seq,
+        'ids': num_aln.keys()
+    }
 
 
 def remove_vars(corvar):
-    # TODO: implement
-    return corvar
-
-
-def get_full_seq(corvar):
-    # TODO: implement
-    return corvar
+    core_aln = {}
+    for seq_id, seq in corvar.iteritems():
+        core_aln[seq_id] = ''.join([i for i in seq if not i.islower()])
+    return core_aln

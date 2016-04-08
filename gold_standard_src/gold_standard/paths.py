@@ -1,3 +1,3 @@
 # html template
 TEMPLATE = "static/quality_template.html"
-CSS = "src/static/quality_color.css"
+CSS = "gold_standard_src/static/quality_color.css"
