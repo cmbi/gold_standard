@@ -64,3 +64,5 @@ Session.vim
 .netrwhist
 *~
 .ropeproject/
+
+.venv/
