@@ -90,7 +90,7 @@ def core_to_num_seq_known_cores(aligned_seq, full_seq, core_indexes):
         seq_index = full_seq.find(degapped)
         if seq_index < 0:
             raise Exception("Didn't find the {} core in the full "
-                            "sequence:\n{}\n".format(degapped, full_seq))
+                            "sequence".format(core))
         res_count = 0
         for res in core:
             if res == '-':
@@ -171,6 +171,7 @@ def core_to_num_seq(aligned_seq, full_seq):
                 grounded_seq.extend([c['pos'] + i + 1 + prev_core
                                      for i in range(len(c['seq']))])
             prev_core = cores[-1]['pos'] + len(cores[-1]['seq'])
+
         else:
             grounded_seq.extend([core_full_start + i + 1
                                  for i in range(len(core))])
@@ -250,6 +251,7 @@ def split_core(core, full_seq, add_index=0):
             new_cores.append({"seq": core[:-i],
                               "pos": position + add_index})
             new_cores.extend(split_core(core[-i:], full_seq))
+
             break
     _log.debug("Split up core %s in two cores: %s", core, new_cores)
     if not new_cores:

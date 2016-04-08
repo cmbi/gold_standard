@@ -1,6 +1,6 @@
 import logging
 
-from gold_standard_src.gold_standard.dict_utils import merge_dicts
+from src.gold_standard.dict_utils import merge_dicts
 
 
 fs = frozenset
