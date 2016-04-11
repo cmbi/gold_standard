@@ -1,9 +1,9 @@
 from nose.tools import eq_
 from mock import mock_open, patch
 
-from gold_standard_src.gold_standard.num_seq import (core_to_num_seq_known_cores,
-                                       core_to_num_seq, get_core_indexes,
-                                       get_next_core, get_var_pos)
+from gold_standard_src.gold_standard.num_seq import (
+    core_to_num_seq_known_cores, core_to_num_seq, get_core_indexes,
+    get_next_core_lowercase, get_next_core, get_var_pos)
 
 
 def test_core_to_num_seq():
@@ -64,3 +64,18 @@ def test_core_to_num_seq_known_cores():
     expected = [1, 2, 3, 4, 5, '-', '-', 7, 8, 9, 10, '-', '-', 12, 13, 14]
     result = core_to_num_seq_known_cores(aligned, full_seq, core_indexes)
     eq_(result, expected)
+
+
+def test_get_next_core_lowercase():
+    aln_seq = 'GRH--wGhwGH'
+    expected_start = 5
+    expected_core = "WGH"
+    res = get_next_core_lowercase(aln_seq, 3)
+    print res
+    eq_(res['core'], expected_core)
+    eq_(res['core_start'], expected_start)
+    aln_seq = 'GRhwGH'
+    expected_start = 3
+    res = get_next_core_lowercase(aln_seq, 3)
+    eq_(res['core'], expected_core)
+    eq_(res['core_start'], expected_start)

@@ -133,7 +133,7 @@ def core_to_num_seq_3SSP(aligned_seq, full_seq):
     while not finished:
         c = get_next_core_lowercase(aligned_seq, start)
         core = c["core"]
-        core_aligned_start = c["core_start"]
+        core_aligned_start = start + c["core_start"]
         if core == '':
             finished = True
             continue
@@ -202,6 +202,10 @@ def core_to_num_seq(aligned_seq, full_seq):
 
 
 def get_next_core_lowercase(aligned_seq, start):
+    """
+    Returns index (from the beginning of the sequence) and sequence of the next
+    core (index >= start)
+    """
     core = ""
     core_start = 0
     it = start
