@@ -71,7 +71,6 @@ def test_get_next_core_lowercase():
     expected_start = 5
     expected_core = "WGH"
     res = get_next_core_lowercase(aln_seq, 3)
-    print res
     eq_(res['core'], expected_core)
     eq_(res['core_start'], expected_start)
     aln_seq = 'GRhwGH'
