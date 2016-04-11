@@ -190,7 +190,7 @@ def core_to_num_seq(aligned_seq, full_seq):
             for c in cores:
                 grounded_seq.extend([c['pos'] + i + 1 + prev_core
                                      for i in range(len(c['seq']))])
-            prev_core = cores[-1]['pos'] + len(cores[-1]['seq'])
+            prev_core = cores[-1]['pos'] + prev_core + len(cores[-1]['seq'])
 
         else:
             grounded_seq.extend([core_full_start + i + 1
@@ -260,25 +260,30 @@ def split_core(core, full_seq, add_index=0):
     :return: list of dicts cores [{"core": string [core's aa seq],
     "pos": int [position in the full sequence]}]
     """
-    _log.debug("Splitting up a core: %s\n full seq: %s", core, full_seq)
+    _log.debug("Splitting up a core: %s\n full seq: %s\
+            add_index: %s", core, full_seq, add_index)
     new_cores = []
     for i in xrange(1, len(core)):
-        if full_seq.find(core[:-i]) != -1 and full_seq.find(core[-i:]) != -1:
+        if full_seq[add_index:].find(core[:-i]) != -1 and \
+                full_seq[add_index:].find(core[-i:]) != -1:
             new_cores = [core[:-i], core[-i:]]
-            new_cores = [{"seq": core[:-i],
-                          "pos": full_seq.find(core[:-i]) + add_index},
-                         {"seq": core[-i:],
-                          "pos": full_seq.find(core[-i:]) + add_index}]
+            new_cores = [
+                {"seq": core[:-i],
+                 "pos": full_seq[add_index:].find(core[:-i]) + add_index},
+                {"seq": core[-i:],
+                 "pos": full_seq[add_index:].find(core[-i:]) + add_index}]
             break
-        elif full_seq.find(core[:-i]) != -1:
-            position = full_seq.find(core[:-i])
+        elif full_seq[add_index:].find(core[:-i]) != -1:
+            position = full_seq[add_index:].find(core[:-i]) + add_index
             new_cores.append({"seq": core[:-i],
-                              "pos": position + add_index})
-            new_cores.extend(split_core(core[-i:], full_seq))
-
+                              "pos": position})
+            add_index = position + len(core[:-i])
+            new_cores.extend(split_core(core[-i:], full_seq,
+                                        add_index))
             break
     _log.debug("Split up core %s in two cores: %s", core, new_cores)
     if not new_cores:
-        raise Exception("Didn't find a way to split up the core {}".format(
-            core))
+        raise Exception("Didn't find a way to split up the core {}\
+                full sequence[add_index:]: {}".format(
+                    core, full_seq))
     return new_cores
