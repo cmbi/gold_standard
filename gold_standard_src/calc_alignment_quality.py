@@ -4,11 +4,13 @@ import logging
 
 from gold_standard_src.gold_standard.html_handler import HtmlHandler
 from gold_standard_src.gold_standard.parsers.aln3SSP import parse_3SSP
-from gold_standard_src.gold_standard.parsers.gold import parse_gold_pairwise, parse_gold_multi
+from gold_standard_src.gold_standard.parsers.gold import (parse_gold_pairwise,
+                                                          parse_gold_multi)
 from gold_standard_src.gold_standard.parsers.fasta import parse_fasta
-from gold_standard_src.gold_standard.num_seq import (aln_seq_to_num, core_aln_to_num,
-                                       aln_3SSP_to_num, get_core_indexes)
-from gold_standard_src.gold_standard.aln_analyzer import calc_scores, calc_scores_3dm
+from gold_standard_src.gold_standard.num_seq import (
+    aln_seq_to_num, core_aln_to_num, aln_3SSP_to_num, get_core_indexes)
+from gold_standard_src.gold_standard.aln_analyzer import (calc_scores,
+                                                          calc_scores_3dm)
 
 
 fs = frozenset

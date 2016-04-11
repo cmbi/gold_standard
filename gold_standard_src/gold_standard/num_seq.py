@@ -1,3 +1,6 @@
+"""
+all numerical sequences are 1-based
+"""
 import logging
 import re
 
@@ -10,7 +13,24 @@ def aln_3SSP_to_num(aln_dict, full_seq):
     for seq_id, seq in aln_dict.iteritems():
         aln["cores"][seq_id] = core_to_num_seq_3SSP(
             seq, full_seq[seq_id])
-        aln["var"][seq_id] = get_var_pos(aln["cores"][seq_id], full_seq[seq_id])
+        aln["var"][seq_id] = get_var_pos(aln["cores"][seq_id],
+                                         full_seq[seq_id])
+    return aln
+
+
+def corvar_to_num(corvar_line):
+    aln = {'cores': [], 'var': [], 'full': ''}
+    # remove numbers and whitespaces form the corvar line
+    sequence = re.sub(r'[0-9\w]', '', corvar_line)
+    aln['full'] = re.sub('-', '', sequence).upper()
+    for i, res_i in enumerate(sequence):
+        if res_i.isupper():
+            # add 1 because it needs to be 1-based
+            aln['cores'].append(i + 1)
+        elif res_i.islower():
+            aln['var'].append(i + 1)
+        else:
+            raise Exception("Incorrect corvar line: {}".format(corvar_line))
     return aln
 
 

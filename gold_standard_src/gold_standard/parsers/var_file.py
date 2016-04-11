@@ -1,7 +1,8 @@
 import logging
 import re
 
-from gold_standard_src.gold_standard.num_seq import aln_seq_to_num
+from gold_standard_src.gold_standard.num_seq import (aln_seq_to_num,
+                                                     corvar_to_num)
 from gold_standard_src.gold_standard.parsers.error_types import ParserError
 
 _log = logging.getLogger(__name__)
@@ -46,7 +47,16 @@ def convert_var_to_aln(var_file):
 
 
 def convert_multi_var_to_aln(var_file):
-    return var_file
+    multi_aln = {"cores": {}, "var": {}}
+    full = {}
+    aln_dict = {i.split(',')[0]: i.split(',')[1] for i in var_file}
+
+    for seq_id, seq in aln_dict.iteritems():
+        aln = corvar_to_num(seq)
+        multi_aln["cores"][seq_id] = aln["cores"]
+        multi_aln["var"][seq_id] = aln["var"]
+        full[seq_id] = aln["full"]
+    return multi_aln
 
 
 def parse_var_file(file_path, multi=False):
@@ -55,11 +65,11 @@ def parse_var_file(file_path, multi=False):
         var_file = a.read().splitlines()
     ids = [i.split(',')[0] for i in var_file]
     if multi:
-        aln = convert_multi_var_to_aln(var_file)
+        aln, full = convert_multi_var_to_aln(var_file)
     else:
         aln = convert_var_to_aln(var_file)
-    full = {}
-    for k, v in aln.iteritems():
-        full[k] = re.sub('-', '', v)
+        full = {}
+        for k, v in aln.iteritems():
+            full[k] = re.sub('-', '', v)
     num_aln = {seq_id: aln_seq_to_num(seq) for seq_id, seq in aln.iteritems()}
     return {'ids': ids, 'alns': num_aln, 'full_seq': full}
