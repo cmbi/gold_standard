@@ -93,6 +93,7 @@ if __name__ == "__main__":
     # change logging level in debug mode
     if args.debug:
         _log.setLevel(logging.DEBUG)
+
     # check input format
     input_format = "fasta"
     if args.in3dm:

@@ -152,8 +152,14 @@ def get_aligned_res(res_num, query_id, id2, golden_aln, multi=False):
         aln_pos = golden_aln[query_id].index(res_num)
         aligned_res = golden_aln[id2][aln_pos]
     else:
-        # TODO: implement this!
-        aligned_res = ""
+        if res_num in golden_aln['cores'][query_id]:
+            aln_pos = golden_aln['cores'][query_id].index(res_num)
+            aligned_res = golden_aln['cores'][id2][aln_pos]
+        elif res_num in golden_aln['var'][query_id]:
+            aligned_res = '-'
+        else:
+            raise Exception("Residue {} from sequence {} is not present in "
+                            "the gold alignment".format(res_num, query_id))
     return aligned_res
 
 
