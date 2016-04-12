@@ -40,8 +40,8 @@ def test_compare_pairwise():
 
 def get_max_sp_score():
     golden_aln = {
-        '1': '-BCDEF',
-        '2': 'ABCD--'
+        '1': '-BCDEF-',
+        '2': 'ABCD---'
     }
 
     expected = 9

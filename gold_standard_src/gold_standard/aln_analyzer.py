@@ -1,7 +1,8 @@
 import logging
 
 from gold_standard_src.gold_standard.dict_utils import merge_dicts
-from gold_standard_src.gold_standard.sanity_checker import check_pairwise_score
+from gold_standard_src.gold_standard.sanity_checker import (
+    check_pairwise_score, check_pairwise_score_3dm)
 
 
 fs = frozenset
@@ -59,10 +60,15 @@ def get_max_sp_score(golden_aln):
     id1 = golden_aln.keys()[0]
     score = 0
     for i in range(len(golden_aln[id1])):
-        if seq1[i] != '-' and seq2[i] != '-':
-            score += 2
-        elif seq1[i] != '-' or seq2[i] != '-':
+        if seq1[i] == '-' and seq2[i] == '-':
+            # ignore this position if both are gaps
+            continue
+        if seq1[i] != '-' or seq2[i] != '-':
+            # insertion / deletion
             score += 1
+        else:
+            # match / mismatch
+            score += 2
     return score
 
 
@@ -77,13 +83,7 @@ def score_var_regions(golden_aln, id1, id2, var1):
     return matrix
 
 
-def calc_pairwise_score_3dm(golden_aln, sequences, var_regs):
-    id1, id2 = sequences.keys()
-    if len(sequences[id1]) != len(sequences[id2]):
-        raise Exception("Aligned sequences {} and {} are not of the same "
-                        "length: {} and {}".format(
-                            sequences[id1], sequences[id2], len(sequences[id1]),
-                            len(sequences[id2])))
+def score_core_regions_3dm(sequences, golden_aln, id1, id2):
     result = {"matrix": {"TP": 0, "FP": 0, "FN": 0, "TN": 0},
               "sp_score": 0,
               "wrong_cols": {i: {} for i in sequences.keys()}}
@@ -118,6 +118,17 @@ def calc_pairwise_score_3dm(golden_aln, sequences, var_regs):
                 result['wrong_cols'][id1][i] = 1
                 result['wrong_cols'][id2][i] = 1
         # if both are gaps do nothing
+    return result
+
+
+def calc_pairwise_score_3dm(golden_aln, sequences, var_regs):
+    id1, id2 = sequences.keys()
+    if len(sequences[id1]) != len(sequences[id2]):
+        raise Exception("Aligned sequences {} and {} are not of the same "
+                        "length: {} and {}".format(
+                            sequences[id1], sequences[id2], len(sequences[id1]),
+                            len(sequences[id2])))
+    result = score_core_regions_3dm(sequences, golden_aln, id1, id2)
     # score variable regions in seq1
     var_matrix = score_var_regions(golden_aln, id1, id2, var_regs[id1])
     result['matrix'] = merge_dicts(result['matrix'], var_matrix)
@@ -127,7 +138,7 @@ def calc_pairwise_score_3dm(golden_aln, sequences, var_regs):
     result['matrix'] = merge_dicts(result['matrix'], var_matrix)
 
     # check output sanity
-    check_pairwise_score(sequences, var_regs, result, id1, id2)
+    check_pairwise_score_3dm(sequences, var_regs, result, id1, id2)
 
     sp_max = get_max_sp_score(golden_aln)
     result['sp_score'] = float(result['sp_score']) / sp_max
@@ -144,54 +155,51 @@ def calc_pairwise_score(golden_aln, id1, seq1, id2, seq2):
         raise Exception("Aligned sequences {} and {} are not of the same "
                         "length")
 
-    matrix = {"TP": 0, "FP": 0, "FN": 0, "TN": 0}
-    sp_score = 0
-    wrong_cols = {
-        id1: {},
-        id2: {}
+    result = {
+        "matrix": {"TP": 0, "FP": 0, "FN": 0, "TN": 0},
+        "sp_score": 0,
+        "wrong_cols": {
+            id1: {},
+            id2: {}
+            }
     }
 
     for i, res_i in enumerate(seq1):
         if res_i != '-' and seq2[i] != '-':
             res2_gold = get_aligned_res(res_i, id1, id2, golden_aln)
             if seq2[i] == res2_gold:
-                sp_score += 2
-                matrix["TP"] += 2
+                result['sp_score'] += 2
+                result['matrix']["TP"] += 2
             else:
-                sp_score -= 2
-                matrix["FP"] += 2
-                wrong_cols[id1][i] = 1
-                wrong_cols[id2][i] = 1
+                result['sp_score'] -= 2
+                result['matrix']["FP"] += 2
+                result['wrong_cols'][id1][i] = 1
+                result['wrong_cols'][id2][i] = 1
         elif seq1[i] != '-':
             res2_gold = get_aligned_res(res_i, id1, id2, golden_aln)
             if res2_gold == '-':
-                sp_score += 1
-                matrix["TN"] += 1
+                result['sp_score'] += 1
+                result['matrix']["TN"] += 1
             else:
-                matrix["FN"] += 1
-                wrong_cols[id1][i] = 1
-                wrong_cols[id2][i] = 1
+                result['matrix']["FN"] += 1
+                result['wrong_cols'][id1][i] = 1
+                result['wrong_cols'][id2][i] = 1
         elif seq2[i] != '-':
             res1_gold = get_aligned_res(seq2[i], id2, id1, golden_aln)
             if res1_gold == '-':
-                sp_score += 1
-                matrix["TN"] += 1
+                result['sp_score'] += 1
+                result['matrix']["TN"] += 1
             else:
-                matrix["FN"] += 1
-                wrong_cols[id1][i] = 1
-                wrong_cols[id2][i] = 1
+                result['matrix']["FN"] += 1
+                result['wrong_cols'][id1][i] = 1
+                result['wrong_cols'][id2][i] = 1
         # if both are gaps do nothing
 
     # check output sanity
-    res_only = [x for x in seq1 + seq2 if x != '-']
-    if len(res_only) != sum(matrix.values()):
-        raise Exception("Sum of values in the confusion matrix({}) should be "
-                        "equal to the total number of residues({})".format(
-                            len(res_only), sum(matrix.values())))
+    check_pairwise_score(seq1, seq2, result['matrix'])
     sp_max = get_max_sp_score(golden_aln)
-    sp_score = float(sp_score) / sp_max
-
-    return {"matrix": matrix, "SP": sp_score, "wrong_cols": wrong_cols}
+    result['sp_score'] = float(result['sp_score']) / sp_max
+    return result
 
 
 def calc_scores_3dm(golden_alns, test_aln):
