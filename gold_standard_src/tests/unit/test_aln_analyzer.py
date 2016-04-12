@@ -51,13 +51,13 @@ def get_max_sp_score():
 
 def test_calc_pairwise_score():
     golden_aln = {
-        '1': '-123--',
-        '2': '12-34-'
+        '1': '-123--4',
+        '2': '12-34-5'
     }
 
     test_aln = {
-        '1': '1-23--',
-        '2': '12-34-'
+        '1': '1-23--4-',
+        '2': '12-34--5'
     }
 
     expected = {
@@ -65,19 +65,23 @@ def test_calc_pairwise_score():
             'TP': 2,
             'FP': 2,
             'TN': 2,
-            'FN': 1
+            'FN': 3
         },
         'wrong_cols': {
             '1': {
                 0: 1,
                 1: 1,
+                6: 1,
+                7: 1
             },
             '2': {
                 0: 1,
                 1: 1,
+                6: 1,
+                7: 1
             }
         },
-        'sp_score': float(2) / 7
+        'sp_score': float(2) / 9
     }
 
     result = aa.calc_pairwise_score(golden_aln, '1', test_aln['1'], '2',
