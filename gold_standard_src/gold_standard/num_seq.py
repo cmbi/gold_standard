@@ -24,13 +24,14 @@ def corvar_to_num(corvar_line):
     sequence = re.sub(r'[0-9\s]', '', corvar_line)
     aln['full'] = re.sub('-', '', sequence).upper()
     for i, res_i in enumerate(sequence):
-        if res_i.isupper():
+        if res_i.isupper() or res_i == '-':
             # add 1 because it needs to be 1-based
             aln['cores'].append(i + 1)
         elif res_i.islower():
             aln['var'].append(i + 1)
         else:
-            raise Exception("Incorrect corvar line: {}".format(corvar_line))
+            raise Exception("Incorrect character ({}) in the corvar line "
+                            "({})".format(res_i, corvar_line))
     return aln
 
 

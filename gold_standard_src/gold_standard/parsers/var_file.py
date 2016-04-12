@@ -56,7 +56,7 @@ def convert_multi_var_to_aln(var_file):
         multi_aln["cores"][seq_id] = aln["cores"]
         multi_aln["var"][seq_id] = aln["var"]
         full[seq_id] = aln["full"]
-    return multi_aln
+    return multi_aln, full
 
 
 def parse_var_file(file_path, multi=False):
@@ -71,5 +71,6 @@ def parse_var_file(file_path, multi=False):
         full = {}
         for k, v in aln.iteritems():
             full[k] = re.sub('-', '', v)
-    num_aln = {seq_id: aln_seq_to_num(seq) for seq_id, seq in aln.iteritems()}
-    return {'ids': ids, 'alns': num_aln, 'full_seq': full}
+        aln = {seq_id: aln_seq_to_num(seq) for
+               seq_id, seq in aln.iteritems()}
+    return {'ids': ids, 'alns': aln, 'full_seq': full}
