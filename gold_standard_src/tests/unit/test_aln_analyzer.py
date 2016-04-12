@@ -87,3 +87,44 @@ def test_calc_pairwise_score():
     result = aa.calc_pairwise_score(golden_aln, '1', test_aln['1'], '2',
                                     test_aln['2'])
     eq_(result, expected)
+
+
+def test_score_core_regions_3dm():
+    golden_aln = {
+        '1': '-123--45-',
+        '2': '12-34-567'
+    }
+
+    test_aln = {
+        '1': '13--4-',
+        '2': '134--5'
+    }
+
+    id1 = '1'
+    id2 = '2'
+    result = aa.score_core_regions_3dm(test_aln, golden_aln, id1, id2)
+    expected = {
+        'matrix': {
+            'TP': 2,
+            'FP': 2,
+            'TN': 1,
+            'FN': 2
+        },
+        'wrong_cols': {
+            '1': {
+                0: 1,
+                4: 1,
+                5: 1
+            },
+            '2': {
+                0: 1,
+                4: 1,
+                5: 1
+            }
+        },
+        'sp_score': 1
+    }
+
+    eq_(result['sp_score'], expected['sp_score'])
+    eq_(result['matrix'], expected['matrix'])
+    eq_(result, expected)

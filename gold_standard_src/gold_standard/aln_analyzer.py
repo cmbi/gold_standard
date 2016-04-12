@@ -87,7 +87,8 @@ def score_core_regions_3dm(sequences, golden_aln, id1, id2):
     result = {"matrix": {"TP": 0, "FP": 0, "FN": 0, "TN": 0},
               "sp_score": 0,
               "wrong_cols": {i: {} for i in sequences.keys()}}
-    # score core regions
+    # score core regions (regions that are part of the core in the TEST
+    # alignments - not necessarily core regions in the golden alignments)
     for i, res_i in enumerate(sequences[id1]):
         if res_i != '-' and sequences[id2][i] != '-':
             res2_gold = get_aligned_res(res_i, id1, id2, golden_aln)
