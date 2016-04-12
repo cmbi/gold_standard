@@ -11,6 +11,6 @@ def parse_3SSP(aln_path):
     seq_dict = {}
     for l in infile:
         seq_id = ''.join(l.split()[0:2])
-        sequence = l.split()[2].replace("?", "")
+        sequence = l.split()[2].replace("?", "-")
         seq_dict[seq_id] = sequence
     return seq_dict

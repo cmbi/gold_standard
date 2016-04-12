@@ -1,10 +1,11 @@
 from nose.tools import eq_
 from mock import mock_open, patch
 
+from gold_standard_src.gold_standard.parsers.aln3SSP import parse_3SSP
 from gold_standard_src.gold_standard.parsers.gold import parse_gold_pairwise
 from gold_standard_src.gold_standard.parsers.fasta import parse_fasta
-from gold_standard_src.gold_standard.parsers.var_file import (parse_var_file,
-                                                convert_var_to_aln)
+from gold_standard_src.gold_standard.parsers.var_file import (
+    parse_var_file, convert_var_to_aln)
 
 
 def test_convert_var_to_aln():
@@ -45,3 +46,16 @@ def test_parse_golden_alns(mock_parse, mock_listdir, mock_path_exists):
                                  "file3.fasta", "file4.Var"]
     res = parse_gold_pairwise("test_dir")
     eq_(2, len(res['alns']))
+
+
+@patch('gold_standard_src.gold_standard.parsers.aln3SSP.open', mock_open(
+    read_data="ID1 A A-?CDEF\nID2 A GHI\n"), create=True)
+@patch('gold_standard_src.gold_standard.parsers.aln3SSP.os.path.exists')
+def test_aln_3SSP(mock_path_exists):
+    mock_path_exists.return_value = True
+    expected = {
+        'ID1A': 'A--CDEF',
+        'ID2A': 'GHI'
+    }
+    parsed = parse_3SSP('filename')
+    eq_(parsed, expected)
