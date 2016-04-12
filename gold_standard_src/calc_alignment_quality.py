@@ -21,8 +21,6 @@ logging.basicConfig(level=logging.INFO, format=FORMAT)
 _log = logging.getLogger(__name__)
 
 
-
-
 def calculate_aln_quality(paths, output, in_format, multi):
     # read the final_core file if provided
     if paths['final_core']:
@@ -54,8 +52,8 @@ def calculate_aln_quality(paths, output, in_format, multi):
         scores = calc_scores(gold_in['alns'], num_aln_dict)
     else:
         raise Exception("Invalid input format: {}".format(in_format))
-    result_processor.process_results(scores['pairwise'], scores['full'],
-                                     scores['sp_score'], output)
+    process_results(scores['pairwise'], scores['full'],
+                    scores['sp_score'], output)
     return {
         'wrong_cols': scores["wrong_cols"],
         'aa_aln': aln_dict,
