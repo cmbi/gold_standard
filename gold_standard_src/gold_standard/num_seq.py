@@ -132,7 +132,7 @@ def core_to_num_seq_3SSP(aligned_seq, full_seq):
     finished = False
     prev_core = 0
     while not finished:
-        c = get_next_core_lowercase(aligned_seq, start)
+        c = get_next_core(aligned_seq, start)
         core = c["core"]
         core_aligned_start = start + c["core_start"]
         if core == '':
@@ -143,11 +143,20 @@ def core_to_num_seq_3SSP(aligned_seq, full_seq):
         start = core_aligned_start + len(core)
         # position of the core in the full sequence
         core_full_start = full_seq[prev_core:].find(core) + prev_core
+        is_single_core = core_full_start != (-1 + prev_core)
+        if not is_single_core:
+            cores = split_core(core, full_seq[prev_core:])
+            cores = sorted(cores, key=lambda x: x["pos"])
+            for c in cores:
+                grounded_seq.extend([c['pos'] + i + 1 + prev_core
+                                     for i in range(len(c['seq']))])
+            prev_core = cores[-1]['pos'] + prev_core + len(cores[-1]['seq'])
+
+        else:
+            grounded_seq.extend([core_full_start + i + 1
+                                 for i in range(len(core))])
+            prev_core = core_full_start + len(core)
         prev_core = core_full_start + len(core)
-        if core_full_start == -1:
-            raise Exception("Core not found: {}".format(core))
-        grounded_seq.extend([core_full_start + i + 1
-                             for i in range(len(core))])
     # fill in the c-terminal gaps
     grounded_seq += '-' * (len(aligned_seq) - len(grounded_seq))
     return grounded_seq
@@ -202,7 +211,7 @@ def core_to_num_seq(aligned_seq, full_seq):
     return grounded_seq
 
 
-def get_next_core_lowercase(aligned_seq, start):
+def get_next_core(aligned_seq, start):
     """
     Returns index (from the beginning of the sequence) and sequence of the next
     core (index >= start)
@@ -225,27 +234,6 @@ def get_next_core_lowercase(aligned_seq, start):
                 core += res.upper()
         elif in_core:
             core += res.upper()
-        it += 1
-    return {"core": core, "core_start": core_start}
-
-
-def get_next_core(aligned_seq, start):
-    core = ""
-    core_start = 0
-    it = start
-    found = False
-    in_core = False
-
-    while not found and it < len(aligned_seq):
-        res = aligned_seq[it]
-        if not in_core and res != '-':
-            in_core = True
-            core += res
-            core_start = it
-        elif res == '-' and in_core:
-            found = True
-        elif in_core:
-            core += res
         it += 1
     return {"core": core, "core_start": core_start}
 

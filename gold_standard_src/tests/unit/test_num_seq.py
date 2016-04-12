@@ -46,6 +46,19 @@ def test_get_next_core():
     eq_(r["core"], expected_core)
     eq_(r["core_start"], expected_start)
 
+    aln_seq = 'GRH--wGhwGH'
+    expected_start = 5
+    expected_core = "WGH"
+    res = ns.get_next_core(aln_seq, 3)
+    eq_(res['core'], expected_core)
+    eq_(res['core_start'], expected_start)
+
+    aln_seq = 'GRhwGH'
+    expected_start = 3
+    res = ns.get_next_core(aln_seq, 3)
+    eq_(res['core'], expected_core)
+    eq_(res['core_start'], expected_start)
+
 
 @patch('gold_standard_src.gold_standard.num_seq.open',
        mock_open(read_data="1ABCA ABCD ABC ABC-- DFGJH"), create=True)
@@ -62,20 +75,6 @@ def test_core_to_num_seq_known_cores():
     expected = [1, 2, 3, 4, 5, '-', '-', 7, 8, 9, 10, '-', '-', 12, 13, 14]
     result = ns.core_to_num_seq_known_cores(aligned, full_seq, core_indexes)
     eq_(result, expected)
-
-
-def test_get_next_core_lowercase():
-    aln_seq = 'GRH--wGhwGH'
-    expected_start = 5
-    expected_core = "WGH"
-    res = ns.get_next_core_lowercase(aln_seq, 3)
-    eq_(res['core'], expected_core)
-    eq_(res['core_start'], expected_start)
-    aln_seq = 'GRhwGH'
-    expected_start = 3
-    res = ns.get_next_core_lowercase(aln_seq, 3)
-    eq_(res['core'], expected_core)
-    eq_(res['core_start'], expected_start)
 
 
 def test_split_core():
@@ -96,3 +95,32 @@ def test_split_core_exception():
     core = "ASYTGHMTG"
     full_seq = "ASMGTMGTYGHKLMKLMWMTG"
     ns.split_core(core, full_seq)
+
+
+def test_corvar_to_num():
+    corvar_line = '0 ADFG bc ABC dc AFC 0 AGH 0'
+    expected = {
+        'cores': [1, 2, 3, 4, 7, 8, 9, 12, 13, 14, 15, 16, 17],
+        'var': [5, 6, 10, 11],
+        'full': 'ADFGBCABCDCAFCAGH'
+    }
+    num_seq = ns.corvar_to_num(corvar_line)
+    eq_(num_seq, expected)
+
+
+def test_aln_3SSP_to_num():
+    full_seq = {
+        '1': 'ABCDEFGHIJKL'
+    }
+
+    aln_dict = {
+        '1': 'ABDEFGHJKL'
+    }
+
+    expected = {
+        'cores': {'1': [1, 2, 4, 5, 6, 7, 8, 10, 11, 12]},
+        'var': {'1': [3, 9]}
+    }
+
+    num_aln = ns.aln_3SSP_to_num(aln_dict, full_seq)
+    eq_(num_aln, expected)
