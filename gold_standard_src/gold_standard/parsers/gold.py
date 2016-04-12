@@ -36,13 +36,3 @@ def parse_gold_multi(gold_path):
     corvar = parse_var_file(gold_path, multi=True)
     return {'alns': corvar['alns'], 'full_seq': corvar['full_seq'],
             'ids': corvar['alns'].keys()}
-
-
-def remove_vars(corvar):
-    # TODO: implement
-    return corvar
-
-
-def get_full_seq(corvar):
-    # TODO: implement
-    return corvar

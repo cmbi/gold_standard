@@ -9,8 +9,8 @@ from gold_standard_src.gold_standard.parsers.gold import (parse_gold_pairwise,
 from gold_standard_src.gold_standard.parsers.fasta import parse_fasta
 from gold_standard_src.gold_standard.num_seq import (
     aln_seq_to_num, core_aln_to_num, aln_3SSP_to_num, get_core_indexes)
-from gold_standard_src.gold_standard.aln_analyzer import (calc_scores,
-                                                          calc_scores_3dm)
+from gold_standard_src.gold_standard.aln_analyzer import (
+    calc_scores, calc_scores_3dm)
 from gold_standard_src.result_processor import process_results
 
 
@@ -39,11 +39,11 @@ def calculate_aln_quality(paths, output, in_format, multi):
         num_aln_dict = core_aln_to_num(
             aln_dict, gold_in['full_seq'], core_indexes,
             golden_ids=gold_in['ids'])
-        scores = calc_scores_3dm(gold_in['alns'], num_aln_dict)
+        scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)
     elif in_format == '3SSP':
         aln_dict = parse_3SSP(paths['aln_path'])
         num_aln_dict = aln_3SSP_to_num(aln_dict, gold_in['full_seq'])
-        scores = calc_scores_3dm(gold_in['alns'], num_aln_dict)
+        scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)
     elif in_format == 'fasta':
         _log.info("Calculating alignment quality")
         aln_dict = parse_fasta(paths['aln_path'], gold_in['ids'])

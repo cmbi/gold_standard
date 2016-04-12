@@ -7,7 +7,7 @@ def test_score_var_regions():
     golden = {"1": [1, 2, 3, '-', '-', 4, 5, 6, '-', '-'],
               "2": ['-', '-', '-', 1, 2, 3, 4, 5, '-', '-']}
     var = [1, 2, 3, 4]
-    matrix = aa.score_var_regions(golden, '1', '2', var)
+    matrix = aa.score_var_regions(golden, '1', '2', var, multi=False)
     eq_({"TN": 3, "FN": 1}, matrix)
 
 
@@ -102,7 +102,8 @@ def test_score_core_regions_3dm():
 
     id1 = '1'
     id2 = '2'
-    result = aa.score_core_regions_3dm(test_aln, golden_aln, id1, id2)
+    result = aa.score_core_regions_3dm(test_aln, golden_aln, id1, id2,
+                                       multi=False)
     expected = {
         'matrix': {
             'TP': 2,
@@ -125,6 +126,4 @@ def test_score_core_regions_3dm():
         'sp_score': 1
     }
 
-    eq_(result['sp_score'], expected['sp_score'])
-    eq_(result['matrix'], expected['matrix'])
     eq_(result, expected)
