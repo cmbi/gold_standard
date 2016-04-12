@@ -108,7 +108,7 @@ def test_corvar_to_num():
     eq_(num_seq, expected)
 
 
-def test_aln_3SSP_to_num():
+def test_core_aln_to_num():
     full_seq = {
         '1': 'ABCDEFGHIJKL'
     }
@@ -122,5 +122,5 @@ def test_aln_3SSP_to_num():
         'var': {'1': [3, 9]}
     }
 
-    num_aln = ns.aln_3SSP_to_num(aln_dict, full_seq)
+    num_aln = ns.core_aln_to_num(aln_dict, full_seq, core_indexes=None)
     eq_(num_aln, expected)

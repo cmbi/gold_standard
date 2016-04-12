@@ -8,16 +8,6 @@ import re
 _log = logging.getLogger(__name__)
 
 
-def aln_3SSP_to_num(aln_dict, full_seq):
-    aln = {"cores": {}, "var": {}}
-    for seq_id, seq in aln_dict.iteritems():
-        aln["cores"][seq_id] = core_to_num_seq_3SSP(
-            seq, full_seq[seq_id])
-        aln["var"][seq_id] = get_var_pos(aln["cores"][seq_id],
-                                         full_seq[seq_id])
-    return aln
-
-
 def corvar_to_num(corvar_line):
     aln = {'cores': [], 'var': [], 'full': ''}
     # remove numbers and whitespaces form the corvar line
@@ -120,46 +110,6 @@ def core_to_num_seq_known_cores(aligned_seq, full_seq, core_indexes):
                 grounded.append(seq_index + res_count + 1)
                 res_count += 1
     return grounded
-
-
-def core_to_num_seq_3SSP(aligned_seq, full_seq):
-    """
-    Converts cores in 3SSP format to a numerical sequence
-    """
-    # 1-based!!!
-    grounded_seq = []
-    start = 0
-    finished = False
-    prev_core = 0
-    while not finished:
-        c = get_next_core(aligned_seq, start)
-        core = c["core"]
-        core_aligned_start = start + c["core_start"]
-        if core == '':
-            finished = True
-            continue
-        # fill in the gaps to the next core
-        grounded_seq += '-' * (core_aligned_start - start)
-        start = core_aligned_start + len(core)
-        # position of the core in the full sequence
-        core_full_start = full_seq[prev_core:].find(core) + prev_core
-        is_single_core = core_full_start != (-1 + prev_core)
-        if not is_single_core:
-            cores = split_core(core, full_seq[prev_core:])
-            cores = sorted(cores, key=lambda x: x["pos"])
-            for c in cores:
-                grounded_seq.extend([c['pos'] + i + 1 + prev_core
-                                     for i in range(len(c['seq']))])
-            prev_core = cores[-1]['pos'] + prev_core + len(cores[-1]['seq'])
-
-        else:
-            grounded_seq.extend([core_full_start + i + 1
-                                 for i in range(len(core))])
-            prev_core = core_full_start + len(core)
-        prev_core = core_full_start + len(core)
-    # fill in the c-terminal gaps
-    grounded_seq += '-' * (len(aligned_seq) - len(grounded_seq))
-    return grounded_seq
 
 
 def core_to_num_seq(aligned_seq, full_seq):
