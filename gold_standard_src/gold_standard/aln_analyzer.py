@@ -1,6 +1,7 @@
 import logging
 
 from gold_standard_src.gold_standard.dict_utils import merge_dicts
+from gold_standard_src.gold_standard.sanity_checker import check_pairwise_score
 
 
 fs = frozenset
@@ -126,12 +127,7 @@ def calc_pairwise_score_3dm(golden_aln, sequences, var_regs):
     result['matrix'] = merge_dicts(result['matrix'], var_matrix)
 
     # check output sanity
-    res_only = [x for x in sequences[id1] + sequences[id2] + var_regs[id1] +
-                var_regs[id2] if x != '-']
-    if len(res_only) != sum(result['matrix'].values()):
-        raise Exception("Sum of values in the confusion matrix({}) should be "
-                        "equal to the total number of residues({})".format(
-                            len(res_only), sum(result['matrix'].values())))
+    check_pairwise_score(sequences, var_regs, result, id1, id2)
 
     sp_max = get_max_sp_score(golden_aln)
     result['sp_score'] = float(result['sp_score']) / sp_max
