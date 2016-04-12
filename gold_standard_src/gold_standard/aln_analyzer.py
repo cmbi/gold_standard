@@ -63,7 +63,7 @@ def get_max_sp_score(golden_aln):
         if seq1[i] == '-' and seq2[i] == '-':
             # ignore this position if both are gaps
             continue
-        if seq1[i] != '-' or seq2[i] != '-':
+        if seq1[i] == '-' or seq2[i] == '-':
             # insertion / deletion
             score += 1
         else:
@@ -153,7 +153,7 @@ def get_aligned_res(res_num, query_id, id2, golden_aln):
 def calc_pairwise_score(golden_aln, id1, seq1, id2, seq2):
     if len(seq1) != len(seq2):
         raise Exception("Aligned sequences {} and {} are not of the same "
-                        "length")
+                        "length".format(seq1, seq2))
 
     result = {
         "matrix": {"TP": 0, "FP": 0, "FN": 0, "TN": 0},
@@ -197,6 +197,7 @@ def calc_pairwise_score(golden_aln, id1, seq1, id2, seq2):
 
     # check output sanity
     check_pairwise_score(seq1, seq2, result['matrix'])
+    # normalize SP score
     sp_max = get_max_sp_score(golden_aln)
     result['sp_score'] = float(result['sp_score']) / sp_max
     return result

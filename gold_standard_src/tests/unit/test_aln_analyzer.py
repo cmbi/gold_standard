@@ -47,3 +47,39 @@ def get_max_sp_score():
     expected = 9
     score = aa.get_max_sp_score(golden_aln)
     eq_(score, expected)
+
+
+def test_calc_pairwise_score():
+    golden_aln = {
+        '1': '-123--',
+        '2': '12-34-'
+    }
+
+    test_aln = {
+        '1': '1-23--',
+        '2': '12-34-'
+    }
+
+    expected = {
+        'matrix': {
+            'TP': 2,
+            'FP': 2,
+            'TN': 2,
+            'FN': 1
+        },
+        'wrong_cols': {
+            '1': {
+                0: 1,
+                1: 1,
+            },
+            '2': {
+                0: 1,
+                1: 1,
+            }
+        },
+        'sp_score': float(2) / 7
+    }
+
+    result = aa.calc_pairwise_score(golden_aln, '1', test_aln['1'], '2',
+                                    test_aln['2'])
+    eq_(result, expected)
