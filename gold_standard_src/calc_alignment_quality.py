@@ -29,7 +29,7 @@ def calculate_aln_quality(paths, output, in_format, multi):
         core_indexes = None
     # read the gold standard alignments
     if multi:
-        gold_in = parse_gold_multi(paths['gold_path'], core_indexes)
+        gold_in = parse_gold_multi(paths['gold_path'])
     else:
         gold_in = parse_gold_pairwise(paths['gold_dir'])
     # parse and assess test alignments

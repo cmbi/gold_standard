@@ -21,7 +21,7 @@ def aln_3SSP_to_num(aln_dict, full_seq):
 def corvar_to_num(corvar_line):
     aln = {'cores': [], 'var': [], 'full': ''}
     # remove numbers and whitespaces form the corvar line
-    sequence = re.sub(r'[0-9\w]', '', corvar_line)
+    sequence = re.sub(r'[0-9\s]', '', corvar_line)
     aln['full'] = re.sub('-', '', sequence).upper()
     for i, res_i in enumerate(sequence):
         if res_i.isupper():

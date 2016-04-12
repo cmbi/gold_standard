@@ -1,7 +1,6 @@
 import logging
 import os
 
-from gold_standard_src.gold_standard.num_seq import core_aln_to_num
 from gold_standard_src.gold_standard.parsers.error_types import ParserError
 from gold_standard_src.gold_standard.parsers.var_file import parse_var_file
 
@@ -33,13 +32,10 @@ def parse_gold_pairwise(gold_dir):
     }
 
 
-def parse_gold_multi(gold_path, core_indexes):
-    corvar = parse_var_file(gold_path)
-    full_seq = get_full_seq(corvar)
-    core_aln = remove_vars(corvar)
-    num_aln = core_aln_to_num(core_aln, full_seq, core_indexes)
-    return {'alns': num_aln, 'full_seq': full_seq,
-            'ids': num_aln.keys()}
+def parse_gold_multi(gold_path):
+    corvar = parse_var_file(gold_path, multi=True)
+    return {'alns': corvar['alns'], 'full_seq': corvar['full_seq'],
+            'ids': corvar['alns'].keys()}
 
 
 def remove_vars(corvar):
