@@ -53,7 +53,7 @@ def calculate_aln_quality(paths, output, in_format, multi):
     else:
         raise Exception("Invalid input format: {}".format(in_format))
     process_results(scores['pairwise'], scores['full'],
-                    scores['sp_score'], output)
+                    scores['sp_scores'], output)
     return {
         'wrong_cols': scores["wrong_cols"],
         'aa_aln': aln_dict,

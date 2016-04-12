@@ -55,15 +55,21 @@ def compare_alignments(aln1, aln2):
     return {'diff_cols1': diff_cols1, "diff_cols2": diff_cols2}
 
 
-def get_max_sp_score(golden_aln):
-    seq1, seq2 = golden_aln.values()
-    id1 = golden_aln.keys()[0]
-    score = 0
-    for i in range(len(golden_aln[id1])):
-        if seq1[i] == '-' and seq2[i] == '-':
+def get_max_sp_score(golden_aln, id1, id2, multi=False):
+    if multi:
+        # each residue in the var region gives one point to the overall score
+        score = len(golden_aln['var'][id1]) + len(golden_aln['var'][id2])
+        seq1 = golden_aln['cores'][id1]
+        seq2 = golden_aln['cores'][id2]
+    else:
+        score = 0
+        seq1 = golden_aln[id1]
+        seq2 = golden_aln[id2]
+    for i, res_i in enumerate(seq1):
+        if res_i == '-' and seq2[i] == '-':
             # ignore this position if both are gaps
             continue
-        if seq1[i] == '-' or seq2[i] == '-':
+        if res_i == '-' or seq2[i] == '-':
             # insertion / deletion
             score += 1
         else:
@@ -142,7 +148,7 @@ def calc_pairwise_score_3dm(golden_aln, sequences, var_regs, multi):
     # check output sanity
     check_pairwise_score_3dm(sequences, var_regs, result, id1, id2)
 
-    sp_max = get_max_sp_score(golden_aln)
+    sp_max = get_max_sp_score(golden_aln, id1, id2, multi)
     result['sp_score'] = float(result['sp_score']) / sp_max
     return result
 
@@ -211,21 +217,23 @@ def calc_pairwise_score(golden_aln, id1, seq1, id2, seq2):
     # check output sanity
     check_pairwise_score(seq1, seq2, result['matrix'])
     # normalize SP score
-    sp_max = get_max_sp_score(golden_aln)
+    sp_max = get_max_sp_score(golden_aln, id1, id2)
     result['sp_score'] = float(result['sp_score']) / sp_max
     return result
 
 
 def calc_scores_3dm(golden_alns, test_aln, multi):
     _log.info("Calculating confusion matrices [3DM mode]")
-    matrices_dict = {}
-    full_matrix = {'TP': 0, 'FP': 0, 'TN': 0, 'FN': 0}
-    sp_scores = {}
-    wrong_cols = {seq_id: {} for seq_id in test_aln["cores"].keys()}
+    result = {
+        'pairwise': {},
+        'full': {'TP': 0, 'FP': 0, 'TN': 0, 'FN': 0},
+        'sp_scores': {},
+        'wrong_cols': {seq_id: {} for seq_id in test_aln["cores"].keys()}
+    }
     for id1, seq1 in test_aln["cores"].iteritems():
         for id2, seq2 in test_aln["cores"].iteritems():
             id_set = fs([id1, id2])
-            if id1 != id2 and id_set not in matrices_dict.keys():
+            if id1 != id2 and id_set not in result['pairwise'].keys():
                 _log.debug("Calculating confusion matrix for sequences %s "
                            "and %s", id1, id2)
                 sequences = {
@@ -236,18 +244,24 @@ def calc_scores_3dm(golden_alns, test_aln, multi):
                     id1: test_aln['var'][id1],
                     id2: test_aln['var'][id2]
                 }
-                scores = calc_pairwise_score_3dm(golden_alns[id_set], sequences,
+                if not multi:
+                    golden_aln = golden_alns[id_set]
+                else:
+                    golden_aln = golden_alns
+
+                scores = calc_pairwise_score_3dm(golden_aln, sequences,
                                                  var_regs, multi)
-                wrong_cols[id1] = merge_dicts(wrong_cols[id1],
-                                              scores["wrong_cols"][id1])
-                wrong_cols[id2] = merge_dicts(wrong_cols[id2],
-                                              scores["wrong_cols"][id2])
-                matrices_dict[id_set] = scores['matrix']
+                result['wrong_cols'][id1] = merge_dicts(
+                    result['wrong_cols'][id1], scores["wrong_cols"][id1])
+
+                result['wrong_cols'][id2] = merge_dicts(
+                    result['wrong_cols'][id2], scores["wrong_cols"][id2])
+
+                result['pairwise'][id_set] = scores['matrix']
                 # add the values to the matrix with overall scores
-                full_matrix = merge_dicts(full_matrix, scores['matrix'])
-                sp_scores[id_set] = scores['sp_score']
-    return {'pairwise': matrices_dict, 'full': full_matrix,
-            'sp_score': sp_scores, 'wrong_cols': wrong_cols}
+                result['full'] = merge_dicts(result['full'], scores['matrix'])
+                result['sp_scores'][id_set] = scores['sp_score']
+    return result
 
 
 def calc_scores(golden_alns, test_aln):
