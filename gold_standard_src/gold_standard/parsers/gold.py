@@ -35,4 +35,4 @@ def parse_gold_pairwise(gold_dir):
 def parse_gold_multi(gold_path):
     corvar = parse_var_file(gold_path, multi=True)
     return {'alns': corvar['alns'], 'full_seq': corvar['full_seq'],
-            'ids': corvar['alns'].keys()}
+            'ids': corvar['alns']['cores'].keys()}

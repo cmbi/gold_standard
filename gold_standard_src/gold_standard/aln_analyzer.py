@@ -225,8 +225,7 @@ def calc_scores_3dm(golden_alns, test_aln, multi):
     for id1, seq1 in test_aln["cores"].iteritems():
         for id2, seq2 in test_aln["cores"].iteritems():
             id_set = fs([id1, id2])
-            if (id1 != id2 and id_set not in matrices_dict.keys() and
-                    id_set in golden_alns.keys()):
+            if id1 != id2 and id_set not in matrices_dict.keys():
                 _log.debug("Calculating confusion matrix for sequences %s "
                            "and %s", id1, id2)
                 sequences = {
