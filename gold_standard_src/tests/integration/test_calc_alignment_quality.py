@@ -1,4 +1,5 @@
 from mock import mock_open, patch
+from nose.tools import eq_
 
 from gold_standard_src.calc_alignment_quality import calculate_aln_quality
 
@@ -27,4 +28,14 @@ def test_calc_alignment_quality_multi(mock_process_results, mock_path_exists):
     input_format = "3dm"
     multi = True
 
+    # expected call to process_results
+    expected = [
+        {},                                    # pairwise score matrix
+        {"TP": 0, "FP": 0, "FN": 0, "TN": 0},  # confusion matrix
+        {},                                    # SP scores
+        'testpath'                             # output path
+    ]
+
     calculate_aln_quality(input_paths, output, input_format, multi)
+    process_res_calls = list(mock_process_results.call_args[0])
+    eq_(process_res_calls, expected)
