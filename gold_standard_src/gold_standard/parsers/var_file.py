@@ -50,7 +50,6 @@ def convert_multi_var_to_aln(var_file):
     multi_aln = {"cores": {}, "var": {}}
     full = {}
     aln_dict = {i.split(',')[0]: i.split(',')[1] for i in var_file}
-
     for seq_id, seq in aln_dict.iteritems():
         aln = corvar_to_num(seq)
         multi_aln["cores"][seq_id] = aln["cores"]
@@ -60,7 +59,7 @@ def convert_multi_var_to_aln(var_file):
 
 
 def parse_var_file(file_path, multi=False):
-    _log.debug("Parsing var file: %s", file_path)
+    _log.debug("Parsing var file: %s; multi: %s", file_path, multi)
     with open(file_path) as a:
         var_file = a.read().splitlines()
     ids = [i.split(',')[0] for i in var_file]

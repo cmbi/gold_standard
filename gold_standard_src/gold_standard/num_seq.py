@@ -13,12 +13,17 @@ def corvar_to_num(corvar_line):
     # remove numbers and whitespaces form the corvar line
     sequence = re.sub(r'[0-9\s]', '', corvar_line)
     aln['full'] = re.sub('-', '', sequence).upper()
-    for i, res_i in enumerate(sequence):
-        if res_i.isupper() or res_i == '-':
-            # add 1 because it needs to be 1-based
-            aln['cores'].append(i + 1)
+    count = 1
+    for res_i in sequence:
+        # add 1 to count because it needs to be 1-based
+        if res_i.isupper():
+            aln['cores'].append(count)
+            count += 1
+        elif res_i == '-':
+            aln['cores'].append('-')
         elif res_i.islower():
-            aln['var'].append(i + 1)
+            aln['var'].append(count)
+            count += 1
         else:
             raise Exception("Incorrect character ({}) in the corvar line "
                             "({})".format(res_i, corvar_line))

@@ -13,7 +13,8 @@ from gold_standard_src.gold_standard.aln_analyzer import (
     calc_scores, calc_scores_3dm)
 from gold_standard_src.gold_standard.result_processor import process_results
 
-
+# use frozensets of sequence ids as keys in dictionaries
+# (regular sets cannot be used because they are mutable)
 fs = frozenset
 
 FORMAT = '%(asctime)s:%(levelname)s:%(funcName)s - %(message)s'
