@@ -11,7 +11,7 @@ from gold_standard_src.gold_standard.num_seq import (
     aln_seq_to_num, core_aln_to_num, get_core_indexes)
 from gold_standard_src.gold_standard.aln_analyzer import (
     calc_scores, calc_scores_3dm)
-from gold_standard_src.result_processor import process_results
+from gold_standard_src.gold_standard.result_processor import process_results
 
 
 fs = frozenset
@@ -98,8 +98,11 @@ if __name__ == "__main__":
     # check input format
     input_format = "fasta"
     if args.in3dm:
+        # fasta format but variable regions are not in the alignment
         input_format = "3dm"
     elif args.in3SSP:
+        # sequence id (no whitespaces) and sequence (corvar) on one line
+        # separated by a comma
         input_format = "3SSP"
 
     input_paths = {
