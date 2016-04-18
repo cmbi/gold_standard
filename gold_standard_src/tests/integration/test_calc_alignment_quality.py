@@ -16,7 +16,6 @@ from gold_standard_src.calc_alignment_quality import calculate_aln_quality
 @patch('gold_standard_src.gold_standard.parsers.fasta.os.path.exists')
 @patch('gold_standard_src.calc_alignment_quality.process_results')
 def test_calc_alignment_quality_multi(mock_process_results, mock_path_exists):
-    # DUMMY TEST
     # setup mocks
     mock_path_exists.return_value = True
     mock_process_results.return_value = 0

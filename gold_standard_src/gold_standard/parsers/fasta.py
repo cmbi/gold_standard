@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 
 from gold_standard_src.gold_standard.parsers.error_types import ParserError
 
@@ -19,7 +20,10 @@ def parse_fasta(aln_path, golden_ids=None):
             if '|' in l:
                 seq_id = l.lstrip('>').split('|')[0]
             else:
+                # remove the fasta header symbol
                 seq_id = l.lstrip('>')
+                # remove whitespace characters
+                seq_id = re.sub(r'\s', '', seq_id)
             if seq_id in aln_dict.keys():
                 raise ParserError("Sequence {} is duplicated".format(seq_id))
             if golden_ids is None or seq_id in golden_ids:

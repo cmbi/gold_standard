@@ -33,6 +33,8 @@ def calculate_aln_quality(paths, output, in_format, multi):
         gold_in = parse_gold_multi(paths['gold_path'])
     else:
         gold_in = parse_gold_pairwise(paths['gold_dir'])
+    _log.debug("Sequences in the gold alignment: %s", gold_in['ids'])
+
     # parse and assess test alignments
     if in_format == '3dm':
         _log.info("Calculating alignment quality in 3DM mode")
@@ -40,11 +42,15 @@ def calculate_aln_quality(paths, output, in_format, multi):
         num_aln_dict = core_aln_to_num(
             aln_dict, gold_in['full_seq'], core_indexes,
             golden_ids=gold_in['ids'])
+        _log.debug("Sequences in the test alignment: %s",
+                   num_aln_dict['cores'].keys())
         scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)
     elif in_format == '3SSP':
         aln_dict = parse_3SSP(paths['aln_path'])
         num_aln_dict = core_aln_to_num(aln_dict, gold_in['full_seq'],
                                        core_indexes=None)
+        _log.debug("Sequences in the test alignment: %s",
+                   num_aln_dict['cores'].keys())
         scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)
     elif in_format == 'fasta':
         _log.info("Calculating alignment quality")
