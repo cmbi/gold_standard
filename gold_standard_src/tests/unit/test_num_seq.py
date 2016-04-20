@@ -9,7 +9,7 @@ def test_core_to_num_seq():
     test_seq = "--ABC--D"
     full_seq = "SABCSD"
     expected = ['-', '-', 2, 3, 4, '-', '-', 6]
-    eq_(expected, ns.core_to_num_seq(test_seq, full_seq))
+    eq_(expected, ns.core_to_num_seq(test_seq, full_seq)[0])
 
     test_seq = "--KSW-SYVSQTPLFTVNKLHNY-"
 
@@ -18,7 +18,7 @@ def test_core_to_num_seq():
     expected = ["-", "-", 1, 2, 3, "-", 34, 35, 36, 38, 39, 40, 43, 44, 45,
                 46, 47, 51, 52, 53, 54, 55, 56, "-"]
 
-    eq_(expected, ns.core_to_num_seq(test_seq, full_seq))
+    eq_(expected, ns.core_to_num_seq(test_seq, full_seq)[0])
 
 
 def test_get_var_pos():
@@ -134,5 +134,5 @@ def test_core_aln_to_num():
         'var': {'1': [3, 9]}
     }
 
-    num_aln = ns.core_aln_to_num(aln_dict, full_seq, core_indexes=None)
+    num_aln = ns.core_aln_to_num(aln_dict, full_seq, core_indexes=None)[0]
     eq_(num_aln, expected)
