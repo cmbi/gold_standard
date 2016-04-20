@@ -7,6 +7,7 @@ from gold_standard_src.gold_standard.parsers.aln3SSP import parse_3SSP
 from gold_standard_src.gold_standard.parsers.gold import (parse_gold_pairwise,
                                                           parse_gold_multi)
 from gold_standard_src.gold_standard.parsers.fasta import parse_fasta
+from gold_standard_src.gold_standard.parsers.fatcat import parse_fatcat
 from gold_standard_src.gold_standard.num_seq import (
     aln_seq_to_num, core_aln_to_num, get_core_indexes)
 from gold_standard_src.gold_standard.aln_analyzer import (
@@ -36,19 +37,22 @@ def calculate_aln_quality(paths, output, in_format, multi):
     _log.debug("Sequences in the gold alignment: %s", gold_in['ids'])
 
     # parse and assess test alignments
-    if in_format == '3dm':
+    if in_format == '3dm' or in_format == 'fatcat':
         _log.info("Calculating alignment quality in 3DM mode")
-        aln_dict = parse_fasta(paths['aln_path'], gold_in['ids'])
-        num_aln_dict = core_aln_to_num(
+        if in_format == 'fatcat':
+            aln_dict = parse_fatcat(paths['aln_path'], gold_in['ids'])
+        else:
+            aln_dict = parse_fasta(paths['aln_path'], gold_in['ids'])
+        num_aln_dict, core_indexes = core_aln_to_num(
             aln_dict, gold_in['full_seq'], core_indexes,
             golden_ids=gold_in['ids'])
         _log.debug("Sequences in the test alignment: %s",
-                   num_aln_dict['cores'].keys())
+                   str(num_aln_dict['cores'].keys()))
         scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)
     elif in_format == '3SSP':
         aln_dict = parse_3SSP(paths['aln_path'])
-        num_aln_dict = core_aln_to_num(aln_dict, gold_in['full_seq'],
-                                       core_indexes=None)
+        num_aln_dict, core_indexes = core_aln_to_num(
+            aln_dict, gold_in['full_seq'], core_indexes=None)
         _log.debug("Sequences in the test alignment: %s",
                    num_aln_dict['cores'].keys())
         scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)
@@ -83,7 +87,9 @@ if __name__ == "__main__":
     parser.add_argument("--html", action="store_true")
     parser.add_argument("--html_var", action="store_true")
     parser.add_argument("--html_var_short", action="store_true")
+    parser.add_argument("--input_format", default="fasta")
     parser.add_argument("--in3dm", default=False, action="store_true")
+    parser.add_argument("--inFatCat", default=False, action="store_true")
     parser.add_argument("--in3SSP", default=False, action="store_true")
     parser.add_argument("-d", "--debug", default=False, action="store_true")
     parser.add_argument("--final_core", help="final core file")
@@ -103,14 +109,15 @@ if __name__ == "__main__":
         _log.setLevel(logging.DEBUG)
 
     # check input format
-    input_format = "fasta"
-    if args.in3dm:
-        # fasta format but variable regions are not in the alignment
-        input_format = "3dm"
-    elif args.in3SSP:
-        # sequence id (no whitespaces) and sequence (corvar) on one line
-        # separated by a comma
-        input_format = "3SSP"
+    allowed_formats = ["fasta", "3dm", "3SSP", "fatcat"]
+    # 3dm - fasta format but variable regions are not in the alignment
+    # fatcat - 'final_core'-like format
+    # 3SSP - sequence id (no whitespaces) and sequence (corvar) on one line
+    #   separated by a comma
+    if args.input_format not in allowed_formats:
+        parser.error("{} is not an allowed formats. Input format needs to be "
+                     "one of the following: {}".format(args.input_format,
+                                                       allowed_formats))
 
     input_paths = {
         'gold_dir': args.gold_dir,
@@ -119,8 +126,8 @@ if __name__ == "__main__":
         'final_core': args.final_core
     }
 
-    quality_data = calculate_aln_quality(input_paths, args.output, input_format,
-                                         args.multi)
+    quality_data = calculate_aln_quality(input_paths, args.output,
+                                         args.input_format, args.multi)
     if args.html or args.html_var or args.html_var_short:
         # create html output
         hh = HtmlHandler(var=args.html_var, var_short=args.html_var_short)

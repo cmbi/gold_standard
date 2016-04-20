@@ -46,7 +46,10 @@ def process_results(matrices, full_matrix, sp_scores, output):
     out_txt += ''.join(["{}: {}\n".format(k, v)
                         for k, v in full_stats.iteritems()]) + '\n'
     # average SP score
-    out_txt += "SP score: {}\n".format(sum(sp_scores.values()) / len(sp_scores))
+    sp_score = sum(sp_scores.values()) / len(sp_scores)
+    out_txt += "SP score: {}\n".format(sp_score)
+    _log.debug("Overall SP score: %f", sp_score)
+    _log.debug("Conf matrix: %s", str(full_matrix))
 
     # PAIRWISE stats
     stats = calc_stats(matrices)

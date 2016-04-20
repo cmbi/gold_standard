@@ -15,8 +15,10 @@ def parse_fasta(aln_path, golden_ids=None):
         aln_file = a.read().splitlines()
     aln_dict = {}
     seq_id = ""
+    found_fasta_headers = False
     for l in aln_file:
         if l.startswith(">"):
+            found_fasta_headers = True
             if '|' in l:
                 seq_id = l.lstrip('>').split('|')[0]
             else:
@@ -30,4 +32,6 @@ def parse_fasta(aln_path, golden_ids=None):
                 aln_dict[seq_id] = ""
         elif seq_id and (golden_ids is None or seq_id in golden_ids):
             aln_dict[seq_id] += l.upper().rstrip("*")
+    if not found_fasta_headers:
+        raise ParserError("Incorrect format, no fasta headers found.")
     return aln_dict

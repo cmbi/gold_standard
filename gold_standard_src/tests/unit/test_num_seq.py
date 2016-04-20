@@ -78,13 +78,25 @@ def test_core_to_num_seq_known_cores():
 
 
 def test_split_core():
-    core = "ASTGHMTG"
-    full_seq = "ASMGTMGTTGHKLMKLMWMTG"
     add_index = 0
+    core = "DAS"
+    full_seq = "SDWAS"
+    new_cores = ns.split_core(core, full_seq, add_index)
     expected_cores = [
-        {'pos': 0, 'seq': 'AS'},
-        {'pos': 8, 'seq': 'TGH'},
-        {'pos': 18, 'seq': 'MTG'}
+        {'pos': 1, 'seq': 'D'},
+        {'pos': 3, 'seq': 'AS'}
+    ]
+    eq_(new_cores, expected_cores)
+
+    core = "DASTGHMTGGG"
+    full_seq = "SDWASMGTMGTTGHKLMKLMWMTGVGVG"
+    expected_cores = [
+        {'pos': 1, 'seq': 'D'},
+        {'pos': 3, 'seq': 'AS'},
+        {'pos': 11, 'seq': 'TGH'},
+        {'pos': 21, 'seq': 'MTG'},
+        {'pos': 25, 'seq': 'G'},
+        {'pos': 27, 'seq': 'G'}
     ]
     new_cores = ns.split_core(core, full_seq, add_index)
     eq_(new_cores, expected_cores)

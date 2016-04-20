@@ -40,6 +40,7 @@ def core_aln_to_num(aln_dict, full_seq, core_indexes, golden_ids=None):
     """
     _log.info("Converting 3DM alignment to grounded sequences")
     aln_3dm = {"cores": {}, "var": {}}
+    new_core_indexes = []
     for seq_id, seq in aln_dict.iteritems():
         if golden_ids and seq_id not in golden_ids:
             continue
@@ -47,10 +48,13 @@ def core_aln_to_num(aln_dict, full_seq, core_indexes, golden_ids=None):
             aln_3dm["cores"][seq_id] = core_to_num_seq_known_cores(
                 seq, full_seq[seq_id], core_indexes)
         else:
-            aln_3dm["cores"][seq_id] = core_to_num_seq(seq, full_seq[seq_id])
+            aln_3dm["cores"][seq_id], new_core_indexes = core_to_num_seq(
+                seq, full_seq[seq_id])
         aln_3dm["var"][seq_id] = get_var_pos(aln_3dm["cores"][seq_id],
                                              full_seq[seq_id])
-    return aln_3dm
+    if not core_indexes:
+        core_indexes = new_core_indexes
+    return aln_3dm, core_indexes
 
 
 def get_var_pos(num_seq, full_seq):
@@ -134,6 +138,7 @@ def core_to_num_seq(aligned_seq, full_seq):
     start = 0
     finished = False
     prev_core = 0
+    new_core_indexes = []
     while not finished:
         c = get_next_core(aligned_seq, start)
         core = c["core"]
@@ -156,14 +161,16 @@ def core_to_num_seq(aligned_seq, full_seq):
                 grounded_seq.extend([c['pos'] + i + 1 + prev_core
                                      for i in range(len(c['seq']))])
             prev_core = cores[-1]['pos'] + prev_core + len(cores[-1]['seq'])
+            new_core_indexes.append(prev_core + c['pos'])
 
         else:
+            new_core_indexes.append(core_full_start)
             grounded_seq.extend([core_full_start + i + 1
                                  for i in range(len(core))])
             prev_core = core_full_start + len(core)
     # fill in the c-terminal gaps
     grounded_seq += '-' * (len(aligned_seq) - len(grounded_seq))
-    return grounded_seq
+    return grounded_seq, new_core_indexes
 
 
 def get_next_core(aligned_seq, start):
@@ -207,18 +214,22 @@ def split_core(core, full_seq, add_index=0):
     _log.debug("Splitting up a core: %s\n full seq: %s\
             add_index: %s", core, full_seq, add_index)
     new_cores = []
+    if full_seq[add_index:].find(core) != -1:
+        return [{'pos': full_seq[add_index:].find(core) + add_index,
+                 'seq': core}]
     for i in xrange(1, len(core)):
-        if full_seq[add_index:].find(core[:-i]) != -1 and \
-                full_seq[add_index:].find(core[-i:]) != -1:
-            new_cores = [core[:-i], core[-i:]]
+        core1_pos = full_seq[add_index:].find(core[:-i])
+        core2_pos = full_seq[add_index + core1_pos + len(core[:-i]):].find(
+            core[-i:])
+        if core1_pos != -1 and core2_pos != -1:
             new_cores = [
                 {"seq": core[:-i],
-                 "pos": full_seq[add_index:].find(core[:-i]) + add_index},
+                 "pos": core1_pos + add_index},
                 {"seq": core[-i:],
-                 "pos": full_seq[add_index:].find(core[-i:]) + add_index}]
+                 "pos": core2_pos + add_index + core1_pos + len(core[:-i])}]
             break
-        elif full_seq[add_index:].find(core[:-i]) != -1:
-            position = full_seq[add_index:].find(core[:-i]) + add_index
+        elif core1_pos != -1:
+            position = core1_pos + add_index
             new_cores.append({"seq": core[:-i],
                               "pos": position})
             add_index = position + len(core[:-i])
@@ -228,6 +239,6 @@ def split_core(core, full_seq, add_index=0):
     _log.debug("Split up core %s in two cores: %s", core, new_cores)
     if not new_cores:
         raise Exception("Didn't find a way to split up the core {}\
-                full sequence[add_index:]: {}".format(
-                    core, full_seq))
+                full sequence[{}:]: {}".format(
+                    core, add_index, full_seq[add_index:]))
     return new_cores
