@@ -151,10 +151,11 @@ def core_to_num_seq(aligned_seq, full_seq):
         start = core_aligned_start + len(core)
         # position of the core in the full sequence
         core_full_start = full_seq[prev_core:].find(core) + prev_core
-        is_single_core = core_full_start != (-1 + prev_core)
+        print c, full_seq[prev_core:], core_full_start
+        # is_single_core = core_full_start != (-1 + prev_core)
         # the next 'core' actually consists of multiple cores, thus we need to
         # split them up
-        if not is_single_core:
+        if not False:
             cores = split_core(core, full_seq[prev_core:])
             cores = sorted(cores, key=lambda x: x["pos"])
             for c in cores:
@@ -214,7 +215,7 @@ def split_core(core, full_seq, add_index=0):
     _log.debug("Splitting up a core: %s\n full seq: %s\
             add_index: %s", core, full_seq, add_index)
     new_cores = []
-    if full_seq[add_index:].find(core) != -1:
+    if full_seq[add_index:].find(core) != -1 and len(core) == 1:
         return [{'pos': full_seq[add_index:].find(core) + add_index,
                  'seq': core}]
     for i in xrange(1, len(core)):
@@ -238,7 +239,7 @@ def split_core(core, full_seq, add_index=0):
             break
     _log.debug("Split up core %s in two cores: %s", core, new_cores)
     if not new_cores:
-        raise Exception("Didn't find a way to split up the core {}\
-                full sequence[{}:]: {}".format(
-                    core, add_index, full_seq[add_index:]))
+        raise Exception("Didn't find a way to split up the core {}\n"
+                        "full sequence[{}:]: {}".format(
+                            core, add_index, full_seq[add_index:]))
     return new_cores
