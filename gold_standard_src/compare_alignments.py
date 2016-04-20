@@ -17,8 +17,8 @@ def run_comparison(aln1_path, aln2_path, outprefix, full_seq_path):
     aln_dict2 = parse_fasta(aln2_path)
     full_seq = parse_fasta(full_seq_path)
     core_indexes = None
-    num_aln_dict1 = core_aln_to_num(aln_dict1, full_seq, core_indexes)
-    num_aln_dict2 = core_aln_to_num(aln_dict2, full_seq, core_indexes)
+    num_aln_dict1 = core_aln_to_num(aln_dict1, full_seq, core_indexes)[0]
+    num_aln_dict2 = core_aln_to_num(aln_dict2, full_seq, core_indexes)[0]
     comp_result = compare_alignments(num_aln_dict1, num_aln_dict2)
     hh = HtmlHandler()
     quality_data = {'aa_aln': aln_dict1,

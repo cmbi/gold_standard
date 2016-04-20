@@ -40,7 +40,7 @@ def core_aln_to_num(aln_dict, full_seq, core_indexes, golden_ids=None):
     """
     _log.info("Converting 3DM alignment to grounded sequences")
     aln_3dm = {"cores": {}, "var": {}}
-    new_core_indexes = []
+    new_core_indexes = set()
     for seq_id, seq in aln_dict.iteritems():
         if golden_ids and seq_id not in golden_ids:
             continue
@@ -48,13 +48,14 @@ def core_aln_to_num(aln_dict, full_seq, core_indexes, golden_ids=None):
             aln_3dm["cores"][seq_id] = core_to_num_seq_known_cores(
                 seq, full_seq[seq_id], core_indexes)
         else:
-            aln_3dm["cores"][seq_id], new_core_indexes = core_to_num_seq(
+            aln_3dm["cores"][seq_id], new_core_indexes_tmp = core_to_num_seq(
                 seq, full_seq[seq_id])
+            new_core_indexes = new_core_indexes.union(set(new_core_indexes_tmp))
         aln_3dm["var"][seq_id] = get_var_pos(aln_3dm["cores"][seq_id],
                                              full_seq[seq_id])
     if not core_indexes:
         core_indexes = new_core_indexes
-    return aln_3dm, core_indexes
+    return aln_3dm, list(core_indexes)
 
 
 def get_var_pos(num_seq, full_seq):
@@ -143,6 +144,7 @@ def core_to_num_seq(aligned_seq, full_seq):
         c = get_next_core(aligned_seq, start)
         core = c["core"]
         core_aligned_start = c["core_start"]
+        new_core_indexes.append(c["core_start"])
         if core == '':
             finished = True
             continue
@@ -153,10 +155,10 @@ def core_to_num_seq(aligned_seq, full_seq):
         cores = split_core(core, full_seq[prev_core:])
         cores = sorted(cores, key=lambda x: x["pos"])
         for c in cores:
+            # new_core_indexes.append(c['pos'] + prev_core)
             grounded_seq.extend([c['pos'] + i + 1 + prev_core
                                  for i in range(len(c['seq']))])
         prev_core = cores[-1]['pos'] + prev_core + len(cores[-1]['seq'])
-        new_core_indexes.append(prev_core + c['pos'])
     # fill in the c-terminal gaps
     grounded_seq += '-' * (len(aligned_seq) - len(grounded_seq))
     return grounded_seq, new_core_indexes
