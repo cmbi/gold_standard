@@ -150,25 +150,13 @@ def core_to_num_seq(aligned_seq, full_seq):
         grounded_seq += '-' * (core_aligned_start - start)
         start = core_aligned_start + len(core)
         # position of the core in the full sequence
-        core_full_start = full_seq[prev_core:].find(core) + prev_core
-        print c, full_seq[prev_core:], core_full_start
-        # is_single_core = core_full_start != (-1 + prev_core)
-        # the next 'core' actually consists of multiple cores, thus we need to
-        # split them up
-        if not False:
-            cores = split_core(core, full_seq[prev_core:])
-            cores = sorted(cores, key=lambda x: x["pos"])
-            for c in cores:
-                grounded_seq.extend([c['pos'] + i + 1 + prev_core
-                                     for i in range(len(c['seq']))])
-            prev_core = cores[-1]['pos'] + prev_core + len(cores[-1]['seq'])
-            new_core_indexes.append(prev_core + c['pos'])
-
-        else:
-            new_core_indexes.append(core_full_start)
-            grounded_seq.extend([core_full_start + i + 1
-                                 for i in range(len(core))])
-            prev_core = core_full_start + len(core)
+        cores = split_core(core, full_seq[prev_core:])
+        cores = sorted(cores, key=lambda x: x["pos"])
+        for c in cores:
+            grounded_seq.extend([c['pos'] + i + 1 + prev_core
+                                 for i in range(len(c['seq']))])
+        prev_core = cores[-1]['pos'] + prev_core + len(cores[-1]['seq'])
+        new_core_indexes.append(prev_core + c['pos'])
     # fill in the c-terminal gaps
     grounded_seq += '-' * (len(aligned_seq) - len(grounded_seq))
     return grounded_seq, new_core_indexes
