@@ -34,7 +34,7 @@ def calculate_aln_quality(paths, output, in_format, multi):
         gold_in = parse_gold_multi(paths['gold_path'])
     else:
         gold_in = parse_gold_pairwise(paths['gold_dir'])
-    if not gold_in:
+    if not gold_in['ids']:
         raise RuntimeError("No gold standard alignments were found")
     _log.debug("Sequences in the gold alignment: %s", gold_in['ids'])
 
