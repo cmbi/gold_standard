@@ -29,7 +29,6 @@ class HtmlHandler(object):
     def aln_to_html_var(self, quality_data):
         html_out = ""
         aln_length = len(quality_data['aa_aln'])
-
         num_aln_c = self.split_cores(quality_data['num_aln'],
                                      quality_data['core_indexes'])
         num_aln_v = self.split_vars(num_aln_c)

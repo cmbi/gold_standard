@@ -9,10 +9,9 @@ from gold_standard_src.gold_standard.parsers.gold import (parse_gold_pairwise,
                                                           parse_gold_multi)
 from gold_standard_src.gold_standard.parsers.fasta import parse_fasta
 from gold_standard_src.gold_standard.parsers.fatcat import parse_fatcat
-from gold_standard_src.gold_standard.num_seq import (
-    aln_seq_to_num, core_aln_to_num, get_core_indexes)
-from gold_standard_src.gold_standard.aln_analyzer import (
-    calc_scores, calc_scores_3dm)
+from gold_standard_src.gold_standard.num_seq import (core_aln_to_num,
+                                                     get_core_indexes)
+from gold_standard_src.gold_standard.aln_analyzer import calc_scores_3dm
 from gold_standard_src.gold_standard.result_processor import process_results
 
 # use frozensets of sequence ids as keys in dictionaries
@@ -41,32 +40,29 @@ def calculate_aln_quality(paths, output, in_format, multi):
 
     # parse and assess test alignments
     if in_format == '3dm' or in_format == 'fatcat':
-        _log.info("Calculating alignment quality in 3DM mode")
         if in_format == 'fatcat':
             aln_dict = parse_fatcat(paths['aln_path'], gold_in['ids'])
         else:
             aln_dict = parse_fasta(paths['aln_path'], gold_in['ids'])
+
         num_aln_dict, core_indexes = core_aln_to_num(
             aln_dict, gold_in['full_seq'], core_indexes,
             golden_ids=gold_in['ids'])
-        _log.debug("Sequences in the test alignment: %s",
-                   str(num_aln_dict['cores'].keys()))
-        scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)
     elif in_format == '3SSP':
         aln_dict = parse_3SSP(paths['aln_path'])
         num_aln_dict, core_indexes = core_aln_to_num(
             aln_dict, gold_in['full_seq'], core_indexes=None)
-        _log.debug("Sequences in the test alignment: %s",
-                   num_aln_dict['cores'].keys())
-        scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)
     elif in_format == 'fasta':
         _log.info("Calculating alignment quality")
         aln_dict = parse_fasta(paths['aln_path'], gold_in['ids'])
-        num_aln_dict = {seq_id: aln_seq_to_num(seq)
-                        for seq_id, seq in aln_dict.iteritems()}
-        scores = calc_scores(gold_in['alns'], num_aln_dict)
+        num_aln_dict, core_indexes = core_aln_to_num(
+            aln_dict, gold_in['full_seq'], core_indexes=None)
     else:
         raise Exception("Invalid input format: {}".format(in_format))
+    _log.debug("Sequences in the test alignment: %s",
+               str(num_aln_dict['cores'].keys()))
+
+    scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)
     process_results(scores['pairwise'], scores['full'],
                     scores['sp_scores'], output)
     return {
@@ -74,7 +70,7 @@ def calculate_aln_quality(paths, output, in_format, multi):
         'aa_aln': aln_dict,
         'num_aln': num_aln_dict,
         'full': gold_in['full_seq'],
-        'core_indexes': core_indexes
+        'core_indexes': sorted(core_indexes)
     }
 
 

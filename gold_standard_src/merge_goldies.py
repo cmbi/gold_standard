@@ -48,9 +48,9 @@ def merge_alignments(aln_list, ref_seq):
     ref_ungapped = re.sub('-', '', aln_list[0][ref_seq])
     # first sequence without gaps
     final_aln = {ref_seq: ref_ungapped}
-    for aln in aln_list:
-        new = remove_ref_gaps(aln, ref_seq)
-        final_aln.update(new)
+    # for aln in aln_list:
+    #     new = remove_ref_gaps(aln, ref_seq)
+    #     final_aln.update(new)
     return final_aln
 
 

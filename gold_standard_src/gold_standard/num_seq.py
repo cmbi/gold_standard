@@ -44,13 +44,9 @@ def core_aln_to_num(aln_dict, full_seq, core_indexes, golden_ids=None):
     for seq_id, seq in aln_dict.iteritems():
         if golden_ids and seq_id not in golden_ids:
             continue
-        if core_indexes:
-            aln_3dm["cores"][seq_id] = core_to_num_seq_known_cores(
-                seq, full_seq[seq_id], core_indexes)
-        else:
-            aln_3dm["cores"][seq_id], new_core_indexes_tmp = core_to_num_seq(
-                seq, full_seq[seq_id])
-            new_core_indexes = new_core_indexes.union(set(new_core_indexes_tmp))
+        aln_3dm["cores"][seq_id], new_core_indexes_tmp = core_to_num_seq(
+            seq, full_seq[seq_id])
+        new_core_indexes = new_core_indexes.union(set(new_core_indexes_tmp))
         aln_3dm["var"][seq_id] = get_var_pos(aln_3dm["cores"][seq_id],
                                              full_seq[seq_id])
     if not core_indexes:
@@ -139,12 +135,10 @@ def core_to_num_seq(aligned_seq, full_seq):
     start = 0
     finished = False
     prev_core = 0
-    new_core_indexes = []
     while not finished:
         c = get_next_core(aligned_seq, start)
         core = c["core"]
         core_aligned_start = c["core_start"]
-        new_core_indexes.append(c["core_start"])
         if core == '':
             finished = True
             continue
@@ -155,13 +149,34 @@ def core_to_num_seq(aligned_seq, full_seq):
         cores = split_core(core, full_seq[prev_core:])
         cores = sorted(cores, key=lambda x: x["pos"])
         for c in cores:
-            # new_core_indexes.append(c['pos'] + prev_core)
             grounded_seq.extend([c['pos'] + i + 1 + prev_core
                                  for i in range(len(c['seq']))])
         prev_core = cores[-1]['pos'] + prev_core + len(cores[-1]['seq'])
     # fill in the c-terminal gaps
     grounded_seq += '-' * (len(aligned_seq) - len(grounded_seq))
+    new_core_indexes = get_core_indexes_from_grounded(grounded_seq)
     return grounded_seq, new_core_indexes
+
+
+def get_core_indexes_from_grounded(grounded_seq):
+    prev = get_first_num(grounded_seq) - 1
+    core_indexes = [0]
+    for i, res in enumerate(grounded_seq):
+        if prev == '-' or res == '-':
+            prev = res
+            continue
+        if prev != int(res) - 1:
+            core_indexes.append(i)
+        prev = int(res)
+    return core_indexes
+
+
+def get_first_num(grounded_seq):
+    first_num = 1
+    for i in grounded_seq:
+        if i != '-':
+            first_num = i
+            return first_num
 
 
 def get_next_core(aligned_seq, start):

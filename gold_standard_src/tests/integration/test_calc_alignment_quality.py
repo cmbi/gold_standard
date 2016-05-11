@@ -79,7 +79,7 @@ def test_calc_alignment_quality_multi(mock_process_results, mock_path_exists):
             'ID12B': {},
             'ID13C': {}
         },
-        'core_indexes': [0, 2]
+        'core_indexes': [0]
     }
 
     calc_result = calculate_aln_quality(input_paths, output, input_format, multi)
