@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import argparse
 import logging
+import sys
 
 from gold_standard_src.gold_standard.html_handler import HtmlHandler
 from gold_standard_src.gold_standard.parsers.aln3SSP import parse_3SSP
@@ -109,6 +110,9 @@ if __name__ == "__main__":
     # change logging level in debug mode
     if args.debug:
         _log.setLevel(logging.DEBUG)
+    else:
+        # no exception traceback when not in debug mode
+        sys.tracebacklimit = 0
 
     # check input format
     allowed_formats = ["fasta", "3dm", "3SSP", "fatcat"]
