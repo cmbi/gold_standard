@@ -5,6 +5,8 @@ import sys
 
 from gold_standard_src.gold_standard.html_handler import HtmlHandler
 from gold_standard_src.gold_standard.parsers.aln3SSP import parse_3SSP
+from gold_standard_src.gold_standard.parsers.csv_parser import (
+    parse_csv_alignment)
 from gold_standard_src.gold_standard.parsers.gold import (parse_gold_pairwise,
                                                           parse_gold_multi)
 from gold_standard_src.gold_standard.parsers.fasta import parse_fasta
@@ -39,9 +41,12 @@ def calculate_aln_quality(paths, output, in_format, multi):
     _log.debug("Sequences in the gold alignment: %s", gold_in['ids'])
 
     # parse and assess test alignments
-    if in_format == '3dm' or in_format == 'fatcat':
+    if in_format in ['3dm', 'fatcat', 'csv', 'fasta']:
         if in_format == 'fatcat':
             aln_dict = parse_fatcat(paths['aln_path'], gold_in['ids'])
+        elif in_format == 'csv':
+            aln_dict = parse_csv_alignment(paths['aln_path'], gold_in['ids'])
+            print aln_dict
         else:
             aln_dict = parse_fasta(paths['aln_path'], gold_in['ids'])
 
@@ -50,11 +55,6 @@ def calculate_aln_quality(paths, output, in_format, multi):
             golden_ids=gold_in['ids'])
     elif in_format == '3SSP':
         aln_dict = parse_3SSP(paths['aln_path'])
-        num_aln_dict, core_indexes = core_aln_to_num(
-            aln_dict, gold_in['full_seq'], core_indexes=None)
-    elif in_format == 'fasta':
-        _log.info("Calculating alignment quality")
-        aln_dict = parse_fasta(paths['aln_path'], gold_in['ids'])
         num_aln_dict, core_indexes = core_aln_to_num(
             aln_dict, gold_in['full_seq'], core_indexes=None)
     else:
@@ -111,7 +111,7 @@ if __name__ == "__main__":
         sys.tracebacklimit = 0
 
     # check input format
-    allowed_formats = ["fasta", "3dm", "3SSP", "fatcat"]
+    allowed_formats = ["fasta", "3dm", "3SSP", "fatcat", "csv"]
     # 3dm - fasta format but variable regions are not in the alignment
     # fatcat - 'final_core'-like format
     # 3SSP - sequence id (no whitespaces) and sequence (corvar) on one line
