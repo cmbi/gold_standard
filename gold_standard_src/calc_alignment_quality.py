@@ -41,30 +41,30 @@ def calculate_aln_quality(paths, output, in_format, multi):
     _log.debug("Sequences in the gold alignment: %s", gold_in['ids'])
 
     # parse and assess test alignments
-    if in_format in ['3dm', 'fatcat', 'csv', 'fasta']:
-        if in_format == 'fatcat':
+    if in_format != 'csv':
+        if in_format == 'fatcat' or in_format == '3dm':
             aln_dict = parse_fatcat(paths['aln_path'], gold_in['ids'])
-        elif in_format == 'csv':
-            aln_dict = parse_csv_alignment(paths['aln_path'], gold_in['ids'])
-            print aln_dict
-        else:
+        elif in_format == 'fasta':
             aln_dict = parse_fasta(paths['aln_path'], gold_in['ids'])
+        elif in_format == '3SSP':
+            aln_dict = parse_3SSP(paths['aln_path'])
+        else:
+            raise Exception("Invalid input format: {}".format(in_format))
+        # create alignment of grounded sequences
+        num_aln_dict, core_indexes = core_aln_to_num(
+            aln_dict, gold_in['full_seq'], golden_ids=gold_in['ids'])
+    elif in_format == 'csv':
+        aln_dict, num_aln_dict, core_indexes = parse_csv_alignment(
+            paths['aln_path'], gold_in['ids'])
 
-        num_aln_dict, core_indexes = core_aln_to_num(
-            aln_dict, gold_in['full_seq'], core_indexes,
-            golden_ids=gold_in['ids'])
-    elif in_format == '3SSP':
-        aln_dict = parse_3SSP(paths['aln_path'])
-        num_aln_dict, core_indexes = core_aln_to_num(
-            aln_dict, gold_in['full_seq'], core_indexes=None)
-    else:
-        raise Exception("Invalid input format: {}".format(in_format))
+    if not num_aln_dict:
+        raise Exception("Test alignment is empty. Did you provide any "
+                        "sequences from the gold standard alignment?")
     _log.debug("Sequences in the test alignment: %s",
                str(num_aln_dict['cores'].keys()))
-
     scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)
-    process_results(scores['pairwise'], scores['full'],
-                    scores['sp_scores'], output)
+    process_results(scores['pairwise'], scores['full'], scores['sp_scores'],
+                    output)
     return {
         'wrong_cols': scores["wrong_cols"],
         'aa_aln': aln_dict,

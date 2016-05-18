@@ -21,42 +21,70 @@ def parse_csv_alignment(inpath, gold_ids):
     # read the file
     with open(inpath) as a:
         in_csv = a.read().splitlines()
-    # iterate through the file ([1:] because first line is the header)
-    in_aln = {}
-    start = 1 if "alnsequence" in in_csv[0] else 0
-    for line in in_csv[start:]:
+        num_aln = {'cores': {}, 'var': {}}
+    core_indexes = []
+    core_indexes_i = []
+    aa_aln = {}
+    for line in in_csv:
+        if "alnsequence" in line:
+            continue
         # split up the line (comma delimiter) and remove quotes
         # and join it again in one line
         # only take fields 1,2 cause field one is proteinid
-        tmp_line = ', '.join([re.sub('"', '', x) for x in line.split(',')[1:]])
-        new_seq = process_sequence(tmp_line)
-        if new_seq.keys()[0] in gold_ids:
-            in_aln.update(new_seq)
-    return in_aln
+        tmp_line = ','.join([re.sub('"', '', x) for x in line.split(',')])
+        corvar_line = tmp_line.split(',')[3]
+        seq_id = ''.join(tmp_line.split(',')[1:3]).upper()
+        new_seq_aa, new_seq_num, core_indexes_i = csv_corvar_to_num(corvar_line)
+        # new_seq, core_indexes_i = process_sequence(tmp_line)
+        if not core_indexes:
+            core_indexes = core_indexes_i
+        assert core_indexes == core_indexes_i
+        if seq_id in gold_ids:
+            # if new_seq.keys()[0] in gold_ids:
+            # num_aln.update(new_seq)
+            num_aln['cores'][seq_id] = new_seq_num['cores']
+            num_aln['var'][seq_id] = new_seq_num['var']
+            aa_aln[seq_id] = new_seq_aa
+    return aa_aln, num_aln, core_indexes
 
 
-def process_sequence(line):
-    """
-    Process sequence line from the 3DM alignment
-    e.g.
-        - input line: 1ABCA, ABC dfg FGH 0 IJK
-        - output:
-            {'1ABCA': {'cores': ['ABC', 'FGH', 'IJK'], 'vars': ['', 'dfg', '']
-            }}
-    :param line: sequence line
-    :return: sequence dictionary
-    """
-    seq_id = line.split(',')[0]
-    next_seg = 'var'
-    if line.split()[1].isupper():
-        # if the first segment is a core add an empty var segment
-        next_seg = 'core'
-    sequence = ""
-    # start at 1, because the 0th segment is the ID
-    for segment in line.split()[1:]:
-        if next_seg == 'core':
-            sequence += segment
-            next_seg = 'var'
-        else:
-            next_seg = 'core'
-    return {seq_id: sequence}
+def csv_corvar_to_num(corvar_line):
+    aln = {'cores': [], 'var': [], 'full': ''}
+    # remove numbers and whitespaces form the corvar line
+    sequence = re.sub(r'[0-9\s]', '', corvar_line)
+    seq_split = corvar_line.split()
+    aln['full'] = re.sub('-', '', sequence).upper()
+    count = 1
+    ex = False
+    core_indexes = set()
+    # total length of cores up to now
+    # cores_len = 0
+    prev = 'var'
+    aa_seq = []
+    for j, seg_j in enumerate(seq_split):
+        for res_i in seg_j:
+            if j % 2 == 0:
+                if res_i.isupper():
+                    ex = True
+                if res_i != '-' and res_i != '0':
+                    # even segments are vars
+                    aln['var'].append(count)
+                    count += 1
+                prev = 'var'
+            else:
+                if prev == 'var':
+                    core_indexes.add(len(aln['cores']))
+                if res_i.islower():
+                    ex = True
+                if res_i == '-':
+                    aln['cores'].append('-')
+                else:
+                    aln['cores'].append(count)
+                    count += 1
+                aa_seq.append(res_i)
+                prev = 'core'
+            if ex:
+                print seq_split
+                raise ParserError("Core and var regions are not in the "
+                                  "right order")
+    return aa_seq, aln, core_indexes

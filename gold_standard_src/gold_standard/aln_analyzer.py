@@ -132,10 +132,10 @@ def score_core_regions_3dm(sequences, golden_aln, id1, id2, multi):
 def calc_pairwise_score_3dm(golden_aln, sequences, var_regs, multi):
     id1, id2 = sequences.keys()
     if len(sequences[id1]) != len(sequences[id2]):
-        raise Exception("Aligned sequences {} and {} are not of the same "
-                        "length: {} and {}".format(
-                            sequences[id1], sequences[id2], len(sequences[id1]),
-                            len(sequences[id2])))
+        raise Exception("Aligned sequences {} and {} ({} and {}) are not of "
+                        "the same length: {} and {}".format(
+                            id1, id2, sequences[id1], sequences[id2],
+                            len(sequences[id1]), len(sequences[id2])))
     result = score_core_regions_3dm(sequences, golden_aln, id1, id2, multi)
     # score variable regions in seq1
     var_matrix = score_var_regions(golden_aln, id1, id2, var_regs[id1], multi)
@@ -171,8 +171,8 @@ def get_aligned_res(res_num, query_id, id2, golden_aln, multi=False):
 
 def calc_pairwise_score(golden_aln, id1, seq1, id2, seq2):
     if len(seq1) != len(seq2):
-        raise Exception("Aligned sequences {} and {} are not of the same "
-                        "length".format(seq1, seq2))
+        raise Exception("Aligned sequences {} and {} ({} and {}) are not of the same "
+                        "length".format(id1, id2, seq1, seq2))
 
     result = {
         "matrix": {"TP": 0, "FP": 0, "FN": 0, "TN": 0},

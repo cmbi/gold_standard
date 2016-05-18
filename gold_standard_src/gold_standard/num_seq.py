@@ -30,7 +30,7 @@ def corvar_to_num(corvar_line):
     return aln
 
 
-def core_aln_to_num(aln_dict, full_seq, core_indexes, golden_ids=None):
+def core_aln_to_num(aln_dict, full_seq, golden_ids=None):
     """
     :param aln_path: path to the core alignment file
     :param full_seq_path: path to the full plain sequences in fasta format
@@ -40,17 +40,15 @@ def core_aln_to_num(aln_dict, full_seq, core_indexes, golden_ids=None):
     """
     _log.info("Converting 3DM alignment to grounded sequences")
     aln_3dm = {"cores": {}, "var": {}}
-    new_core_indexes = set()
+    core_indexes = set()
     for seq_id, seq in aln_dict.iteritems():
         if golden_ids and seq_id not in golden_ids:
             continue
-        aln_3dm["cores"][seq_id], new_core_indexes_tmp = core_to_num_seq(
+        aln_3dm["cores"][seq_id], core_indexes_tmp = core_to_num_seq(
             seq, full_seq[seq_id])
-        new_core_indexes = new_core_indexes.union(set(new_core_indexes_tmp))
+        core_indexes = core_indexes.union(set(core_indexes_tmp))
         aln_3dm["var"][seq_id] = get_var_pos(aln_3dm["cores"][seq_id],
                                              full_seq[seq_id])
-    if not core_indexes:
-        core_indexes = new_core_indexes
     return aln_3dm, list(core_indexes)
 
 
