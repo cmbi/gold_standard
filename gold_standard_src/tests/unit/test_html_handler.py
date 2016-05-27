@@ -45,8 +45,7 @@ def test_aln_to_html_var():
     wrong = {'1': {0: 1, 10: 1, 11: 1}, '2': {}}
     full_seq = {'1': 'ABCDEFGHIJKLMNOP',
                 '2': 'ABCDEF'}
-    core_indexes = [0, 1, 6]
-    num_aln = core_aln_to_num(aa_aln, full_seq, core_indexes)[0]
+    num_aln, core_indexes = core_aln_to_num(aa_aln, full_seq)
     expected = "1      <span class=featWRONG3>A</span> b <span class=featOK>C" \
                "</span><span class=featOK>D</span><span class=featOK>E</span>" \
                "<span class=featOK>F</span><span class=featOK>G</span> hij <s" \

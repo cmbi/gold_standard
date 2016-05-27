@@ -167,5 +167,5 @@ def test_core_aln_to_num():
         'var': {'1': [3, 9]}
     }
 
-    num_aln = ns.core_aln_to_num(aln_dict, full_seq, core_indexes=None)[0]
+    num_aln = ns.core_aln_to_num(aln_dict, full_seq)[0]
     eq_(num_aln, expected)

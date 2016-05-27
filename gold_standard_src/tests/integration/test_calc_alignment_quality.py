@@ -4,8 +4,8 @@ from nose.tools import eq_
 from gold_standard_src.calc_alignment_quality import calculate_aln_quality
 
 
-@patch('gold_standard_src.gold_standard.parsers.fasta.open', mock_open(
-    read_data=">ID11A\nA-C\nDEF\n>ID12B\nABCGHI\n>ID13C\nACDFGH\n"),
+@patch('gold_standard_src.gold_standard.parsers.fatcat.open', mock_open(
+    read_data="ID11 A A-CDEF\nID12 B ABCGHI\nID13 C ACDFGH\n"),
        create=True)
 @patch('gold_standard_src.gold_standard.num_seq.open', mock_open(
     read_data="ID11A, 0 A-C 0 DEF 0\nID12B, 0 ABC 0 GHI 0\nID13C, "
@@ -52,33 +52,16 @@ def test_calc_alignment_quality_multi(mock_process_results, mock_path_exists):
 
     expected_result = {
         'num_aln': {
-            'var': {
-                'ID11A': [],
-                'ID12B': [],
-                'ID13C': []
-            },
+            'var': {'ID11A': [], 'ID12B': [], 'ID13C': []},
             'cores': {
                 'ID11A': [1, '-', 2, 3, 4, 5],
                 'ID12B': [1, 2, 3, 4, 5, 6],
                 'ID13C': [1, 2, 3, 4, 5, 6]
             }
         },
-        'full': {
-            'ID11A': 'ACDEF',
-            'ID12B': 'ABCGHI',
-            'ID13C': 'ACDFGH'
-
-        },
-        'aa_aln': {
-            'ID11A': 'A-CDEF',
-            'ID12B': 'ABCGHI',
-            'ID13C': 'ACDFGH'
-        },
-        'wrong_cols': {
-            'ID11A': {},
-            'ID12B': {},
-            'ID13C': {}
-        },
+        'full': {'ID11A': 'ACDEF', 'ID12B': 'ABCGHI', 'ID13C': 'ACDFGH'},
+        'aa_aln': {'ID11A': 'A-CDEF', 'ID12B': 'ABCGHI', 'ID13C': 'ACDFGH'},
+        'wrong_cols': {'ID11A': {}, 'ID12B': {}, 'ID13C': {}},
         'core_indexes': [0]
     }
 

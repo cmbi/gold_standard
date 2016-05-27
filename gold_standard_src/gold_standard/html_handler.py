@@ -31,7 +31,9 @@ class HtmlHandler(object):
         aln_length = len(quality_data['aa_aln'])
         num_aln_c = self.split_cores(quality_data['num_aln'],
                                      quality_data['core_indexes'])
+        print num_aln_c
         num_aln_v = self.split_vars(num_aln_c)
+        print num_aln_v
 
         aa_aln_corvar = self.make_corvar(quality_data['full'], num_aln_v)
         var_lengths = self.get_max_var_lengths(num_aln_v)
