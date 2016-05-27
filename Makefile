@@ -1,6 +1,4 @@
 PROJECT = gold-standard
-# PACKAGE = gold_standard_src/gold_standard
-# PYTHON_FILES = $(PACKAGE)/*.py 
 PACKAGE = gold_standard_src/
 PYTHON_FILES = find $(PACKAGE) -name "*py"
 
