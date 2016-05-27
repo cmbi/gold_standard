@@ -1,6 +1,6 @@
 PROJECT = gold-standard
 PACKAGE = gold_standard_src/gold_standard
-PYTHON_FILES = $(PACKAGE)/*.py
+PYTHON_FILES = $(PACKAGE)/*.py gold_standard/*py
 
 # Build environment
 VIRTUALENV = .venv
