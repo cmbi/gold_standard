@@ -83,13 +83,12 @@ if __name__ == "__main__":
     parser.add_argument("test_aln_path")
     parser.add_argument("output")
     parser.add_argument("--gold_dir")
-    parser.add_argument("--html", action="store_true")
-    parser.add_argument("--html_var", action="store_true")
-    parser.add_argument("--html_var_short", action="store_true")
+    parser.add_argument("--html", help="HTML output (without variable regions)",
+                        action="store_true")
+    parser.add_argument("--html_var", help="HTML output with variable regions", action="store_true")
+    parser.add_argument("--html_var_short", "HTML output with shortened "
+                        "variable regions", action="store_true")
     parser.add_argument("--input_format", default="fasta")
-    parser.add_argument("--in3dm", default=False, action="store_true")
-    parser.add_argument("--inFatCat", default=False, action="store_true")
-    parser.add_argument("--in3SSP", default=False, action="store_true")
     parser.add_argument("-d", "--debug", default=False, action="store_true")
     parser.add_argument("--final_core", help="final core file")
     parser.add_argument("--multi", action="store_true")

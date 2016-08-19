@@ -262,34 +262,3 @@ def calc_scores_3dm(golden_alns, test_aln, multi):
                 result['full'] = merge_dicts(result['full'], scores['matrix'])
                 result['sp_scores'][id_set] = scores['sp_score']
     return result
-
-
-def calc_scores(golden_alns, test_aln):
-    _log.info("Calculating confusion matrices")
-    matrices_dict = {}
-    # full matrix holds scores summed up from all sequence pairs
-    full_matrix = {'TP': 0, 'FP': 0, 'TN': 0, 'FN': 0}
-    sp_scores = {}
-    wrong_cols = {}
-    for id1, seq1 in test_aln.iteritems():
-        for id2, seq2 in test_aln.iteritems():
-            id_set = fs([id1, id2])
-            # check if not the same sequence and if not already calculated
-            if (id1 != id2 and id_set not in matrices_dict.keys() and
-                    id_set in golden_alns.keys()):
-                scores = calc_pairwise_score(golden_alns[id_set], id1, seq1,
-                                             id2, seq2)
-                if id1 not in wrong_cols:
-                    wrong_cols[id1] = {}
-                if id2 not in wrong_cols:
-                    wrong_cols[id2] = {}
-                wrong_cols[id1] = merge_dicts(wrong_cols[id1],
-                                              scores["wrong_cols"][id1])
-                wrong_cols[id2] = merge_dicts(wrong_cols[id2],
-                                              scores["wrong_cols"][id2])
-                matrices_dict[id_set] = scores['matrix']
-                # add the values to the matrix with overall scores
-                full_matrix = merge_dicts(full_matrix, scores['matrix'])
-                sp_scores[id_set] = scores['sp_score']
-    return {'pairwise': matrices_dict, 'full': full_matrix,
-            'sp_scores': sp_scores, 'wrong_cols': wrong_cols}

@@ -3,18 +3,6 @@ import logging
 _log = logging.getLogger("__main__")
 
 
-def calc_sums(aln, id1, id2):
-    sum_pos = 0
-    sum_neg = 0
-    for i in range(len(aln[id1])):
-        if ((aln[id1][i] == "-" and aln[id2][i] != "-") or
-                (aln[id1][i] != "-" and aln[id2][i] == "-")):
-            sum_neg += 1
-        elif aln[id1][i] != "-" and aln[id2][i] != "-":
-            sum_pos += 2
-    return {"pos": sum_pos, "neg": sum_neg}
-
-
 def calc_stats(confusion_matrices):
     _log.info("Calculating stats")
     stats = {}
