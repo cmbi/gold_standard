@@ -86,7 +86,7 @@ if __name__ == "__main__":
     parser.add_argument("--html", help="HTML output (without variable regions)",
                         action="store_true")
     parser.add_argument("--html_var", help="HTML output with variable regions", action="store_true")
-    parser.add_argument("--html_var_short", "HTML output with shortened "
+    parser.add_argument("--html_var_short", help="HTML output with shortened "
                         "variable regions", action="store_true")
     parser.add_argument("--input_format", default="fasta")
     parser.add_argument("-d", "--debug", default=False, action="store_true")
