@@ -32,8 +32,13 @@ def parse_csv_alignment(inpath, gold_ids):
         # and join it again in one line
         # only take fields 1,2 cause field one is proteinid
         tmp_line = ','.join([re.sub('"', '', x) for x in line.split(',')])
-        corvar_line = tmp_line.split(',')[3]
-        seq_id = ''.join(tmp_line.split(',')[1:3]).upper()
+        tmp_line_split = tmp_line.split(',')
+        if len(tmp_line_split) == 4:
+            corvar_line = tmp_line_split[3]
+            seq_id = ''.join(tmp_line_split[1:3]).upper()
+        elif len(tmp_line_split) == 2:
+            corvar_line = tmp_line_split[1]
+            seq_id = tmp_line_split[0].upper()
         new_seq_aa, new_seq_num, core_indexes_i = csv_corvar_to_num(corvar_line)
         # new_seq, core_indexes_i = process_sequence(tmp_line)
         if not core_indexes:
