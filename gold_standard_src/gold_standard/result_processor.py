@@ -29,10 +29,16 @@ def process_results(matrices, full_matrix, sp_scores, output):
     # sensitivity, specificity, ppv, npv
     out_txt += ' '.join(["{}: {}".format(k, v)
                          for k, v in full_matrix.iteritems()]) + '\n'
+    # conf matrix rates (e.g. TP / total number of aa)
+    total = float(sum(full_matrix.values()))
+    rates = {key + 'r': val / total for key, val in full_matrix.iteritems()}
+    out_txt += ' '.join(["%s: %.3f" % (k, v)
+                         for k, v in rates.iteritems()]) + '\n'
     # FP, TP, FN, TN values
     full_stats = calc_stats({'full': full_matrix})['full']
     out_txt += ''.join(["{}: {}\n".format(k, v)
                         for k, v in full_stats.iteritems()]) + '\n'
+
     # average SP score
     sp_score = sum(sp_scores.values()) / len(sp_scores)
     out_txt += "SP score: {}\n".format(sp_score)

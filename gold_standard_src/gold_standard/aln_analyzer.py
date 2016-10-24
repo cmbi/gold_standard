@@ -188,10 +188,10 @@ def calc_pairwise_score(golden_aln, id1, seq1, id2, seq2):
             res2_gold = get_aligned_res(res_i, id1, id2, golden_aln)
             if seq2[i] == res2_gold:
                 result['sp_score'] += 2
-                result['matrix']["TP"] += 2
+                result['matrix']["TP"] += 1
             else:
                 result['sp_score'] -= 2
-                result['matrix']["FP"] += 2
+                result['matrix']["FP"] += 1
                 result['wrong_cols'][id1][i] = 1
                 result['wrong_cols'][id2][i] = 1
         elif seq1[i] != '-':
