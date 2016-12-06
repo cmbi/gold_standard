@@ -60,7 +60,6 @@ def calculate_aln_quality(paths, output, in_format, multi):
     if not num_aln_dict['cores']:
         raise Exception("Test alignment is empty. Did you provide any "
                         "sequences from the gold standard alignment?")
-    print num_aln_dict
     _log.debug("Sequences in the test alignment: %s",
                str(num_aln_dict['cores'].keys()))
     scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)

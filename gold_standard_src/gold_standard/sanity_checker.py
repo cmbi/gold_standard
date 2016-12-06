@@ -17,7 +17,6 @@ def check_pairwise_score_3dm(sequences, var_regs, result, id1, id2):
 
 def check_pairwise_score(seq1, seq2, matrix):
     res_only = [x for x in seq1 + seq2 if x != '-']
-    print "length: ", len(res_only), seq1, seq2
     if len(res_only) != sum(matrix.values()):
         raise Exception("Sum of values in the confusion matrix({}) should be "
                         "equal to the total number of residues({})".format(

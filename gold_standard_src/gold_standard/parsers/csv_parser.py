@@ -89,7 +89,6 @@ def csv_corvar_to_num(corvar_line):
                 aa_seq.append(res_i)
                 prev = 'core'
             if ex:
-                print seq_split
                 raise ParserError("Core and var regions are not in the "
                                   "right order")
     return aa_seq, aln, core_indexes
