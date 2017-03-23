@@ -43,7 +43,7 @@ def parse_csv_alignment(inpath, gold_ids):
         # new_seq, core_indexes_i = process_sequence(tmp_line)
         if not core_indexes:
             core_indexes = core_indexes_i
-        assert core_indexes == core_indexes_i
+        # assert core_indexes == core_indexes_i
         if seq_id in gold_ids:
             # if new_seq.keys()[0] in gold_ids:
             # num_aln.update(new_seq)
@@ -69,8 +69,8 @@ def csv_corvar_to_num(corvar_line):
     for j, seg_j in enumerate(seq_split):
         for res_i in seg_j:
             if j % 2 == 0:
-                if res_i.isupper():
-                    ex = True
+                # if res_i.isupper():
+                #     ex = True
                 if res_i != '-' and res_i != '0':
                     # even segments are vars
                     aln['var'].append(count)
@@ -79,8 +79,8 @@ def csv_corvar_to_num(corvar_line):
             else:
                 if prev == 'var':
                     core_indexes.add(len(aln['cores']))
-                if res_i.islower():
-                    ex = True
+                # if res_i.islower():
+                #     ex = True
                 if res_i == '-':
                     aln['cores'].append('-')
                 else:
