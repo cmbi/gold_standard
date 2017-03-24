@@ -53,12 +53,13 @@ def calculate_aln_quality(paths, output, in_format, multi):
         # create alignment of grounded sequences
         num_aln_dict, core_indexes = core_aln_to_num(
             aln_dict, gold_in['full_seq'], golden_ids=gold_in['ids'])
-    elif in_format == 'csv':
+    else:
+        # input format is 'csv'
         aln_dict, num_aln_dict, core_indexes = parse_csv_alignment(
             paths['aln_path'], gold_in['ids'])
-
-    if not num_aln_dict['cores']:
-        raise Exception("Test alignment is empty. Did you provide any "
+    if len(num_aln_dict['cores']) < 2:
+        raise Exception("Test alignment has fewer than 2 sequences from the "
+                        "gold standard alignment. Did you provide any "
                         "sequences from the gold standard alignment?")
     _log.debug("Sequences in the test alignment: %s",
                str(num_aln_dict['cores'].keys()))
