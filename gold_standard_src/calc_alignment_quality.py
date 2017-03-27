@@ -57,7 +57,8 @@ def calculate_aln_quality(paths, output, in_format, multi):
         # input format is 'csv'
         aln_dict, num_aln_dict, core_indexes = parse_csv_alignment(
             paths['aln_path'], gold_in['ids'])
-    if len(num_aln_dict['cores']) < 2:
+    tmpl_no = len(num_aln_dict['cores'])
+    if tmpl_no < 2:
         raise Exception("Test alignment has fewer than 2 sequences from the "
                         "gold standard alignment. Did you provide any "
                         "sequences from the gold standard alignment?")
@@ -65,7 +66,7 @@ def calculate_aln_quality(paths, output, in_format, multi):
                str(num_aln_dict['cores'].keys()))
     scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)
     process_results(scores['pairwise'], scores['full'], scores['sp_scores'],
-                    output)
+                    output, tmpl_no)
     return {
         'wrong_cols': scores["wrong_cols"],
         'aa_aln': aln_dict,

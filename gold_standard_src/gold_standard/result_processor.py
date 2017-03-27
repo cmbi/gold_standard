@@ -1,4 +1,5 @@
 import logging
+from numpy import sqrt
 
 _log = logging.getLogger("__main__")
 
@@ -17,10 +18,15 @@ def calc_stats(confusion_matrices):
             stats[m_id]['ppv'] = float(m['TP']) / (m['TP'] + m['FP'])
         if m['TN'] + m['FN'] != 0:
             stats[m_id]['npv'] = float(m['TN']) / (m['TN'] + m['FN'])
+        up = (m['TP'] * m['TN']) - (m['FP'] * m['FN'])
+        down = (m['TP'] + m['FP']) * (m['TP'] + m['FN']) * \
+            (m['TN'] + m['FP']) * (m['TN'] + m['FN'])
+        stats[m_id]['mcc'] = up / sqrt(down)
+
     return stats
 
 
-def process_results(matrices, full_matrix, sp_scores, output):
+def process_results(matrices, full_matrix, sp_scores, output, tmpl_no):
     _log.info("Processing the results")
     out_txt = ""
 
@@ -39,6 +45,7 @@ def process_results(matrices, full_matrix, sp_scores, output):
     out_txt += ''.join(["{}: {}\n".format(k, v)
                         for k, v in full_stats.iteritems()]) + '\n'
 
+    out_txt += 'aligned templates: {}\n'.format(tmpl_no)
     # average SP score
     sp_score = sum(sp_scores.values()) / len(sp_scores)
     out_txt += "SP score: {}\n".format(sp_score)

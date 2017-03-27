@@ -8,7 +8,7 @@ from gold_standard_src.gold_standard.parsers.error_types import ParserError
 _log = logging.getLogger(__name__)
 
 
-def parse_csv_alignment(inpath, gold_ids):
+def parse_csv_alignment(inpath, gold_ids, with_identities=False):
     """
     Parses CSV file containing aligned seuqences, first line is the header,
     second line is the template sequence:
