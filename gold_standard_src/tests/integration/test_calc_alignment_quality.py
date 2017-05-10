@@ -47,7 +47,8 @@ def test_calc_alignment_quality_multi(mock_process_results, mock_path_exists):
             frozenset(['ID11A', 'ID13C']): 1.0,
             frozenset(['ID13C', 'ID12B']): 1.0,
         },  # SP scores; 1.0 is max
-        'testpath'                             # output path
+        'testpath',                            # output path
+        3   # number of templates
     ]
 
     expected_result = {
