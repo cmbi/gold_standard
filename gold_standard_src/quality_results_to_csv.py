@@ -20,7 +20,6 @@ def parse_files(paths):
                 uniq_tmpls.add(l.split()[1])
                 uniq_tmpls.add(l.split()[2])
 
-
         results[batch] = {
             'sensitivity': result_lines[0].split(":")[1],
             'specificity': result_lines[4].split(":")[1],
@@ -30,7 +29,6 @@ def parse_files(paths):
             'aligned templates': result_lines[6].split(":")[1]
         }
     return results, uniq_tmpls
-
 
 
 def get_string(s):
@@ -45,11 +43,13 @@ def get_string(s):
     else:
         return s
 
+
 def get_line(values, key):
     newline = ["", "", key]
     for i in values:
         newline.append(values[i][key])
     return newline
+
 
 def convert_to_csv(inpath, outpath):
     with open(inpath) as a:
