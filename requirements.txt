@@ -6,6 +6,7 @@ argparse>=1.2.1
 numpy>=1.10.2
 
 # Build requirements
+appdirs>=1.4.3
 clonedigger>=1.1.0
 coverage>=4.0.1
 epydoc>=3.0.1
@@ -15,4 +16,3 @@ pep8>=1.7.0
 pylint>=1.5.5
 virtualenv>=15.0.1
 vulture>=0.8.1
-appdirs>=1.4.3
