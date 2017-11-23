@@ -32,7 +32,7 @@ if __name__ == "__main__":
     parser.add_argument("project_name")
     args = parser.parse_args()
     input_paths = get_input_paths(args.project_name)
-    output = args.project_name + "_test_result"
+    output = os.path.join('WIFALI', args.project_name + "_test_result")
     quality_data = ca.calculate_aln_quality(
         input_paths, output, 'fatcat', True)
     hh = HtmlHandler(var=False, var_short=False)
