@@ -1,8 +1,8 @@
 import logging
 import os
 
-from gold_standard_src.gold_standard.parsers.error_types import ParserError
-from gold_standard_src.gold_standard.parsers.var_file import parse_var_file
+from gold_standard.parsers.error_types import ParserError
+from gold_standard.parsers.var_file import parse_var_file
 
 _log = logging.getLogger(__name__)
 fs = frozenset

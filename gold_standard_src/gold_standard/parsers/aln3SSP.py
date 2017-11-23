@@ -1,6 +1,6 @@
 import os
 
-from gold_standard_src.gold_standard.parsers.error_types import ParserError
+from gold_standard.parsers.error_types import ParserError
 
 
 def parse_3SSP(aln_path):

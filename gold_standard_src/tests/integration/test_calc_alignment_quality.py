@@ -1,7 +1,7 @@
 from mock import mock_open, patch
 from nose.tools import eq_
 
-from gold_standard_src.calc_alignment_quality import calculate_aln_quality
+from calc_alignment_quality import calculate_aln_quality
 
 
 @patch('gold_standard_src.gold_standard.parsers.fatcat.open', mock_open(

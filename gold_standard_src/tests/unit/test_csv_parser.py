@@ -1,4 +1,4 @@
-from gold_standard_src.gold_standard.parsers.csv_parser import csv_corvar_to_num
+from gold_standard.parsers.csv_parser import csv_corvar_to_num
 
 
 def test_csv_corvar_to_num():

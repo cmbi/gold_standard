@@ -1,10 +1,10 @@
 import argparse
 import logging
 
-from gold_standard_src.gold_standard.aln_analyzer import compare_alignments
-from gold_standard_src.gold_standard.html_handler import HtmlHandler
-from gold_standard_src.gold_standard.num_seq import core_aln_to_num
-from gold_standard_src.gold_standard.parsers.fasta import parse_fasta
+from gold_standard.aln_analyzer import compare_alignments
+from gold_standard.html_handler import HtmlHandler
+from gold_standard.num_seq import core_aln_to_num
+from gold_standard.parsers.fasta import parse_fasta
 
 
 FORMAT = '%(asctime)s:%(levelname)s:%(funcName)s - %(message)s'

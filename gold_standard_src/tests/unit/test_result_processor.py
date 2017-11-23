@@ -1,6 +1,6 @@
 from nose.tools import assert_almost_equals, eq_
 
-from gold_standard_src.gold_standard.result_processor import calc_stats
+from gold_standard.result_processor import calc_stats
 
 
 def test_calc_stats():
