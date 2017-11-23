@@ -34,7 +34,6 @@ def calculate_aln_quality(paths, output, in_format, multi):
     # read the gold standard alignments
     if multi:
         gold_in = parse_gold_multi(paths['gold_path'])
-        print gold_in['ids']
     else:
         gold_in = parse_gold_pairwise(paths['gold_dir'])
     if not gold_in['ids']:
@@ -45,7 +44,6 @@ def calculate_aln_quality(paths, output, in_format, multi):
     if in_format != 'csv':
         if in_format == 'fatcat' or in_format == '3dm':
             aln_dict = parse_fatcat(paths['aln_path'], gold_in['ids'])
-            print aln_dict
         elif in_format == 'fasta':
             aln_dict = parse_fasta(paths['aln_path'], gold_in['ids'])
         elif in_format == '3SSP':
