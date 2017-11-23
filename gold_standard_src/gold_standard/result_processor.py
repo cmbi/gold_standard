@@ -21,7 +21,10 @@ def calc_stats(confusion_matrices):
         up = (m['TP'] * m['TN']) - (m['FP'] * m['FN'])
         down = (m['TP'] + m['FP']) * (m['TP'] + m['FN']) * \
             (m['TN'] + m['FP']) * (m['TN'] + m['FN'])
-        stats[m_id]['mcc'] = up / sqrt(down)
+        try:
+            stats[m_id]['mcc'] = up / sqrt(down)
+        except:
+            print ""
 
     return stats
 

@@ -1,7 +1,7 @@
 import copy
 import os
 
-from gold_standard_src.gold_standard.paths import CSS, TEMPLATE
+from gold_standard.paths import CSS, TEMPLATE
 
 
 class HtmlHandler(object):

@@ -3,18 +3,18 @@ import argparse
 import logging
 import sys
 
-from gold_standard_src.gold_standard.html_handler import HtmlHandler
-from gold_standard_src.gold_standard.parsers.aln3SSP import parse_3SSP
-from gold_standard_src.gold_standard.parsers.csv_parser import (
+from gold_standard.html_handler import HtmlHandler
+from gold_standard.parsers.aln3SSP import parse_3SSP
+from gold_standard.parsers.csv_parser import (
     parse_csv_alignment)
-from gold_standard_src.gold_standard.parsers.gold import (parse_gold_pairwise,
+from gold_standard.parsers.gold import (parse_gold_pairwise,
                                                           parse_gold_multi)
-from gold_standard_src.gold_standard.parsers.fasta import parse_fasta
-from gold_standard_src.gold_standard.parsers.fatcat import parse_fatcat
-from gold_standard_src.gold_standard.num_seq import (core_aln_to_num,
+from gold_standard.parsers.fasta import parse_fasta
+from gold_standard.parsers.fatcat import parse_fatcat
+from gold_standard.num_seq import (core_aln_to_num,
                                                      get_core_indexes)
-from gold_standard_src.gold_standard.aln_analyzer import calc_scores_3dm
-from gold_standard_src.gold_standard.result_processor import process_results
+from gold_standard.aln_analyzer import calc_scores_3dm
+from gold_standard.result_processor import process_results
 
 # use frozensets of sequence ids as keys in dictionaries
 # (regular sets cannot be used because they are mutable)
@@ -34,6 +34,7 @@ def calculate_aln_quality(paths, output, in_format, multi):
     # read the gold standard alignments
     if multi:
         gold_in = parse_gold_multi(paths['gold_path'])
+        print gold_in['ids']
     else:
         gold_in = parse_gold_pairwise(paths['gold_dir'])
     if not gold_in['ids']:
@@ -44,6 +45,7 @@ def calculate_aln_quality(paths, output, in_format, multi):
     if in_format != 'csv':
         if in_format == 'fatcat' or in_format == '3dm':
             aln_dict = parse_fatcat(paths['aln_path'], gold_in['ids'])
+            print aln_dict
         elif in_format == 'fasta':
             aln_dict = parse_fasta(paths['aln_path'], gold_in['ids'])
         elif in_format == '3SSP':
