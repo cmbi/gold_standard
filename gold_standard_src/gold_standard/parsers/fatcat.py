@@ -1,7 +1,7 @@
 import logging
 import os
 
-from .parsers.error_types import ParserError
+from .error_types import ParserError
 
 _log = logging.getLogger(__name__)
 
