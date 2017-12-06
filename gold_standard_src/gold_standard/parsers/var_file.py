@@ -1,18 +1,21 @@
 import logging
 import re
 
-from gold_standard_src.gold_standard.num_seq import (aln_seq_to_num,
-                                                     corvar_to_num)
+from gold_standard_src.gold_standard.num_seq import (aln_seq_to_num, corvar_to_num)
 from gold_standard_src.gold_standard.parsers.error_types import ParserError
 
 _log = logging.getLogger(__name__)
 
 
-def convert_var_to_aln(var_file):
-    id1 = var_file[0].split(',')[0]
-    id2 = var_file[1].split(',')[0]
-    var1 = var_file[0].split(',')[1]
-    var2 = var_file[1].split(',')[1]
+def convert_var_to_aln(var_file_lines):
+    """
+    Convert a pairwise corvar alignment to a regular alignment, leave variable
+    regions unaligned (insert gaps in the other sequence)
+    """
+    id1 = var_file_lines[0].split(',')[0]
+    id2 = var_file_lines[1].split(',')[0]
+    var1 = var_file_lines[0].split(',')[1]
+    var2 = var_file_lines[1].split(',')[1]
     # filter out the '0' core separators and split in segments
     var1 = re.sub('0', '', var1).split()
     var2 = re.sub('0', '', var2).split()
@@ -47,6 +50,9 @@ def convert_var_to_aln(var_file):
 
 
 def convert_multi_var_to_aln(var_file):
+    """
+    Convert a multiple corvar alignment to a regular alignment
+    """
     multi_aln = {"cores": {}, "var": {}}
     full = {}
     aln_dict = {i.split(',')[0]: i.split(',')[1] for i in var_file}
@@ -63,6 +69,9 @@ def parse_var_file(file_path, multi=False):
     with open(file_path) as a:
         var_file = a.read().splitlines()
     ids = [i.split(',')[0] for i in var_file]
+
+    # we take first structure as the 'target'
+    target = var_file[0].split(',')[0]
     if multi:
         aln, full = convert_multi_var_to_aln(var_file)
     else:
@@ -70,6 +79,7 @@ def parse_var_file(file_path, multi=False):
         full = {}
         for k, v in aln.iteritems():
             full[k] = re.sub('-', '', v)
+        # convert aa sequences to grounded sequences
         aln = {seq_id: aln_seq_to_num(seq) for
                seq_id, seq in aln.iteritems()}
-    return {'ids': ids, 'alns': aln, 'full_seq': full}
+    return {'ids': ids, 'alns': aln, 'full_seq': full, 'target': target}
