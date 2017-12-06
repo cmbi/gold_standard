@@ -1,8 +1,8 @@
 import logging
 import re
 
-from gold_standard_src.gold_standard.num_seq import (aln_seq_to_num, corvar_to_num)
-from gold_standard_src.gold_standard.parsers.error_types import ParserError
+from ..num_seq import (aln_seq_to_num, corvar_to_num)
+from .error_types import ParserError
 
 _log = logging.getLogger(__name__)
 

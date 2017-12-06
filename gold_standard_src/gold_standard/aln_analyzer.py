@@ -1,7 +1,7 @@
 import logging
 
-from gold_standard_src.gold_standard.dict_utils import merge_dicts
-from gold_standard_src.gold_standard.sanity_checker import (
+from .dict_utils import merge_dicts
+from .sanity_checker import (
     check_pairwise_score, check_pairwise_score_3dm)
 
 
