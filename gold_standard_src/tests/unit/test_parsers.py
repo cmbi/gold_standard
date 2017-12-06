@@ -49,13 +49,13 @@ def test_parse_golden_alns(mock_parse, mock_listdir, mock_path_exists):
 
 
 @patch('gold_standard_src.gold_standard.parsers.aln3SSP.open', mock_open(
-    read_data="ID1 A A-?CDEF\nID2 A GHI\n"), create=True)
+    read_data="ID01 A A-?CDEF\nID02 A GHI\n"), create=True)
 @patch('gold_standard_src.gold_standard.parsers.aln3SSP.os.path.exists')
 def test_aln_3SSP(mock_path_exists):
     mock_path_exists.return_value = True
     expected = {
-        'ID1A': 'A--CDEF',
-        'ID2A': 'GHI'
+        'ID01A': 'A--CDEF',
+        'ID02A': 'GHI'
     }
     parsed = parse_3SSP('filename')
     eq_(parsed, expected)
