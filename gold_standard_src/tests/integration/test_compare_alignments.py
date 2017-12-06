@@ -2,7 +2,7 @@ import os
 
 from nose.tools import eq_, ok_
 
-from compare_alignments import run_comparison
+from gold_standard_src.compare_alignments import run_comparison
 
 
 def test_compare_alignments_dummy():

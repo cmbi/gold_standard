@@ -1,10 +1,10 @@
 from nose.tools import eq_
 from mock import mock_open, patch
 
-from gold_standard.parsers.aln3SSP import parse_3SSP
-from gold_standard.parsers.gold import parse_gold_pairwise
-from gold_standard.parsers.fasta import parse_fasta
-from gold_standard.parsers.var_file import (
+from gold_standard_src.gold_standard.parsers.aln3SSP import parse_3SSP
+from gold_standard_src.gold_standard.parsers.gold import parse_gold_pairwise
+from gold_standard_src.gold_standard.parsers.fasta import parse_fasta
+from gold_standard_src.gold_standard.parsers.var_file import (
     parse_var_file, convert_var_to_aln)
 
 

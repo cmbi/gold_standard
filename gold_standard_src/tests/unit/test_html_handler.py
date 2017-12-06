@@ -2,8 +2,8 @@ import os
 
 from nose.tools import eq_, ok_
 
-from gold_standard.html_handler import HtmlHandler
-from gold_standard.num_seq import core_aln_to_num
+from gold_standard_src.gold_standard.html_handler import HtmlHandler
+from gold_standard_src.gold_standard.num_seq import core_aln_to_num
 
 
 def test_make_corvar():
