@@ -1,6 +1,5 @@
 import argparse
 import json
-import os
 
 from gold_standard.parsers import var_file as vf
 
