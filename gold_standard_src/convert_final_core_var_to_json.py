@@ -5,6 +5,28 @@ import os
 from gold_standard.parsers import var_file as vf
 
 
+def convert_pairwise_aln_to_json(target_cores, core_aln_strct2, var_regions_strct2):
+    """
+    converts a pairwise alignment to json
+    :param target_cores: grounded target core sequence
+    :param core_aln_strct2: grounded sequence of the 2nd structure
+    :param var_regions_strct2: list of residues in the variable regions (2nd structure)
+    :return: json alignment
+    """
+    all_strct2_residues = filter(lambda x: x != '-', sorted(core_aln_strct2 + var_regions_strct2))
+
+    pairwise_json_aln = {}
+    for res_num in all_strct2_residues:
+        if res_num == '-':
+            continue
+        if res_num in core_aln_strct2:
+            index = core_aln_strct2.index(res_num)
+            pairwise_json_aln[res_num] = {target_cores[index]: 'a'}
+        else:
+            pairwise_json_aln[res_num] = {'*': 'u'}
+    return pairwise_json_aln
+
+
 def convert_corvar_to_json_alignment(corvar_data):
     """
     Convert corvar data to a json alignment
@@ -50,14 +72,25 @@ def convert_corvar_to_json_alignment(corvar_data):
     """
     score_modifiers = {'a': 1, 'u': -1, 'd': 0, 'm0': 0, 'm1': 0.1, 'm2': 0.2}
 
-    # get all structure ids
-    alignments = {strct_id: {} for strct_id in corvar_data["alns"]["cores"]}
-    core_alns = corvar_data["alns"]["cores"]
     var_regions = corvar_data["alns"]["var"]
 
-    # for strct_id, core_aln in corvar_data["alns"]["cores"].iteritems():
+    # retrieve target alignment
+    target_id = corvar_data["target"]
+    target_cores = corvar_data["alns"]["cores"][target_id]
+
+    # convert alignments
+    json_alignments = {}
+    for strct_id, core_aln in corvar_data["alns"]["cores"].iteritems():
+        if strct_id == target_id:
+            # don't compare the target to itself
+            continue
+
+        json_pairwise_alignment = convert_pairwise_aln_to_json(target_cores, core_aln, var_regions[strct_id])
+
+        json_alignments[strct_id] = json_pairwise_alignment
+
     result = {
-        "alignments": alignments, "target": corvar_data["target"], "score_modifiers": score_modifiers
+        "alignments": json_alignments, "target": corvar_data["target"], "score_modifiers": score_modifiers
     }
     return result
 
@@ -74,8 +107,7 @@ def run_convert(inpath, outpath):
 
     # write to json file
     with open(outpath, "w") as o:
-        json.dump(json_alignment, o)
-
+        json.dump(json_alignment, o, indent=4)
 
 
 if __name__ == "__main__":
