@@ -22,8 +22,35 @@ class HtmlHandler(object):
                                   [TEMPLATE])
         with open(tmpl_full_path) as a:
             template_fmt = a.read()
+
+        css = """
+			<style>
+			.featWRONG{
+				background: #FF0000;
+			}
+			.featWRONG5{
+				background: #FF2200;
+			}
+			.featWRONG4{
+				background: #FF9900;
+			}
+			.featWRONG3{
+				background: #FFAA00;
+			}
+			.featWRONG2{
+				background: #FFCC00;
+			}
+			.featWRONG1{
+				background: #FFFF00;
+			}
+			.featOK{
+				background: #AAFF00;
+			}
+
+			</style>
+        """
         with open(outname + ".html", 'w') as out:
-            out.write(template_fmt.format(outtxt))
+            out.write(template_fmt.format(css, outtxt))
 
     def aln_to_html_var(self, quality_data):
         html_out = ""
