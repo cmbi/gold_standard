@@ -72,4 +72,7 @@ def process_results(matrices, full_matrix, sp_scores, output, tmpl_no):
     with open(output, 'w') as out:
         out.write(out_txt)
     _log.info("Created the output file: %s", output)
-    return stats
+    return {
+        "full_stats": full_stats,
+        "full_matrix": full_matrix
+    }
