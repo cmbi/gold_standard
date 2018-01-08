@@ -72,7 +72,7 @@ def calculate_aln_quality(paths, output, in_format, multi, write_json):
     if write_json:
         # write scores to a json file
         with open(output + ".json", 'w') as o:
-            json.dump(scores, o)
+            json.dump(scores["full"], o)
 
     return {
         'wrong_cols': scores["wrong_cols"],
