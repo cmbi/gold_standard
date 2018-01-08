@@ -66,13 +66,13 @@ def calculate_aln_quality(paths, output, in_format, multi, write_json):
     _log.debug("Sequences in the test alignment: %s",
                str(num_aln_dict['cores'].keys()))
     scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)
-    process_results(scores['pairwise'], scores['full'], scores['sp_scores'],
+    stats = process_results(scores['pairwise'], scores['full'], scores['sp_scores'],
                     output, tmpl_no)
 
     if write_json:
         # write scores to a json file
         with open(output + ".json", 'w') as o:
-            json.dump(scores["full"], o)
+            json.dump(stats, o)
 
     return {
         'wrong_cols': scores["wrong_cols"],
