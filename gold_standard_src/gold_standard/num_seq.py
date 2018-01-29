@@ -133,6 +133,9 @@ def core_to_num_seq(aligned_seq, full_seq):
     start = 0
     finished = False
     prev_core = 0
+    if aligned_seq.count("-") == len(aligned_seq):
+        grounded_seq = list(aligned_seq)
+        finished = True
     while not finished:
         c = get_next_core(aligned_seq, start)
         core = c["core"]
@@ -175,6 +178,8 @@ def get_first_num(grounded_seq):
         if i != '-':
             first_num = i
             return first_num
+    # no cores
+    return len(grounded_seq)
 
 
 def get_next_core(aligned_seq, start):
