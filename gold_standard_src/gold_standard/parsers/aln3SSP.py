@@ -22,4 +22,5 @@ def parse_3SSP(aln_path):
     #for seq_id in seq_dict.keys():
         #if seq_dict[seq_id].count("-") == len(seq_dict[seq_id]):
             #del seq_dict[seq_id]
+    print strcts_order
     return seq_dict, strcts_order

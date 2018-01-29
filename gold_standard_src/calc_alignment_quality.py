@@ -45,7 +45,7 @@ def calculate_aln_quality(paths, output, in_format, multi, write_json):
     strcts_order = []
     if in_format != 'csv':
         if in_format == 'fatcat' or in_format == '3dm':
-            aln_dict = parse_fatcat(paths['aln_path'], gold_in['ids'])
+            aln_dict, strcts_order = parse_fatcat(paths['aln_path'], gold_in['ids'])
         elif in_format == 'fasta':
             aln_dict = parse_fasta(paths['aln_path'], gold_in['ids'])
         elif in_format == '3SSP':
