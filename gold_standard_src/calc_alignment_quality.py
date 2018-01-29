@@ -42,13 +42,14 @@ def calculate_aln_quality(paths, output, in_format, multi, write_json):
     _log.debug("Sequences in the gold alignment: %s", gold_in['ids'])
 
     # parse and assess test alignments
+    strcts_order = []
     if in_format != 'csv':
         if in_format == 'fatcat' or in_format == '3dm':
             aln_dict = parse_fatcat(paths['aln_path'], gold_in['ids'])
         elif in_format == 'fasta':
             aln_dict = parse_fasta(paths['aln_path'], gold_in['ids'])
         elif in_format == '3SSP':
-            aln_dict = parse_3SSP(paths['aln_path'])
+            aln_dict, strcts_order = parse_3SSP(paths['aln_path'])
         else:
             raise Exception("Invalid input format: {}".format(in_format))
         # create alignment of grounded sequences
@@ -79,7 +80,8 @@ def calculate_aln_quality(paths, output, in_format, multi, write_json):
         'aa_aln': aln_dict,
         'num_aln': num_aln_dict,
         'full': gold_in['full_seq'],
-        'core_indexes': sorted(core_indexes)
+        'core_indexes': sorted(core_indexes),
+        'order': strcts_order
     }
 
 
