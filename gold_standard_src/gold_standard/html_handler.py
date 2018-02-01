@@ -131,6 +131,7 @@ class HtmlHandler(object):
         for seq_id, seq in aa_aln.iteritems():
             html_sequence = "<b>TEST</b> {}    ".format(seq_id)
             html_gold_sequence = "<b>GOLD</b> {}    ".format(seq_id)
+            asterisk_line = "         {}".format(" " * len(seq_id))
             gold_seq = gold_aln["cores"][seq_id]
             assert len(gold_seq) == len(seq)
             for r, res in enumerate(seq):
@@ -152,8 +153,15 @@ class HtmlHandler(object):
                 else:
                     new_res = res
                     new_gold_res = gold_aa
+
+                if new_res.upper() != new_gold_res.upper() and new_res != "-":
+                    asterisk_line += "*"
+                else:
+                    asterisk_line += " "
+
                 html_sequence += new_res
                 html_gold_sequence += new_gold_res
+            html_out += asterisk_line + "\n"
             html_out += html_sequence + "\n"
             html_out += html_gold_sequence + "\n"
             html_out += "<br>"
