@@ -8,11 +8,11 @@ from gold_standard.parsers.aln3SSP import parse_3SSP
 from gold_standard.parsers.csv_parser import (
     parse_csv_alignment)
 from gold_standard.parsers.gold import (parse_gold_pairwise,
-                                                          parse_gold_multi)
+                                        parse_gold_multi)
 from gold_standard.parsers.fasta import parse_fasta
 from gold_standard.parsers.fatcat import parse_fatcat
 from gold_standard.num_seq import (core_aln_to_num,
-                                                     get_core_indexes)
+                                   get_core_indexes)
 from gold_standard.aln_analyzer import calc_scores_3dm
 from gold_standard.result_processor import process_results
 
@@ -70,6 +70,7 @@ def calculate_aln_quality(paths, output, in_format, multi):
     return {
         'wrong_cols': scores["wrong_cols"],
         'aa_aln': aln_dict,
+        'gold_aln': gold_in['alns'],
         'num_aln': num_aln_dict,
         'full': gold_in['full_seq'],
         'core_indexes': sorted(core_indexes)
@@ -88,6 +89,7 @@ if __name__ == "__main__":
     parser.add_argument("--html", help="HTML output (without variable regions)",
                         action="store_true")
     parser.add_argument("--html_var", help="HTML output with variable regions", action="store_true")
+    parser.add_argument("--html_pair", help="HTML output with pairwise comparisons", action="store_true")
     parser.add_argument("--html_var_short", help="HTML output with shortened "
                         "variable regions", action="store_true")
     parser.add_argument("--input_format", default="fasta")
@@ -133,5 +135,5 @@ if __name__ == "__main__":
                                          args.input_format, args.multi)
     if args.html or args.html_var or args.html_var_short:
         # create html output
-        hh = HtmlHandler(var=args.html_var, var_short=args.html_var_short)
+        hh = HtmlHandler(var=args.html_var, var_short=args.html_var_short, pairwise=args.html_pair)
         hh.write_html(quality_data, args.output)

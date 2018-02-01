@@ -44,6 +44,7 @@ def core_aln_to_num(aln_dict, full_seq, golden_ids=None):
     for seq_id, seq in aln_dict.iteritems():
         if golden_ids and seq_id not in golden_ids:
             continue
+
         aln_3dm["cores"][seq_id], core_indexes_tmp = core_to_num_seq(
             seq, full_seq[seq_id])
         core_indexes = core_indexes.union(set(core_indexes_tmp))
@@ -128,6 +129,8 @@ def core_to_num_seq(aligned_seq, full_seq):
     full_seq_a = 'IVAFCLYKYFPFGGLQRDFMRIASTVAARGHHVRVYTQSWEG'
     full_seq_b = 'NLLHVAVLAFPFGTHAAPLLSLVKKIATEAPKVTFSFFCTTTTNDTLFSRSNEFLPNIKYY'
     """
+    if aligned_seq.count("-") == len(aligned_seq):
+        return list(aligned_seq), [0]
     # 1-based!!!
     grounded_seq = []
     start = 0

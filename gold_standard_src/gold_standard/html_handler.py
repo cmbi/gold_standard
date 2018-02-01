@@ -5,15 +5,19 @@ from .paths import CSS, TEMPLATE
 
 
 class HtmlHandler(object):
-    def __init__(self, var=False, var_short=False, long_len=20, short=False):
+    def __init__(self, var=False, var_short=False, long_len=20, short=False, pairwise=False):
         self.var = var
         self.var_short = var_short
         self.short = short
         self.long_len = long_len
+        self.pairwise = pairwise
 
     def write_html(self, quality_data, outname):
         if self.var or self.var_short:
             outtxt = self.aln_to_html_var(quality_data)
+        elif self.pairwise:
+            outtxt = self.aln_to_html_pariwise(
+                    quality_data['aa_aln'], quality_data["gold_aln"], quality_data['wrong_cols'])
         else:
             outtxt = self.aln_to_html(quality_data['aa_aln'],
                                       quality_data['wrong_cols'])
@@ -24,30 +28,29 @@ class HtmlHandler(object):
             template_fmt = a.read()
 
         css = """
-			<style>
-			.featWRONG{
-				background: #FF0000;
-			}
-			.featWRONG5{
-				background: #FF2200;
-			}
-			.featWRONG4{
-				background: #FF9900;
-			}
-			.featWRONG3{
-				background: #FFAA00;
-			}
-			.featWRONG2{
-				background: #FFCC00;
-			}
-			.featWRONG1{
-				background: #FFFF00;
-			}
-			.featOK{
-				background: #AAFF00;
-			}
-
-			</style>
+        <style>
+        .featWRONG{
+            background: #FF0000;
+        }
+        .featWRONG5{
+            background: #FF2200;
+        }
+        .featWRONG4{
+            background: #FF9900;
+        }
+        .featWRONG3{
+            background: #FFAA00;
+        }
+        .featWRONG2{
+            background: #FFCC00;
+        }
+        .featWRONG1{
+            background: #FFFF00;
+        }
+        .featOK{
+            background: #AAFF00;
+        }
+        </style>
         """
         with open(outname + ".html", 'w') as out:
             out.write(template_fmt.format(css, outtxt))
@@ -119,6 +122,34 @@ class HtmlHandler(object):
         else:
             short_var = var
         return short_var
+
+    def aln_to_html_pairwise(self, aa_aln, gold_aln, wrong):
+        html_out = ""
+        aln_length = len(aa_aln)
+        for seq_id, seq in aa_aln.iteritems():
+            html_sequence = "<b>TEST</b> {}    ".format(seq_id)
+            html_gold_sequence = "<b>GOLD</b> {}    ".format(seq_id)
+            for r, res in enumerate(seq):
+                if res != "-" and res != " ":
+                    if r in wrong[seq_id].keys():
+                        level = self.get_level(wrong[seq_id][r], aln_length)
+                        new_res = "<span class=featWRONG{}>{}</span>".format(
+                                level, res)
+                        new_gold_res = "<span class=featWRONG{}>{}</span>".format(
+                                level, gold_aln[seq_id][r])
+                    else:
+                        new_res = "<span class=featOK>{}</span>".format(res)
+                        new_gold_res = "<span class=featOK>{}</span>".format(gold_aln[seq_id][r])
+                else:
+                    new_res = res
+                    new_gold_res = gold_aln[seq_id][r]
+
+                html_sequence += new_res
+                html_gold_sequence += new_gold_res
+            html_out += html_sequence + "\n"
+            html_out += html_gold_sequence + "\n"
+            html_out += "\n<br>\n"
+        return html_out
 
     def aln_to_html(self, aa_aln, wrong):
         html_out = ""
