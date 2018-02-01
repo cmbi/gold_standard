@@ -18,7 +18,7 @@ class HtmlHandler(object):
         elif self.pairwise:
             outtxt = self.aln_to_html_pairwise(
                     quality_data['aa_aln'], quality_data["gold_aln"], quality_data["full"],
-                    quality_data['wrong_cols'])
+                    quality_data['wrong_cols'], quality_data["order"])
         else:
             outtxt = self.aln_to_html(
                 quality_data['aa_aln'], quality_data['wrong_cols'], quality_data["order"])
@@ -125,10 +125,11 @@ class HtmlHandler(object):
             short_var = var
         return short_var
 
-    def aln_to_html_pairwise(self, aa_aln, gold_aln, full, wrong):
+    def aln_to_html_pairwise(self, aa_aln, gold_aln, full, wrong, order):
         html_out = ""
         aln_length = len(aa_aln)
-        for seq_id, seq in aa_aln.iteritems():
+        for seq_id in order:
+            seq = aa_aln[seq_id]
             html_sequence = "<b>TEST</b> {}    ".format(seq_id)
             html_gold_sequence = "<b>GOLD</b> {}    ".format(seq_id)
             asterisk_line = "         {}".format(" " * len(seq_id))
