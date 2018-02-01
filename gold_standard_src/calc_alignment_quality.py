@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import argparse
+import json
 import logging
 import sys
 
@@ -25,7 +26,7 @@ logging.basicConfig(level=logging.INFO, format=FORMAT)
 _log = logging.getLogger(__name__)
 
 
-def calculate_aln_quality(paths, output, in_format, multi):
+def calculate_aln_quality(paths, output, in_format, multi, write_json):
     # read the final_core file if provided
     if paths['final_core']:
         core_indexes = get_core_indexes(paths['final_core'])
@@ -41,13 +42,14 @@ def calculate_aln_quality(paths, output, in_format, multi):
     _log.debug("Sequences in the gold alignment: %s", gold_in['ids'])
 
     # parse and assess test alignments
+    strcts_order = []
     if in_format != 'csv':
         if in_format == 'fatcat' or in_format == '3dm':
-            aln_dict = parse_fatcat(paths['aln_path'], gold_in['ids'])
+            aln_dict, strcts_order = parse_fatcat(paths['aln_path'], gold_in['ids'])
         elif in_format == 'fasta':
             aln_dict = parse_fasta(paths['aln_path'], gold_in['ids'])
         elif in_format == '3SSP':
-            aln_dict = parse_3SSP(paths['aln_path'])
+            aln_dict, strcts_order = parse_3SSP(paths['aln_path'])
         else:
             raise Exception("Invalid input format: {}".format(in_format))
         # create alignment of grounded sequences
@@ -65,15 +67,22 @@ def calculate_aln_quality(paths, output, in_format, multi):
     _log.debug("Sequences in the test alignment: %s",
                str(num_aln_dict['cores'].keys()))
     scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)
-    process_results(scores['pairwise'], scores['full'], scores['sp_scores'],
+    stats = process_results(scores['pairwise'], scores['full'], scores['sp_scores'],
                     output, tmpl_no)
+
+    if write_json:
+        # write scores to a json file
+        with open(output + ".json", 'w') as o:
+            json.dump(stats, o)
+
     return {
         'wrong_cols': scores["wrong_cols"],
         'aa_aln': aln_dict,
         'gold_aln': gold_in['alns'],
         'num_aln': num_aln_dict,
         'full': gold_in['full_seq'],
-        'core_indexes': sorted(core_indexes)
+        'core_indexes': sorted(core_indexes),
+        'order': strcts_order
     }
 
 
@@ -94,6 +103,7 @@ if __name__ == "__main__":
                         "variable regions", action="store_true")
     parser.add_argument("--input_format", default="fasta")
     parser.add_argument("-d", "--debug", default=False, action="store_true")
+    parser.add_argument("--json", default=False, action="store_true")
     parser.add_argument("--final_core", help="final core file")
     parser.add_argument("--multi", action="store_true")
     parser.add_argument("--gold_path")
@@ -132,8 +142,12 @@ if __name__ == "__main__":
     }
 
     quality_data = calculate_aln_quality(input_paths, args.output,
-                                         args.input_format, args.multi)
+                                         args.input_format, args.multi, args.json)
     if args.html or args.html_var or args.html_var_short:
         # create html output
         hh = HtmlHandler(var=args.html_var, var_short=args.html_var_short, pairwise=args.html_pair)
         hh.write_html(quality_data, args.output)
+
+        if args.html_var or args.html_var_short:
+            hh = HtmlHandler(var=args.html_var, var_short=args.html_var_short)
+            hh.write_html(quality_data, args.output + "_varshort")

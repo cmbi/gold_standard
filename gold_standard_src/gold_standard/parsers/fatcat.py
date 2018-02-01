@@ -15,6 +15,7 @@ def parse_fatcat(aln_path, golden_ids=None):
     aln_dict = {}
     seq_id = ""
     split_id = True
+    strcts_order = []
     for l in aln_file:
         seq_id = ''.join(l.split()[:2])
         if len(seq_id) != 5:
@@ -25,4 +26,5 @@ def parse_fatcat(aln_path, golden_ids=None):
                 aln_dict[seq_id] = l.split()[2]
             else:
                 aln_dict[seq_id] = l.split()[1]
-    return aln_dict
+            strcts_order.append(seq_id)
+    return aln_dict, strcts_order

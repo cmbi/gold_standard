@@ -19,8 +19,8 @@ class HtmlHandler(object):
             outtxt = self.aln_to_html_pariwise(
                     quality_data['aa_aln'], quality_data["gold_aln"], quality_data['wrong_cols'])
         else:
-            outtxt = self.aln_to_html(quality_data['aa_aln'],
-                                      quality_data['wrong_cols'])
+            outtxt = self.aln_to_html(
+                quality_data['aa_aln'], quality_data['wrong_cols'], quality_data["order"])
         script_dir = os.path.dirname(os.path.abspath(__file__))
         tmpl_full_path = '/'.join(list(os.path.split(script_dir)[:-1]) +
                                   [TEMPLATE])
@@ -64,7 +64,8 @@ class HtmlHandler(object):
 
         aa_aln_corvar = self.make_corvar(quality_data['full'], num_aln_v)
         var_lengths = self.get_max_var_lengths(num_aln_v)
-        for seq_id, seq in aa_aln_corvar.iteritems():
+        for seq_id in quality_data["order"]:
+            seq = aa_aln_corvar[seq_id]
             html_seq = self.make_html_var_seq(
                 seq, quality_data['wrong_cols'][seq_id], var_lengths,
                 aln_length)
@@ -123,6 +124,7 @@ class HtmlHandler(object):
             short_var = var
         return short_var
 
+<<<<<<< HEAD
     def aln_to_html_pairwise(self, aa_aln, gold_aln, wrong):
         html_out = ""
         aln_length = len(aa_aln)
@@ -151,10 +153,11 @@ class HtmlHandler(object):
             html_out += "\n<br>\n"
         return html_out
 
-    def aln_to_html(self, aa_aln, wrong):
+    def aln_to_html(self, aa_aln, wrong, order):
         html_out = ""
         aln_length = len(aa_aln)
-        for seq_id, seq in aa_aln.iteritems():
+        for seq_id in order:
+            seq = aa_aln[seq_id]
             html_sequence = "{}    ".format(seq_id)
             for r, res in enumerate(seq):
                 if res != "-" and res != " ":
