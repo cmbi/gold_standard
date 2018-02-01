@@ -13,15 +13,18 @@ class HtmlHandler(object):
         self.pairwise = pairwise
 
     def write_html(self, quality_data, outname):
+        print "hej11"
         if self.var or self.var_short:
             outtxt = self.aln_to_html_var(quality_data)
         elif self.pairwise:
-            outtxt = self.aln_to_html_pariwise(
-                    quality_data['aa_aln'], quality_data["gold_aln"], quality_data['wrong_cols'])
+            outtxt = self.aln_to_html_pairwise(
+                    quality_data['num_aln'], quality_data["gold_aln"], quality_data["full"],
+                    quality_data['wrong_cols'])
         else:
             outtxt = self.aln_to_html(
                 quality_data['aa_aln'], quality_data['wrong_cols'], quality_data["order"])
         script_dir = os.path.dirname(os.path.abspath(__file__))
+        print "hej22"
         tmpl_full_path = '/'.join(list(os.path.split(script_dir)[:-1]) +
                                   [TEMPLATE])
         with open(tmpl_full_path) as a:
@@ -124,26 +127,53 @@ class HtmlHandler(object):
             short_var = var
         return short_var
 
-    def aln_to_html_pairwise(self, aa_aln, gold_aln, wrong):
+    def aln_to_html_pairwise(self, aa_aln, gold_aln, full, wrong):
         html_out = ""
         aln_length = len(aa_aln)
-        for seq_id, seq in aa_aln.iteritems():
+        for seq_id, seq in aa_aln["cores"].iteritems():
             html_sequence = "<b>TEST</b> {}    ".format(seq_id)
             html_gold_sequence = "<b>GOLD</b> {}    ".format(seq_id)
-            for r, res in enumerate(seq):
+            print "shit"
+            gold_seq = gold_aln["cores"][seq_id]
+            print "shit2"
+            print gold_seq
+            print seq
+            assert len(gold_seq) == len(seq)
+            print seq["cores"]
+            for r, res in enumerate(seq["cores"]):
+                res = full[res - 1]
+                if res in gold_seq:
+                    gold_res = gold_seq.index(res)
+                    gold_aa = full[gold_res]
+                else:
+                    gold_aa = " "
+                # if r in gold_seq:
+                #     print "\nstart"
+                #     print r
+                #     print gold_seq
+                #     gold_aa_index = gold_seq.index(r) - 1
+                #     print gold_aa_index
+                #     print ""
+                # else:
+                #     gold_aa_index = "-"
+                # if gold_aa_index == "-":
+                #     gold_aa = "-"
+                # else:
+                #     gold_aa = full[seq_id][gold_aa_index]
+
                 if res != "-" and res != " ":
                     if r in wrong[seq_id].keys():
                         level = self.get_level(wrong[seq_id][r], aln_length)
                         new_res = "<span class=featWRONG{}>{}</span>".format(
                                 level, res)
                         new_gold_res = "<span class=featWRONG{}>{}</span>".format(
-                                level, gold_aln[seq_id][r])
+                                level, gold_aa)
                     else:
                         new_res = "<span class=featOK>{}</span>".format(res)
-                        new_gold_res = "<span class=featOK>{}</span>".format(gold_aln[seq_id][r])
+                        new_gold_res = "<span class=featOK>{}</span>".format(gold_aa)
                 else:
                     new_res = res
-                    new_gold_res = gold_aln[seq_id][r]
+                    new_gold_res = gold_aa
 
                 html_sequence += new_res
                 html_gold_sequence += new_gold_res
