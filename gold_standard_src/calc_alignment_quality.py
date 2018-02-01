@@ -145,8 +145,11 @@ if __name__ == "__main__":
                                          args.input_format, args.multi, args.json)
 
     if args.html_pair:
-        hh = HtmlHandler(pairwise=args.html_pair)
-        hh.write_html(quality_data, args.output + "_pairwise")
+        try:
+            hh = HtmlHandler(pairwise=args.html_pair)
+            hh.write_html(quality_data, args.output + "_pairwise")
+        except:
+            _log.error("pairwise html creation failed")
 
     if args.html or args.html_var or args.html_var_short:
         # create html output
