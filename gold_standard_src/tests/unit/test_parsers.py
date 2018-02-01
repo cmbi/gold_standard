@@ -2,7 +2,7 @@ from nose.tools import eq_
 from mock import mock_open, patch
 
 from gold_standard_src.gold_standard.parsers.aln3SSP import parse_3SSP
-from gold_standard_src.gold_standard.parsers.gold import parse_gold_pairwise
+from gold_standard_src.gold_standard.parsers.gold import parse_gold_pairwise, fill_in_target
 from gold_standard_src.gold_standard.parsers.fasta import parse_fasta
 from gold_standard_src.gold_standard.parsers.var_file import (
     parse_var_file, convert_var_to_aln)
@@ -59,3 +59,71 @@ def test_aln_3SSP(mock_path_exists):
     }
     parsed = parse_3SSP('filename')
     eq_(parsed, expected)
+
+
+def test_fill_in_target():
+    # corvar = {
+    #     "target": "1ABCA",
+    #     "alns":
+    #         {
+    #             "cores": {
+    #                 "1ABCA": ["A", "B", "C"],
+    #                 "1ABCB": ["D", "E", "F"],
+    #                 "1ABCC": ["G", "H", "I"]
+    #             },
+    #             "vars": {
+    #                 "1ABCA": ["a", "b", "", "hej"],
+    #                 "1ABCB": ["", "elk", "bam"],
+    #                 "1ABCC": ["sth", "sth1", "sth2"]
+    #             }
+    #         }}
+
+    # expected = {
+    #     "target": "1ABCA",
+    #     "alns":
+    #         {
+    #             "cores": {
+    #                 "1ABCA": ["AAB", "B", "CHEJ"],
+    #                 "1ABCB": ["-D-", "E", "F---"],
+    #                 "1ABCC": ["-G-", "H", "I---"]
+    #             },
+    #             "vars": {
+    #                 "1ABCA": ["", "", "", ""],
+    #                 "1ABCB": ["", "elk", "bam"],
+    #                 "1ABCC": ["sth", "sth1", "sth2"]
+    #             }
+    #         }}
+
+    # result = fill_in_target(corvar)
+    # eq_(result, expected)
+    corvar = {
+        "target": "1ABCA",
+        "alns":
+            {
+                "cores": {
+                    "1ABCA": [2, 4, 5],
+                    "1ABCB": [1, "-", 5],
+                    "1ABCC": [2, 4, 6]
+                },
+                "vars": {
+                    "1ABCA": [1, 3, "-", 6, 7, 8],
+                    "1ABCB": ["-", 2, 3, 4, "-", "-"],
+                    "1ABCC": [1, 3, 5, "-", "-", "-"]
+                }
+            }}
+
+    expected = {
+        "target": "1ABCA",
+        "alns":
+            {
+                "cores": {
+                    "1ABCA": [1, 2, 3, 4, 5, 6, 7, 8],
+                    "1ABCB": ["-", 1, "-", "-", 5, "-", "-", "-"],
+                    "1ABCC": ["-", 2, "-", "4", 6, "-", "-", "-"]
+                },
+                "vars": {
+                    "1ABCA": ["-", "-", "-", "-", "-", "-"],
+                    "1ABCB": ["-", 2, 3, 4, "-", "-"],
+                    "1ABCC": [1, 3, 5, "-", "-", "-"]
+                }
+            }}

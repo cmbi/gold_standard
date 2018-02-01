@@ -68,7 +68,7 @@ def calculate_aln_quality(paths, output, in_format, multi, write_json):
                str(num_aln_dict['cores'].keys()))
     scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)
     stats = process_results(scores['pairwise'], scores['full'], scores['sp_scores'],
-                    output, tmpl_no)
+                            output, tmpl_no)
 
     if write_json:
         # write scores to a json file
@@ -143,9 +143,14 @@ if __name__ == "__main__":
 
     quality_data = calculate_aln_quality(input_paths, args.output,
                                          args.input_format, args.multi, args.json)
+
+    if args.html_pair:
+        hh = HtmlHandler(pairwise=args.html_pair)
+        hh.write_html(quality_data, args.output + "_pairwise")
+
     if args.html or args.html_var or args.html_var_short:
         # create html output
-        hh = HtmlHandler(var=args.html_var, var_short=args.html_var_short, pairwise=args.html_pair)
+        hh = HtmlHandler()
         hh.write_html(quality_data, args.output)
 
         if args.html_var or args.html_var_short:
