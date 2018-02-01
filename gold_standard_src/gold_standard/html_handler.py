@@ -124,7 +124,6 @@ class HtmlHandler(object):
             short_var = var
         return short_var
 
-<<<<<<< HEAD
     def aln_to_html_pairwise(self, aa_aln, gold_aln, wrong):
         html_out = ""
         aln_length = len(aa_aln)
