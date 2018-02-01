@@ -156,7 +156,7 @@ class HtmlHandler(object):
                 html_gold_sequence += new_gold_res
             html_out += html_sequence + "\n"
             html_out += html_gold_sequence + "\n"
-            html_out += "\n<br>\n"
+            html_out += "<br>"
         return html_out
 
     def aln_to_html(self, aa_aln, wrong, order):
