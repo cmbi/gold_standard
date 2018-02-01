@@ -35,7 +35,7 @@ def parse_gold_pairwise(gold_dir):
 
 def parse_gold_multi(gold_path):
     corvar = parse_var_file(gold_path, multi=True)
-    corvar = fill_in_target(corvar)
+    # corvar = fill_in_target(corvar)
     return {'alns': corvar['alns'], 'full_seq': corvar['full_seq'],
             'ids': corvar['alns']['cores'].keys()}
 
@@ -54,7 +54,7 @@ def fill_in_target(corvar):
         return corvar
 
     for i, var_i in enumerate(target_vars):
-        if var_i:
+        if var_i != "-":
             # var not empty add it to previous (or next if it's the first core)
             # and add gaps in all other sequences
             new_vars[target_id][i] = ""
