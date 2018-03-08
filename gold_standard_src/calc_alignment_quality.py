@@ -26,6 +26,19 @@ logging.basicConfig(level=logging.INFO, format=FORMAT)
 _log = logging.getLogger(__name__)
 
 
+def detect_input_format(aln_path):
+    """
+    Check if input format is 3dm or 3SSP
+    """
+    with open(aln_path) as a:
+        first_line = a.read().splitlines()[0]
+
+    if first_line.isupper() and len(first_line.split()) > 2:
+        return "3SSP"
+    else:
+        return "3dm"
+
+
 def calculate_aln_quality(paths, output, in_format, multi, write_json):
     # read the final_core file if provided
     if paths['final_core']:
@@ -44,6 +57,10 @@ def calculate_aln_quality(paths, output, in_format, multi, write_json):
     # parse and assess test alignments
     strcts_order = []
     if in_format != 'csv':
+        if not in_format:
+            # detect input format (only for fatcat, 3dm, 3SSP)
+            in_format = detect_input_format(paths['aln_path'])
+
         if in_format == 'fatcat' or in_format == '3dm':
             aln_dict, strcts_order = parse_fatcat(paths['aln_path'], gold_in['ids'])
         elif in_format == 'fasta':
@@ -101,7 +118,7 @@ if __name__ == "__main__":
     parser.add_argument("--html_pair", help="HTML output with pairwise comparisons", action="store_true")
     parser.add_argument("--html_var_short", help="HTML output with shortened "
                         "variable regions", action="store_true")
-    parser.add_argument("--input_format", default="fasta")
+    parser.add_argument("--input_format")
     parser.add_argument("-d", "--debug", default=False, action="store_true")
     parser.add_argument("--json", default=False, action="store_true")
     parser.add_argument("--final_core", help="final core file")
