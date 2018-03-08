@@ -146,7 +146,7 @@ if __name__ == "__main__":
     # fatcat - 'final_core'-like format
     # 3SSP - sequence id (no whitespaces) and sequence (corvar) on one line
     #   separated by a comma
-    if args.input_format not in allowed_formats:
+    if args.input_format and args.input_format not in allowed_formats:
         parser.error("{} is not an allowed formats. Input format needs to be "
                      "one of the following: {}".format(args.input_format,
                                                        allowed_formats))
