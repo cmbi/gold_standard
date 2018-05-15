@@ -16,11 +16,11 @@ def parse_gold_json(gold_path, corvar_path):
         raise ParserError("File not fund: {}".format(gold_path))
     # get all ".Var" files in the given directory
     with open(gold_path) as a:
-        gold_alns = json.load(a)
+        gold_alns = json.load(a)['alignments']
 
     gold_ids = gold_alns.keys()
 
-    var = parse_var_file(corvar_path)
+    var = parse_var_file(corvar_path, multi=True)
     full_seq = var['full_seq']
 
     return {
