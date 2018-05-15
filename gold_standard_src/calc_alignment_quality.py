@@ -9,12 +9,12 @@ from gold_standard.parsers.aln3SSP import parse_3SSP
 from gold_standard.parsers.csv_parser import (
     parse_csv_alignment)
 from gold_standard.parsers.gold import (parse_gold_pairwise,
-                                        parse_gold_multi)
+                                        parse_gold_multi, parse_gold_json)
 from gold_standard.parsers.fasta import parse_fasta
 from gold_standard.parsers.fatcat import parse_fatcat
 from gold_standard.num_seq import (core_aln_to_num,
                                    get_core_indexes)
-from gold_standard.aln_analyzer import calc_scores_3dm
+from gold_standard.aln_analyzer import calc_scores_3dm, calc_scores_3dm_complex
 from gold_standard.result_processor import process_results
 
 # use frozensets of sequence ids as keys in dictionaries
@@ -39,43 +39,37 @@ def detect_input_format(aln_path):
         return "3dm"
 
 
-def calculate_aln_quality(paths, output, in_format, multi, write_json):
+def parse_input_alignment(aln_path, full_seq, gold_ids, in_format, final_core_path):
+    """
+    parse and assess test alignments
+    """
     # read the final_core file if provided
-    if paths['final_core']:
-        core_indexes = get_core_indexes(paths['final_core'])
+    if final_core_path:
+        core_indexes = get_core_indexes(final_core_path)
     else:
         core_indexes = None
-    # read the gold standard alignments
-    if multi:
-        gold_in = parse_gold_multi(paths['gold_path'])
-    else:
-        gold_in = parse_gold_pairwise(paths['gold_dir'])
-    if not gold_in['ids']:
-        raise RuntimeError("No gold standard alignments were found")
-    _log.debug("Sequences in the gold alignment: %s", gold_in['ids'])
 
-    # parse and assess test alignments
     strcts_order = []
     if in_format != 'csv':
         if not in_format:
             # detect input format (only for fatcat, 3dm, 3SSP)
-            in_format = detect_input_format(paths['aln_path'])
+            in_format = detect_input_format(aln_path)
 
         if in_format == 'fatcat' or in_format == '3dm':
-            aln_dict, strcts_order = parse_fatcat(paths['aln_path'], gold_in['ids'])
+            aln_dict, strcts_order = parse_fatcat(aln_path, gold_ids)
         elif in_format == 'fasta':
-            aln_dict = parse_fasta(paths['aln_path'], gold_in['ids'])
+            aln_dict = parse_fasta(aln_path, gold_ids)
         elif in_format == '3SSP':
-            aln_dict, strcts_order = parse_3SSP(paths['aln_path'])
+            aln_dict, strcts_order = parse_3SSP(aln_path)
         else:
             raise Exception("Invalid input format: {}".format(in_format))
         # create alignment of grounded sequences
-        num_aln_dict, core_indexes = core_aln_to_num(
-            aln_dict, gold_in['full_seq'], golden_ids=gold_in['ids'])
+        num_aln_dict, core_indexes = core_aln_to_num(aln_dict, full_seq, golden_ids=gold_ids)
     else:
         # input format is 'csv'
-        aln_dict, num_aln_dict, core_indexes = parse_csv_alignment(
-            paths['aln_path'], gold_in['ids'])
+        aln_dict, num_aln_dict, core_indexes = parse_csv_alignment(aln_path, gold_ids)
+
+    # check if enough sequences
     tmpl_no = len(num_aln_dict['cores'])
     if tmpl_no < 2:
         raise Exception("Test alignment has fewer than 2 sequences from the "
@@ -83,6 +77,59 @@ def calculate_aln_quality(paths, output, in_format, multi, write_json):
                         "sequences from the gold standard alignment?")
     _log.debug("Sequences in the test alignment: %s",
                str(num_aln_dict['cores'].keys()))
+    return aln_dict, strcts_order, num_aln_dict, core_indexes
+
+
+def calculate_aln_quality_complex(paths, output, in_format, write_json):
+    # read the gold standard alignments
+
+    gold_path = paths['gold_path']
+    corvar_path = gold_path.replace('.json', '.txt.Var')
+    gold_in = parse_gold_json(gold_path, corvar_path)
+
+    if not gold_in['ids']:
+        raise RuntimeError("No gold standard alignments were found")
+    _log.debug("Sequences in the gold alignment: %s", gold_in['ids'])
+
+    aln_dict, strcts_order, num_aln_dict, core_indexes = parse_input_alignment(
+        paths['aln_path'], gold_in['full_seq'], gold_in['ids'], in_format, paths['final_core'])
+
+    # calculate scores
+    scores = calc_scores_3dm_complex(gold_in['alns'], num_aln_dict)
+    stats = process_results(scores['pairwise'], scores['full'], scores['sp_scores'],
+                            output, tmpl_no)
+
+    if write_json:
+        # write scores to a json file
+        with open(output + ".json", 'w') as o:
+            json.dump(stats, o)
+
+    return {
+        'wrong_cols': scores["wrong_cols"],
+        'aa_aln': aln_dict,
+        'gold_aln': gold_in['alns'],
+        'num_aln': num_aln_dict,
+        'full': gold_in['full_seq'],
+        'core_indexes': sorted(core_indexes),
+        'order': strcts_order
+    }
+
+
+def calculate_aln_quality_simple(paths, output, in_format, multi, write_json, gold_json):
+    # read the gold standard alignments
+    if multi:
+        gold_in = parse_gold_multi(paths['gold_path'])
+    else:
+        gold_in = parse_gold_pairwise(paths['gold_dir'])
+
+    if not gold_in['ids']:
+        raise RuntimeError("No gold standard alignments were found")
+    _log.debug("Sequences in the gold alignment: %s", gold_in['ids'])
+
+    aln_dict, strcts_order, num_aln_dict, core_indexes = parse_input_alignment(
+        paths['aln_path'], gold_in['full_seq'], gold_in['ids'], in_format, paths['final_core'])
+
+    # calculate scores
     scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)
     stats = process_results(scores['pairwise'], scores['full'], scores['sp_scores'],
                             output, tmpl_no)
@@ -124,13 +171,14 @@ if __name__ == "__main__":
     parser.add_argument("--final_core", help="final core file")
     parser.add_argument("--multi", action="store_true")
     parser.add_argument("--gold_path")
+    parser.add_argument("--gold_json", default=False, action='store_true')
 
     args = parser.parse_args()
     # check args
     if args.multi and not args.gold_path:
         raise parser.error("In the 'multi' mode you must provide the gold_path "
                            "argument")
-    elif not args.multi and not args.gold_dir:
+    elif not args.multi and not args.gold_dir and not args.gold_json:
         raise parser.error("In the pairwise (default) mode you must provide the"
                            " gold_dir argument")
     # change logging level in debug mode
@@ -141,7 +189,7 @@ if __name__ == "__main__":
         sys.tracebacklimit = 0
 
     # check input format
-    allowed_formats = ["fasta", "3dm", "3SSP", "fatcat", "csv"]
+    allowed_formats = ["fasta", "3dm", "3SSP", "fatcat", "csv", "json"]
     # 3dm - fasta format but variable regions are not in the alignment
     # fatcat - 'final_core'-like format
     # 3SSP - sequence id (no whitespaces) and sequence (corvar) on one line
@@ -157,9 +205,13 @@ if __name__ == "__main__":
         'aln_path': args.test_aln_path,
         'final_core': args.final_core
     }
-
-    quality_data = calculate_aln_quality(input_paths, args.output,
-                                         args.input_format, args.multi, args.json)
+    if args.gold_json:
+        quality_data = calculate_aln_quality_complex(input_paths, args.output,
+                                            args.input_format, args.json)
+    else:
+        quality_data = calculate_aln_quality_simple(input_paths, args.output,
+                                            args.input_format, args.multi, args.json,
+                                            args.gold_json)
 
     if args.html_pair:
         try:

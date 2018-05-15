@@ -262,3 +262,6 @@ def calc_scores_3dm(golden_alns, test_aln, multi):
                 result['full'] = merge_dicts(result['full'], scores['matrix'])
                 result['sp_scores'][id_set] = scores['sp_score']
     return result
+
+def calc_scores_3dm_complex(golden_alns, test_aln, multi):
+    pass

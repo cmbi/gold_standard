@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from copy import deepcopy
@@ -7,6 +8,26 @@ from .var_file import parse_var_file
 
 _log = logging.getLogger(__name__)
 fs = frozenset
+
+
+def parse_gold_json(gold_path, corvar_path):
+    _log.info("Getting gold standard alignments")
+    if not os.path.exists(gold_path):
+        raise ParserError("File not fund: {}".format(gold_path))
+    # get all ".Var" files in the given directory
+    with open(gold_path) as a:
+        gold_alns = json.load(a)
+
+    gold_ids = gold_alns.keys()
+
+    var = parse_var_file(corvar_path)
+    full_seq = var['full_seq']
+
+    return {
+        'alns': gold_alns,
+        'ids': gold_ids,
+        'full_seq': full_seq
+    }
 
 
 def parse_gold_pairwise(gold_dir):
