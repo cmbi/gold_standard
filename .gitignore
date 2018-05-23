@@ -67,3 +67,5 @@ Session.vim
 
 .venv/
 .dropbox
+.idea/
+.idea/*

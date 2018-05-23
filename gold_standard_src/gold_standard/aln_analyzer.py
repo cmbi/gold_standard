@@ -263,5 +263,11 @@ def calc_scores_3dm(golden_alns, test_aln, multi):
                 result['sp_scores'][id_set] = scores['sp_score']
     return result
 
-def calc_scores_3dm_complex(golden_alns, test_aln, multi):
+
+def calc_scores_3dm_complex(golden_alns, test_aln):
+    """
+    """
+    for seq_id, aln in test_aln.iteritems():
+
+
     pass

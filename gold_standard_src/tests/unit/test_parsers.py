@@ -2,7 +2,8 @@ from nose.tools import eq_
 from mock import mock_open, patch
 
 from gold_standard_src.gold_standard.parsers.aln3SSP import parse_3SSP
-from gold_standard_src.gold_standard.parsers.gold import parse_gold_pairwise, fill_in_target
+from gold_standard_src.gold_standard.parsers.gold import parse_gold_pairwise, \
+    fill_in_target, parse_gold_json
 from gold_standard_src.gold_standard.parsers.fasta import parse_fasta
 from gold_standard_src.gold_standard.parsers.var_file import (
     parse_var_file, convert_var_to_aln)
@@ -127,3 +128,14 @@ def test_fill_in_target():
                     "1ABCC": [1, 3, 5, "-", "-", "-"]
                 }
             }}
+
+
+def test_parse_gold_json():
+    json_path = "gold_standard_src/tests/testdata/final_core.json"
+    var_path = "gold_standard_src/tests/testdata/final_core.txt.Var"
+    res = parse_gold_json(json_path, var_path)
+    print res
+    eq_(len(res["full_seq"]), 13)
+    eq_(len(res["ids"]), 13)
+    # n - 1 alignments (n equals 13)
+    eq_(len(res["alns"]), 12)
