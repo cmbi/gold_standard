@@ -264,7 +264,7 @@ def calc_scores_3dm(golden_alns, test_aln, multi):
     return result
 
 
-def calc_scores_3dm_complex(gold_aln_data, test_aln):
+def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
     """
     """
     target_id = gold_aln_data["target"]
@@ -273,13 +273,27 @@ def calc_scores_3dm_complex(gold_aln_data, test_aln):
 
     print score_mods
 
+    result_cores = compare_cores_complex(gold_alns, score_mods, target_id, test_aln)
+    n = result_cores["n"]
+    overall_score = result_cores["overall_score"]
+
+    if mode == "strict":
+        # this is to penalize false negatives, only done in the strict mode
+        result_vars = compare_vars_complex(gold_alns, score_mods, target_id, test_aln)
+        n += result_vars["n"]
+        overall_score += result_vars["overall_score"]
+
+    overall_score /= n
+    return overall_score
+
+
+def compare_cores_complex(gold_alns, score_mods, target_id, test_aln):
+    # number of comparisons for score normalization
+    n = 0
+    overall_score = 0
     # check the aligned ones in test alignment (FPs and TPs)
     test_target_aln = test_aln["cores"][target_id]
 
-    overall_score = 0
-
-    # number of comparisons for score normalization
-    n = 0
     for seq_id, aln in test_aln["cores"].iteritems():
         if seq_id == target_id:
             continue
@@ -317,10 +331,9 @@ def calc_scores_3dm_complex(gold_aln_data, test_aln):
                 # means this residue is aligned while it should not be aligned with anything
                 pairwise_score -= 1
                 n += 1
+
         overall_score += pairwise_score
-    # check the non-aligned ones in test alignment (FNs and TNs)
-    overall_score /= n
-    return overall_score
+    return {"n": n, "overall_score": overall_score}
 
 
 def get_m_score(m, full_score):
@@ -334,3 +347,36 @@ def get_m_score(m, full_score):
     part = int(m.lstrip('m'))
 
     return (1. / part) * full_score
+
+
+def compare_vars_complex(gold_alns, score_mods, target_id, test_aln):
+    # number of comparisons for score normalization
+    n = 0
+    overall_score = 0
+    # check the aligned ones in test alignment (FPs and TPs)
+    # test_target_aln = test_aln["vars"][target_id]
+
+    penalty = score_mods["p"]
+    alrights = 0
+    for seq_id, gold_aln in gold_alns.iteritems():
+        test_seq_nonaligned = test_aln["var"][seq_id]
+
+        for test_res_number in test_seq_nonaligned:
+            test_res_number = str(test_res_number)
+            if test_res_number not in gold_aln:
+                alrights += 1
+                # residue not aligned in gold one, OK
+                continue
+
+            scores = gold_aln[test_res_number]
+            if scores.keys()[0] == '*':
+                alrights += 1
+                # residue not aligned in gold one, OK
+                # means residue should not be aligned with anything, also OK
+                continue
+
+            # if we're here that means the residue is not aligned in the
+            # test alignment and aligned in gold
+            overall_score -= penalty
+            n += 1
+    return {"n": n, "overall_score": overall_score}

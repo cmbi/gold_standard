@@ -1,4 +1,4 @@
-from nose.tools import eq_
+from nose.tools import eq_, ok_
 
 import gold_standard_src.gold_standard.aln_analyzer as aa
 
@@ -139,17 +139,17 @@ def test_calc_scores_3dm_complex():
 
     # retrieve gold aln
     gold_alns = eval(g)
+    full_seq = gold_alns["full_seq"]
 
+    # TESTCASE 1 - good aln
     # retrieve test aln
     aln_path = "gold_standard_src/tests/testdata/tautomerase_final_core.txt"
     aln_dict, strcts_order = parse_3SSP(aln_path)
 
     # convert to grounded
-    full_seq = gold_alns["full_seq"]
     num_aln_dict, core_indexes = core_aln_to_num(
             aln_dict, full_seq, golden_ids=gold_alns["ids"])
 
     # -- run test --
     result = aa.calc_scores_3dm_complex(gold_alns, num_aln_dict)
-    print result
-
+    ok_(1 - result < 0.01)
