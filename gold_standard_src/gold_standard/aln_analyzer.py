@@ -270,4 +270,4 @@ def calc_scores_3dm_complex(golden_alns, test_aln):
     for seq_id, aln in test_aln.iteritems():
 
 
-    pass
+        pass

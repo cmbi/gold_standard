@@ -97,7 +97,7 @@ def calculate_aln_quality_complex(paths, output, in_format, write_json):
     # calculate scores
     scores = calc_scores_3dm_complex(gold_in['alns'], num_aln_dict)
     stats = process_results(scores['pairwise'], scores['full'], scores['sp_scores'],
-                            output, tmpl_no)
+                            output, len(strcts_order))
 
     if write_json:
         # write scores to a json file
@@ -132,7 +132,7 @@ def calculate_aln_quality_simple(paths, output, in_format, multi, write_json, go
     # calculate scores
     scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)
     stats = process_results(scores['pairwise'], scores['full'], scores['sp_scores'],
-                            output, tmpl_no)
+                            output, len(strcts_order))
 
     if write_json:
         # write scores to a json file
