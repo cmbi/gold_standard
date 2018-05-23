@@ -264,10 +264,73 @@ def calc_scores_3dm(golden_alns, test_aln, multi):
     return result
 
 
-def calc_scores_3dm_complex(golden_alns, test_aln):
+def calc_scores_3dm_complex(gold_aln_data, test_aln):
     """
     """
-    for seq_id, aln in test_aln.iteritems():
+    target_id = gold_aln_data["target"]
+    gold_alns = gold_aln_data["alns"]
+    score_mods = gold_aln_data["score_modifiers"]
+
+    print score_mods
+
+    # check the aligned ones in test alignment (FPs and TPs)
+    test_target_aln = test_aln["cores"][target_id]
+
+    overall_score = 0
+
+    # number of comparisons for score normalization
+    n = 0
+    for seq_id, aln in test_aln["cores"].iteritems():
+        if seq_id == target_id:
+            continue
+
+        gold_aln = gold_alns[seq_id]
+
+        pairwise_score = 0
+
+        for i, res_number in enumerate(aln):
+            if res_number == '-':
+                continue
+            # alignment scores on this position
+            gold_residue_scores = gold_aln[str(res_number)]
+
+            # target residue aligned with residue 'res_number' from sequence 'seq_id'
+            test_target_res = str(test_target_aln[i])
+
+            found_aln = False
+            for res_number_gold, score_category in gold_residue_scores.iteritems():
+                if res_number_gold == '*':
+                    # means this residue should not be aligned with anything, give a penalty
+                    break
+
+                if res_number_gold == test_target_res:
+                    n += 1
+                    if score_category.startswith('m'):
+                        pairwise_score += get_m_score(score_category, score_mods["a"])
+                        found_aln = True
+                    else:
+                        pairwise_score += score_mods[score_category]
+                        found_aln = True
+                    break
+
+            if not found_aln and test_target_res != '-':
+                # means this residue is aligned while it should not be aligned with anything
+                pairwise_score -= 1
+                n += 1
+        overall_score += pairwise_score
+    # check the non-aligned ones in test alignment (FNs and TNs)
+    overall_score /= n
+    return overall_score
 
 
-        pass
+def get_m_score(m, full_score):
+    """
+    Get a score for a position with multiple solutions
+    :param m: m modifier name, m + int
+    :param full_score: full score
+    :return: score (float)
+    """
+
+    part = int(m.lstrip('m'))
+
+    return (1. / part) * full_score

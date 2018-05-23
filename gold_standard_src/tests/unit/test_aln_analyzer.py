@@ -151,4 +151,5 @@ def test_calc_scores_3dm_complex():
 
     # -- run test --
     result = aa.calc_scores_3dm_complex(gold_alns, num_aln_dict)
+    print result
 
