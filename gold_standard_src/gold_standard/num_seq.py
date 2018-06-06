@@ -44,12 +44,16 @@ def core_aln_to_num(aln_dict, full_seq, golden_ids=None):
     for seq_id, seq in aln_dict.iteritems():
         if golden_ids and seq_id not in golden_ids:
             continue
+        try:
+            aln_3dm["cores"][seq_id], core_indexes_tmp = core_to_num_seq(
+                seq, full_seq[seq_id])
+            core_indexes = core_indexes.union(set(core_indexes_tmp))
+            aln_3dm["var"][seq_id] = get_var_pos(aln_3dm["cores"][seq_id],
+                                                 full_seq[seq_id])
+        except:
+            _log.error("There was an error processing sequence %s", seq_id)
+            raise
 
-        aln_3dm["cores"][seq_id], core_indexes_tmp = core_to_num_seq(
-            seq, full_seq[seq_id])
-        core_indexes = core_indexes.union(set(core_indexes_tmp))
-        aln_3dm["var"][seq_id] = get_var_pos(aln_3dm["cores"][seq_id],
-                                             full_seq[seq_id])
     return aln_3dm, list(core_indexes)
 
 
@@ -251,6 +255,6 @@ def split_core(core, full_seq, add_index=0):
     _log.debug("Split up core %s in two cores: %s", core, new_cores)
     if not new_cores:
         raise Exception("Didn't find a way to split up the core {}\n"
-                        "full sequence[{}:]: {}".format(
-                            core, add_index, full_seq[add_index:]))
+                        "full sequence[{}:]: {}\nfull sequence:\n{}\n.".format(
+                            core, add_index, full_seq[add_index:], full_seq))
     return new_cores
