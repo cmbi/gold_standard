@@ -4,6 +4,8 @@ import json
 import logging
 import sys
 
+from copy import deepcopy
+
 from gold_standard.aln_processor import make_master_seq_full
 from gold_standard.html_handler import HtmlHandler
 from gold_standard.parsers.aln3SSP import parse_3SSP
@@ -68,7 +70,11 @@ def parse_input_alignment(aln_path, full_seq, gold_ids, in_format, final_core_pa
 
         # fill in the alignment with gaps so that the full master sequence is in
         # the test alignment
-        aln_dict = make_master_seq_full(aln_dict, full_seq, gold_ids)
+        old_aln_dict = deepcopy(aln_dict)
+        try:
+            aln_dict = make_master_seq_full(aln_dict, full_seq, gold_ids)
+        except:
+            aln_dict = old_aln_dict
 
         # create alignment of grounded sequences
         num_aln_dict, core_indexes = core_aln_to_num(aln_dict, full_seq, golden_ids=gold_ids)
