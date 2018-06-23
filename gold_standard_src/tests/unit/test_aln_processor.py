@@ -16,11 +16,11 @@ def test_find_positions_to_fill_in():
             "2OPAA":  "PYVTVKMLEGRTDEQKRNLVEKVTEAVKETTGASEEKIVVFIEEMRKDHYAVAGKRLSDME",
     }
 
-    master_full_seq = "PIAQIHILEGRSDEQKETLIREVSEAISRSLDAPLTSVRVIITEMAKGHFGIGGELASKVRR"
+    master_full_seq = "PIAQIHILEGRSDEQKETLIREVSEAISRSLDAPLTSVRVIITEMAKGHFGIGGELASKVRA"
     master_aln_seq = input_aln_dict["4X1CH"]
 
     positions_to_fill_in = ap.find_positions_to_fill_in(master_full_seq, master_aln_seq)
-    eq_(positions_to_fill_in, [60, 60])
+    eq_(positions_to_fill_in, [(60, 'R'), (60, 'A')])
 
 
 def test_fill_in_gaps():
@@ -36,18 +36,19 @@ def test_fill_in_gaps():
             "2OPAA":  "PYVTVKMLEGRTDEQKRNLVEKVTEAVKETTGASEEKIVVFIEEMRKDHYAVAGKRLSDME",
     }
 
-    master_full_seq = "PIAQIHILEGRSDEQKETLIREVSEAISRSLDAPLTSVRVIITEMAKGHFGIGGELASKVRR"
-    master_aln_seq = aln_dict["4X1CH"]
+    master_full_seq = "PIAQIHILEGRSDEQKETLIREVSEAISRSLDAPLTSVRVIITEMAKGHFGIGGELASKVRA"
+    master_id = "4X1CH"
+    master_aln_seq = aln_dict[master_id]
 
     positions_to_fill_in = ap.find_positions_to_fill_in(master_full_seq, master_aln_seq)
-    eq_(positions_to_fill_in, [60, 60])
+    eq_(positions_to_fill_in, [(60, 'R'), (60, 'A')])
 
-    ap.fill_in_gaps(aln_dict, positions_to_fill_in)
+    ap.fill_in_gaps(aln_dict, positions_to_fill_in, master_id, master_full_seq)
 
     expected = {
         "4FDXA":  "PIIQMNLLEGRTVEQKRNAVAAITEAVVRTLDVRPDQVRILINELGVEHFSVAGQTAAMRQ--",
         "3RY0A":  "PLIRVTLLEGRSPQEVAALGEALTAAAHETLGTPVEAVRVIVEETPPERWFVGGRSVAERR--",
-        "4X1CH":  "PIAQIHILEGRSDEQKETLIREVSEAISRSLDAPLTSVRVIITEMAKGHFGIGGELASKV-RR",
+        "4X1CH":  "PIAQIHILEGRSDEQKETLIREVSEAISRSLDAPLTSVRVIITEMAKGHFGIGGELASKV-RA",
         "1MWWA":  "TVIEINLMAGRMEGTKKRLIKMLFSELEYKLGIRAHDVEITIKEQPAHCWGFRGMTG--EA--",
         "3M21A":  "PFINIKLVpgPTNEQKQQLIEGVSDLMVKVLNKNKASIVVIIDEVDSNNYGLGGESVHHLR--",
         "4FAZA":  "PFAQIYLIEGRTEEQKRAVIEKVTQAMMEAVGAPKENVRVWIHDVPKENWGIGGVSAKALG--",

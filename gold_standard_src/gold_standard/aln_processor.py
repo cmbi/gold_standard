@@ -15,7 +15,8 @@ def find_positions_to_fill_in(master_full_seq, master_aln_seq):
     while pos_full < len(master_full_seq):
         if master_full_seq[pos_full] != master_aln_seq[pos_aln]:
             # different residue on this position, we need to insert a gap here
-            positions_to_fill_in.append(pos_aln)
+            # positions_to_fill_in[pos_aln] = master_full_seq[pos_full]
+            positions_to_fill_in.append(tuple([pos_aln, master_full_seq[pos_full]]))
         else:
             # same residue in the full and aligned sequence, can go to the next
             # position in both
@@ -26,10 +27,24 @@ def find_positions_to_fill_in(master_full_seq, master_aln_seq):
     return positions_to_fill_in
 
 
-def fill_in_gaps(aln_dict, gaps_to_fill_in, full_master_seq):
-    rev_gap_positions = sorted(gaps_to_fill_in, reverse=True)
+def fill_in_gaps(aln_dict, positions_to_fill_in, master_id, master_full_seq):
+    # need to reverse positions order, to change the alignment starting
+    # from C-terminus (then we don't need to update the alignment positions
+    # to fill in)
+    # rev_gap_positions = sorted(positions_to_fill_in, reverse=True, key=lambda x: x[0])
+    rev_gap_positions = positions_to_fill_in[::-1]
 
-    pass
+    for pos_tuple in rev_gap_positions:
+        aln_position = pos_tuple[0] + 1
+        master_res = pos_tuple[1]
+        for seq_id, seq in aln_dict.iteritems():
+            if seq_id == master_id:
+                new_seq = seq[:aln_position] + master_res + seq[aln_position:]
+            else:
+                new_seq = seq[:aln_position] + "-" + seq[aln_position:]
+            aln_dict[seq_id] = new_seq
+
+    assert aln_dict[master_id].replace("-", "") == master_full_seq
 
 
 def make_master_seq_full(aln_dict, full_seqs, gold_ids):
@@ -52,6 +67,6 @@ def make_master_seq_full(aln_dict, full_seqs, gold_ids):
 
     positions_to_fill_in = find_positions_to_fill_in(master_full_seq, master_aln_seq)
 
-    fill_in_gaps(aln_dict, positions_to_fill_in)
+    fill_in_gaps(aln_dict, positions_to_fill_in, master_id, master_full_seq)
 
     return aln_dict
