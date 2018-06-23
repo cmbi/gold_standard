@@ -13,10 +13,12 @@ def find_positions_to_fill_in(master_full_seq, master_aln_seq):
     # positions in the alignment on which gaps need to be added
     positions_to_fill_in = []
     while pos_full < len(master_full_seq):
-        if master_full_seq[pos_full] != master_aln_seq[pos_aln]:
+        if master_full_seq[pos_full] != master_aln_seq[pos_aln].upper():
             # different residue on this position, we need to insert a gap here
             # positions_to_fill_in[pos_aln] = master_full_seq[pos_full]
             positions_to_fill_in.append(tuple([pos_aln, master_full_seq[pos_full]]))
+            # if master_aln_seq[pos_aln] == "-":
+            #     pos_aln += 1
         else:
             # same residue in the full and aligned sequence, can go to the next
             # position in both
@@ -35,7 +37,8 @@ def fill_in_gaps(aln_dict, positions_to_fill_in, master_id, master_full_seq):
     rev_gap_positions = positions_to_fill_in[::-1]
 
     for pos_tuple in rev_gap_positions:
-        aln_position = pos_tuple[0] + 1
+        # aln_position = pos_tuple[0] + 1
+        aln_position = pos_tuple[0]
         master_res = pos_tuple[1]
         for seq_id, seq in aln_dict.iteritems():
             if seq_id == master_id:
@@ -44,7 +47,13 @@ def fill_in_gaps(aln_dict, positions_to_fill_in, master_id, master_full_seq):
                 new_seq = seq[:aln_position] + "-" + seq[aln_position:]
             aln_dict[seq_id] = new_seq
 
-    assert aln_dict[master_id].replace("-", "") == master_full_seq
+    # there should be no residues missing in the master seq now,
+    # we can make it all uppercase
+    aln_dict[master_id] = aln_dict[master_id].upper()
+    if aln_dict[master_id].replace("-", "") != master_full_seq:
+        print "sequences not equal:"
+        print aln_dict[master_id].replace("-", "")
+        print master_full_seq
 
 
 def make_master_seq_full(aln_dict, full_seqs, gold_ids):
