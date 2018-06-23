@@ -1,7 +1,11 @@
 import copy
+import logging
 import os
 
 from .paths import CSS, TEMPLATE
+
+
+_log = logging.getLogger("__main__")
 
 
 class HtmlHandler(object):
@@ -128,13 +132,19 @@ class HtmlHandler(object):
     def aln_to_html_pairwise(self, aa_aln, gold_aln, full, wrong, order):
         html_out = ""
         aln_length = len(aa_aln)
+
+        _log.info("Creating pairiwse html")
+
         for seq_id in order:
             seq = aa_aln[seq_id]
             html_sequence = "<b>TEST</b> {}    ".format(seq_id)
             html_gold_sequence = "<b>GOLD</b> {}    ".format(seq_id)
             asterisk_line = "         {}".format(" " * len(seq_id))
             gold_seq = gold_aln["cores"][seq_id]
-            assert len(gold_seq) == len(seq)
+            if len(gold_seq) != len(seq):
+                msg = "Sequences not of equal length ({} vs {}):\n{}\n{}".format(len(gold_seq), len(seq), gold_seq, seq)
+                _log.error(msg)
+                raise RuntimeError(msg)
             for r, res in enumerate(seq):
                 if gold_seq[r] != "-":
                     gold_aa_index = gold_seq[r] - 1
@@ -166,6 +176,7 @@ class HtmlHandler(object):
             html_out += html_sequence + "\n"
             html_out += html_gold_sequence + "\n"
             html_out += "<br>"
+        _log.info("Finished creating pairwise html")
         return html_out
 
     def aln_to_html(self, aa_aln, wrong, order):
