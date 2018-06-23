@@ -1,4 +1,22 @@
-from collections import OrderedDict
+def remove_positions(aln_dict, positions_to_remove):
+    for i in sorted(positions_to_remove, reverse=True):
+        for seq_id, seq in aln_dict.iteritems():
+            if i < len(seq) - 1:
+                new_seq = seq[:i-1] + seq[i-1].lower() + seq[i+1].lower() + seq[i+2:]
+            else:
+                new_seq = seq[:i-1] + seq[i-1].lower()
+            aln_dict[seq_id] = new_seq
+
+
+def find_positions_to_remove(master_aln_seq):
+    """
+    Find positions with gaps in the master sequence - these will be removed
+    """
+    positions_to_remove = []
+    for i, res in enumerate(master_aln_seq):
+        if res == "-":
+            positions_to_remove.append(i)
+    return positions_to_remove
 
 
 def find_positions_to_fill_in(master_full_seq, master_aln_seq):
@@ -13,12 +31,16 @@ def find_positions_to_fill_in(master_full_seq, master_aln_seq):
     # positions in the alignment on which gaps need to be added
     positions_to_fill_in = []
     while pos_full < len(master_full_seq):
-        if master_full_seq[pos_full] != master_aln_seq[pos_aln].upper():
+        # if pos_aln < len(master_aln_seq) - 1 and master_full_seq[pos_full] != master_aln_seq[pos_aln].upper():
+        if pos_aln < len(master_aln_seq) and master_full_seq[pos_full] != master_aln_seq[pos_aln].upper():
             # different residue on this position, we need to insert a gap here
             # positions_to_fill_in[pos_aln] = master_full_seq[pos_full]
             positions_to_fill_in.append(tuple([pos_aln, master_full_seq[pos_full]]))
-            # if master_aln_seq[pos_aln] == "-":
-            #     pos_aln += 1
+            if master_aln_seq[pos_aln] == "-":
+                pos_aln += 1
+        # elif pos_aln >= len(master_aln_seq) - 1:
+        elif pos_aln >= len(master_aln_seq):
+            positions_to_fill_in.append(tuple([pos_aln, master_full_seq[pos_full]]))
         else:
             # same residue in the full and aligned sequence, can go to the next
             # position in both
@@ -50,10 +72,7 @@ def fill_in_gaps(aln_dict, positions_to_fill_in, master_id, master_full_seq):
     # there should be no residues missing in the master seq now,
     # we can make it all uppercase
     aln_dict[master_id] = aln_dict[master_id].upper()
-    if aln_dict[master_id].replace("-", "") != master_full_seq:
-        print "sequences not equal:"
-        print aln_dict[master_id].replace("-", "")
-        print master_full_seq
+    assert aln_dict[master_id].replace("-", "") == master_full_seq
 
 
 def make_master_seq_full(aln_dict, full_seqs, gold_ids):
@@ -74,6 +93,10 @@ def make_master_seq_full(aln_dict, full_seqs, gold_ids):
         # alignment ok, maste sequence is full and there are no gaps in it
         return aln_dict
 
+    positions_to_remove = find_positions_to_remove(master_aln_seq)
+    remove_positions(aln_dict, positions_to_remove)
+
+    master_aln_seq = aln_dict[master_id]
     positions_to_fill_in = find_positions_to_fill_in(master_full_seq, master_aln_seq)
 
     fill_in_gaps(aln_dict, positions_to_fill_in, master_id, master_full_seq)
