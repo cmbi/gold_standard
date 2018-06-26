@@ -34,7 +34,6 @@ def find_positions_to_fill_in(master_full_seq, master_aln_seq):
         # if pos_aln < len(master_aln_seq) - 1 and master_full_seq[pos_full] != master_aln_seq[pos_aln].upper():
         if pos_aln < len(master_aln_seq) and master_full_seq[pos_full] != master_aln_seq[pos_aln].upper():
             # different residue on this position, we need to insert a gap here
-            # positions_to_fill_in[pos_aln] = master_full_seq[pos_full]
             positions_to_fill_in.append(tuple([pos_aln, master_full_seq[pos_full]]))
             if master_aln_seq[pos_aln] == "-":
                 pos_aln += 1
