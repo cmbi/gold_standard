@@ -85,12 +85,13 @@ def make_master_seq_full(aln_dict, full_seqs, gold_ids):
 
     # retrieve data about the master sequence
     master_id = gold_ids[0]
+
     master_full_seq = full_seqs[master_id]
     master_aln_seq = aln_dict[master_id]
 
     # first check if it's needed
     if len(master_full_seq) == len(master_aln_seq) and "-" not in master_aln_seq:
-        # alignment ok, maste sequence is full and there are no gaps in it
+        # alignment ok, master sequence is full and there are no gaps in it
         return aln_dict
 
     positions_to_remove = find_positions_to_remove(master_aln_seq)

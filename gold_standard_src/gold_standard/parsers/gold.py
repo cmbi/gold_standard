@@ -43,15 +43,16 @@ def parse_gold_pairwise(gold_dir):
     var_list = [x for x in os.listdir(gold_dir) if x.endswith(".Var")]
     _log.info("Got %s var files", len(var_list))
     gold_alns = {}
-    gold_ids = set()
+    gold_ids = []
     full_seq = {}
     for v in var_list:
         var = parse_var_file(os.path.join(gold_dir, v))
-        gold_ids.update(var['ids'])
+        gold_ids.extend(var['ids'])
         aln_ids = fs(var['ids'])
         gold_alns[aln_ids] = var['alns']
         full_seq.update(var['full_seq'])
     _log.info("Finished parsing .Var files")
+
     return {
         'alns': gold_alns,
         'ids': gold_ids,
@@ -61,15 +62,13 @@ def parse_gold_pairwise(gold_dir):
 
 def parse_gold_multi(gold_path):
     corvar = parse_var_file(gold_path, multi=True)
-    # corvar = fill_in_target(corvar)
     return {'alns': corvar['alns'], 'full_seq': corvar['full_seq'],
-            'ids': corvar['alns']['cores'].keys()}
+            'ids': corvar['ids']}
 
 
 def fill_in_target(corvar):
     new_cores = corvar["alns"]["cores"]
     new_vars = corvar["alns"]["var"]
-    print new_vars
     target_id = corvar["target"]
 
     target_vars = corvar["alns"]["var"][target_id]
