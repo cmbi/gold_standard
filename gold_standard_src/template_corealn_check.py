@@ -16,6 +16,8 @@ from copy import deepcopy
 from numpy import isclose
 
 from gold_standard_src.gold_standard.parsers.fasta import parse_fasta, write_fasta
+from gold_standard_src.gold_standard.sbst_mat import get_blosum_score
+
 
 # setup logging
 logger = logging.getLogger('3DM.' + __name__)
@@ -44,6 +46,43 @@ def parse_var_file(var_path):
     return var_aln, target_id, strcts_order
 
 
+# def calc_similarity(seg1, seg2, short_seg):
+#     # first remove lowercase residues
+#     clean_seg1 = [i for i in seg1 if not i.islower()]
+#     clean_seg2 = [i for i in seg2 if not i.islower()]
+#     clean_short = [i for i in short_seg if not i.islower()]
+
+#     assert len(clean_seg1) == len(clean_seg2)
+#     score = 0
+#     max_sim_score = sum([get_blosum_score(i, i) for i in clean_short])
+#     if not max_sim_score:
+#         return 0
+
+#     for i, res_i in enumerate(clean_seg1):
+#         if res_i == '-' or clean_seg2[i] == '-':
+#             continue
+#         score += get_blosum_score(res_i, clean_seg2[i])
+#     return float(score) / max_sim_score
+
+
+def calc_similarity(seq1, seq2):
+    if isinstance(seq1, list):
+        seq1 = "".join(seq1)
+    if isinstance(seq2, list):
+        seq2 = "".join(seq2)
+
+    # max score: what would be the score if the templ seq (seq1) was aligned with itself
+    max_sim_score = sum([get_blosum_score(i, i) for i in seq1.replace("-", "")])
+
+    score = 0.0
+    for i, res_1 in enumerate(seq1):
+        if res_1 != "-":
+            score += get_blosum_score(res_1, seq2[i])
+    similarity = score / max_sim_score
+
+    return similarity
+
+
 def calc_identity(seq1, seq2):
     if isinstance(seq1, list):
         seq1 = "".join(seq1)
@@ -54,8 +93,7 @@ def calc_identity(seq1, seq2):
     for i, res_1 in enumerate(seq1):
         if res_1 == seq2[i] and res_1 != "-":
             matching += 1
-    avg_len = float(len(seq1.replace("-", "")) + len(seq2.replace("-", ""))) / 2
-    return float(matching) / avg_len
+    return float(matching) / len(seq1.replace("-", ""))
 
 
 def convert_to_cores_by_index(incorrect_cores):
@@ -146,21 +184,20 @@ def check_aln_coverage(aligned_cores):
     """
     Check if alignment coverage is good enough
     """
-    corelen1 = len(aligned_cores[0].replace('-', ''))
-    corelen2 = len(aligned_cores[1].replace('-', ''))
+    # length of the templ seq (non-aligned)
+    tmpl_seq_len = len(aligned_cores[0].replace('-', ''))
 
-    # check which core is the shorter one and which is the longer one
-    if corelen1 <= corelen2:
-        shortlen = corelen1
-        longlen = corelen2
-    else:
-        shortlen = corelen2
-        longlen = corelen1
+    tmpl_aln_seq = aligned_cores[0]
+    aln_seq2 = aligned_cores[1]
+    # tmpl residues aligned
+    covered_positions = 0
+    for i in range(len(tmpl_aln_seq)):
+        if tmpl_aln_seq[i] != "-" and aln_seq2[i] != "-":
+            covered_positions += 1
 
-    covered_positions = shortlen - (len(aligned_cores[0]) - longlen)
     if covered_positions >= 6:
         return True
-    if float(covered_positions) / shortlen < 0.75:
+    if float(covered_positions) / tmpl_seq_len < 0.5:
         # check coverage percentage only if length of the shorter core
         # is lower than 6
         return False
@@ -219,7 +256,8 @@ def check_corevar(corevar1, corevar2, mafft_identity_cutoff):
                 continue
 
             aligned_regs = run_mafft_alignment(seq1, seq2)
-            if check_aln_coverage(aligned_regs) and calc_identity(aligned_regs[0], aligned_regs[1]) > mafft_identity_cutoff:
+            # if check_aln_coverage(aligned_regs) and calc_identity(aligned_regs[0], aligned_regs[1]) > mafft_identity_cutoff:
+            if check_aln_coverage(aligned_regs) and calc_similarity(aligned_regs[0], aligned_regs[1]) > mafft_identity_cutoff:
                 new_core, left_var, right_var = get_newcorvar(aligned_regs)
                 if corevar2[i - 1] == "0":
                     corevar2[i - 1] = left_var
@@ -236,7 +274,7 @@ def run_mafft_alignment(core1, core2):
     Align the two cores with mafft, return a list of two strings (aligned cores)
     """
     fastapath = write_fasta({'core1': core1, 'core2': core2})
-    sp_args = [MAFFT, '--op', '4', fastapath]
+    sp_args = [MAFFT, '--anysymbol', '--op', '4', fastapath]
     output = subprocess.check_output(sp_args, stderr=subprocess.PIPE)
 
     if os.path.exists(fastapath):
@@ -381,7 +419,8 @@ def check_template_cores(aligned_templates, tmpl_id, tmpl_identity_cutoff=0.5,
             logger.info("Running check %s out of %s", counter, checks_to_run)
 
         # run the check
-        full_identity = calc_identity(core_seq1, core_seq2)
+        # full_identity = calc_identity(core_seq1, core_seq2)
+        full_identity = calc_similarity(core_seq1, core_seq2)
         if 0.1 < full_identity < tmpl_identity_cutoff:
             # only compare highly identical templates
             new_aligned_templates[seq_id2] = corevar2

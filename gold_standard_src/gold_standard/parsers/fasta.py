@@ -51,7 +51,7 @@ def write_fasta(sequences, name=None, prefix=''):
     _log.debug("Sequence %s: %s", k, sequences[k])
     fasta_sequences = '\n'.join(
         ['>{}\n{}'.format(s_id, s) for s_id, s in sequences.iteritems()]
-    )
+    ) + "\n"
     with outfile as f:
         f.write(fasta_sequences)
     return outfile.name
