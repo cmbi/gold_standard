@@ -203,6 +203,10 @@ def check_corevar(corevar1, corevar2, mafft_identity_cutoff):
             # this is a var region, skip it
             continue
 
+        if corevar1[i].count('-'):
+            # only take template cores if there are no gaps
+            continue
+
         if not corevar2[i].replace('-', ''):
             # gaps-only core region
             # TODO: take the var region to the right and try to align it to the
@@ -305,22 +309,24 @@ def write_corevar(aligned_templates, outpath, templates_order):
         o.write("\n".join(outlines) + '\n')
 
 
-def run_check(corevar_path, tmpl_identity=0.4,
-              mafft_identity=0.6, whatif_identity=0.4, write_log=False, diff_check=True,
+def run_check(corevar_path, tmpl_identity=0.4, tmpl_id="",
+              mafft_identity=0.6, write_log=False, diff_check=True,
               outvar="", outfinal=""):
     """
     Checks correctness of core alignments in the final_core alignment by comparison
         to MAFFT alignments and removed the possibly incorrect cores
     """
-    cutoffs = {'mafft': mafft_identity, 'whatif': whatif_identity, 'tmpl': tmpl_identity}
+    cutoffs = {'mafft': mafft_identity, 'tmpl': tmpl_identity}
 
     # parse final_core.txt
     aligned_templates, target_id, strcts_order = parse_var_file(corevar_path)
+    if tmpl_id and tmpl_id in strcts_order:
+        target_id = tmpl_id
 
     # check cores
     check_result = check_template_cores(
             aligned_templates, target_id, cutoffs['tmpl'], cutoffs['mafft'],
-            cutoffs['whatif'], write_log, diff_check=diff_check)
+            write_log)
 
     if not check_result["changed"]:
         print "No changes to the input alignment"
@@ -336,10 +342,8 @@ def run_check(corevar_path, tmpl_identity=0.4,
         write_core(check_result["new_templates"], outfinal, strcts_order)
 
 
-
 def check_template_cores(aligned_templates, tmpl_id, tmpl_identity_cutoff=0.5,
-                         mafft_identity_cutoff=0.6, whatif_identity_cutoff=0.5,
-                         write_log=False, diff_check=True, ):
+                         mafft_identity_cutoff=0.6, write_log=False):
     """
     Checks correctness of core alignments in the final_core alignment by comparison
         to MAFFT alignments and removed the possibly incorrect cores
@@ -421,18 +425,17 @@ if __name__ == "__main__":
                         default=0.2, type=float)
     parser.add_argument("--mafft_identity", help="mafft identity cutoff",
                         default=0.2, type=float)
-    parser.add_argument("--whatif_identity", help="whatif identity cutoff",
-                        default=0.5, type=float)
     parser.add_argument('--write_log', action='store_true', default=False)
     parser.add_argument('--nodiffcheck', action='store_true', default=False)
 
     parser.add_argument('--outvar')
     parser.add_argument('--outfinal')
+    parser.add_argument('--tmpl_id')
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
     run_check(corevar_path=args.corvar, tmpl_identity=args.tmpl_identity,
-              mafft_identity=args.mafft_identity, whatif_identity=args.whatif_identity,
+              mafft_identity=args.mafft_identity, tmpl_id=args.tmpl_id,
               write_log=args.write_log, diff_check=not args.nodiffcheck, outvar=args.outvar,
               outfinal=args.outfinal)
