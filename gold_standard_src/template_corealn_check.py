@@ -188,13 +188,14 @@ def get_newcorvar(aligned_regs):
             right_var += aligned_regs[1][i].lower()
         else:
             left_var += aligned_regs[1][i].lower()
-    if not var2:
-        var2 = "0"
+    if not right_var:
+        right_var = "0"
+    if not left_var:
+        left_var = "0"
     return core2, left_var, right_var
 
 
-def check_corevar(corevar1, corevar2, mafft_identity_cutoff, whatif_identity_cutoff,
-                  seq_id1, seq_id2, diff_check=True):
+def check_corevar(corevar1, corevar2, mafft_identity_cutoff):
     corevar1 = corevar1.split()
     corevar2 = corevar2.split()
     for i, reg_i in enumerate(corevar1):
@@ -213,18 +214,16 @@ def check_corevar(corevar1, corevar2, mafft_identity_cutoff, whatif_identity_cut
             if seq2 == '0':
                 continue
 
-            print "aligning", seq1, seq2
             aligned_regs = run_mafft_alignment(seq1, seq2)
-            if check_aln_coverage(aligned_regs) and calc_identity(aligned_regs[0], aligned_regs[1]) > 0.2:
+            if check_aln_coverage(aligned_regs) and calc_identity(aligned_regs[0], aligned_regs[1]) > mafft_identity_cutoff:
                 new_core, left_var, right_var = get_newcorvar(aligned_regs)
                 if corevar2[i - 1] == "0":
                     corevar2[i - 1] = left_var
-                else:
+                elif left_var != "0":
                     corevar2[i - 1] += left_var
 
                 corevar2[i] = new_core
                 corevar2[i + 1] = right_var
-                print aligned_regs
     return " ".join(corevar2)
 
 
@@ -235,7 +234,6 @@ def run_mafft_alignment(core1, core2):
     fastapath = write_fasta({'core1': core1, 'core2': core2})
     sp_args = [MAFFT, '--op', '4', fastapath]
     output = subprocess.check_output(sp_args, stderr=subprocess.PIPE)
-    print output
 
     if os.path.exists(fastapath):
         os.remove(fastapath)
@@ -283,6 +281,18 @@ def write_core_errors_to_file(aligned_templates, errors, final_core_path):
     logger.info("Output written to: %s", output_path)
 
 
+def write_core(aligned_templates, outpath, templates_order):
+    """
+    Write template cores to file
+    """
+    outlines = []
+    for seq_id in templates_order:
+        if seq_id in aligned_templates:
+            outlines.append("{} {}".format(seq_id, " ".join(aligned_templates[seq_id].split()[1::2])))
+    with open(outpath, 'w') as o:
+        o.write("\n".join(outlines) + '\n')
+
+
 def write_corevar(aligned_templates, outpath, templates_order):
     """
     Write template cores to file
@@ -296,7 +306,8 @@ def write_corevar(aligned_templates, outpath, templates_order):
 
 
 def run_check(corevar_path, tmpl_identity=0.4,
-              mafft_identity=0.6, whatif_identity=0.4, write_log=False, diff_check=True):
+              mafft_identity=0.6, whatif_identity=0.4, write_log=False, diff_check=True,
+              outvar="", outfinal=""):
     """
     Checks correctness of core alignments in the final_core alignment by comparison
         to MAFFT alignments and removed the possibly incorrect cores
@@ -311,7 +322,19 @@ def run_check(corevar_path, tmpl_identity=0.4,
             aligned_templates, target_id, cutoffs['tmpl'], cutoffs['mafft'],
             cutoffs['whatif'], write_log, diff_check=diff_check)
 
-    write_corevar(check_result["new_templates"], corevar_path, strcts_order)
+    if not check_result["changed"]:
+        print "No changes to the input alignment"
+        return
+
+    if not outvar:
+        # if output var not provided overwrite input var
+        outvar = corevar_path
+    write_corevar(check_result["new_templates"], outvar, strcts_order)
+    if not outfinal and outvar.endswith(".Var"):
+        outfinal = outvar[:-4]
+    if outfinal:
+        write_core(check_result["new_templates"], outfinal, strcts_order)
+
 
 
 def check_template_cores(aligned_templates, tmpl_id, tmpl_identity_cutoff=0.5,
@@ -355,19 +378,17 @@ def check_template_cores(aligned_templates, tmpl_id, tmpl_identity_cutoff=0.5,
 
         # run the check
         full_identity = calc_identity(core_seq1, core_seq2)
-        print full_identity
         if 0.1 < full_identity < tmpl_identity_cutoff:
             # only compare highly identical templates
-            print "skipping"
+            new_aligned_templates[seq_id2] = corevar2
             continue
 
         # run core-by-core check
-        newcorevar = check_corevar(corevar1, corevar2, mafft_identity_cutoff, whatif_identity_cutoff,
-                                   seq_id1, seq_id2, diff_check=diff_check)
+        newcorevar = check_corevar(corevar1, corevar2, mafft_identity_cutoff)
         if newcorevar != corevar2:
             changed += 1
 
-        new_aligned_templates[seq_id2] = newcorevar
+        new_aligned_templates[seq_id2] = newcorevar.replace("  ", " ")
 
         # check if all pairs have been checked
         if len(checked_pairs) == all_pairs:
@@ -388,7 +409,8 @@ def check_template_cores(aligned_templates, tmpl_id, tmpl_identity_cutoff=0.5,
         'new_templates': new_aligned_templates,
         'old_templates': aligned_templates,
         'errors': possible_core_errors,
-        'full_seq_errors': possible_full_seq_errors
+        'full_seq_errors': possible_full_seq_errors,
+        "changed": changed
     }
 
 
@@ -398,15 +420,19 @@ if __name__ == "__main__":
     parser.add_argument("--tmpl_identity", help="template identity cutoff",
                         default=0.2, type=float)
     parser.add_argument("--mafft_identity", help="mafft identity cutoff",
-                        default=0.7, type=float)
+                        default=0.2, type=float)
     parser.add_argument("--whatif_identity", help="whatif identity cutoff",
                         default=0.5, type=float)
     parser.add_argument('--write_log', action='store_true', default=False)
     parser.add_argument('--nodiffcheck', action='store_true', default=False)
+
+    parser.add_argument('--outvar')
+    parser.add_argument('--outfinal')
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
     run_check(corevar_path=args.corvar, tmpl_identity=args.tmpl_identity,
               mafft_identity=args.mafft_identity, whatif_identity=args.whatif_identity,
-              write_log=args.write_log, diff_check=not args.nodiffcheck)
+              write_log=args.write_log, diff_check=not args.nodiffcheck, outvar=args.outvar,
+              outfinal=args.outfinal)
