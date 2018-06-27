@@ -1,18 +1,15 @@
 import logging
 import os
 import re
+import tempfile
 
 from .error_types import ParserError
 
 _log = logging.getLogger(__name__)
 
 
-def parse_fasta(aln_path, golden_ids=None):
-    _log.info("Parsing FASTA: %s", aln_path)
-    if not os.path.exists(aln_path):
-        raise ParserError("FASTA file doesn't exist: {}".format(aln_path))
-    with open(aln_path) as a:
-        aln_file = a.read().splitlines()
+def parse_fasta(aln_text, golden_ids=None):
+    aln_file = aln_text.splitlines()
     aln_dict = {}
     seq_id = ""
     found_fasta_headers = False
@@ -35,3 +32,26 @@ def parse_fasta(aln_path, golden_ids=None):
     if not found_fasta_headers:
         raise ParserError("Incorrect format, no fasta headers found.")
     return aln_dict
+
+
+def write_fasta(sequences, name=None, prefix=''):
+    """
+    Write sequences to a temporary fasta file
+    :param sequences: sequences dict, key: id, value: seq string
+    :return: tmp path
+    """
+    if name:
+        outfile = open(name, 'w')
+    else:
+        outfile = tempfile.NamedTemporaryFile(prefix=prefix, suffix=".fasta", delete=False)
+
+    _log.debug("Writing %s sequences to a FASTA file: %s", len(sequences), outfile.name)
+    # TODO: comment out the two lines below after debugging is finished
+    k = sequences.keys()[0]
+    _log.debug("Sequence %s: %s", k, sequences[k])
+    fasta_sequences = '\n'.join(
+        ['>{}\n{}'.format(s_id, s) for s_id, s in sequences.iteritems()]
+    )
+    with outfile as f:
+        f.write(fasta_sequences)
+    return outfile.name

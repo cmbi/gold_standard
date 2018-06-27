@@ -15,7 +15,7 @@ from collections import Counter
 from copy import deepcopy
 from numpy import isclose
 
-from gold_standard.parsers.var_file import parse_var_file
+from gold_standard_src.gold_standard.parsers.fasta import parse_fasta, write_fasta
 
 # setup logging
 logger = logging.getLogger('3DM.' + __name__)
@@ -24,7 +24,32 @@ fs = frozenset
 MAFFT = 'mafft'
 
 
+def parse_var_file(var_path):
+    """
+    Parse var file, key: seq id, value: corevar seq (string)
+    :param var_path:
+    :return:
+    """
+
+    with open(var_path) as a:
+        inlines = a.read().splitlines()
+    target_id = inlines[0].split(",")[0]
+    var_aln = {}
+    strcts_order = []
+    for i in inlines:
+        seq_id = i.split(",")[0]
+        strcts_order.append(seq_id)
+        sequence = i.split(",")[1]
+        var_aln[seq_id] = sequence.strip()
+    return var_aln, target_id, strcts_order
+
+
 def calc_identity(seq1, seq2):
+    if isinstance(seq1, list):
+        seq1 = "".join(seq1)
+    if isinstance(seq2, list):
+        seq2 = "".join(seq2)
+
     matching = 0
     for i, res_1 in enumerate(seq1):
         if res_1 == seq2[i] and res_1 != "-":
@@ -141,83 +166,81 @@ def check_aln_coverage(aligned_cores):
         return False
     return True
 
+
+def get_newcorvar(aligned_regs):
+    """
+    Get core and var of the 2nd sequence based on the alignmnet
+    :param aligned_regs:
+    :return:
+    """
+    tmpl_core = aligned_regs[0].replace("-", "")
+    core2 = ""
+    var2 = ""
+    right_var = ""
+    left_var = ""
+    for i in range(len(aligned_regs[0])):
+        if aligned_regs[0][i] != '-':
+            if right_var:
+                raise RuntimeError
+
+            core2 += aligned_regs[1][i]
+        elif core2:
+            right_var += aligned_regs[1][i].lower()
+        else:
+            left_var += aligned_regs[1][i].lower()
+    if not var2:
+        var2 = "0"
+    return core2, left_var, right_var
+
+
 def check_corevar(corevar1, corevar2, mafft_identity_cutoff, whatif_identity_cutoff,
-                seq_id1, seq_id2, diff_check=True):
+                  seq_id1, seq_id2, diff_check=True):
+    corevar1 = corevar1.split()
+    corevar2 = corevar2.split()
     for i, reg_i in enumerate(corevar1):
         if i % 2 == 0:
             # this is a var region, skip it
             continue
 
-        if not corevar2.replace('-', ''):
+        if not corevar2[i].replace('-', ''):
             # gaps-only core region
-            # TODO: take the var region to the left and try to align it to the
+            # TODO: take the var region to the right and try to align it to the
             # core in the template (corevar1)
-            seq1 = corevar2[i + 1].upper()
-            seq2 = corevar1[i]
+            # core of the template
+            seq1 = corevar1[i]
+            # var region to the right
+            seq2 = corevar2[i + 1].upper()
+            if seq2 == '0':
+                continue
+
+            print "aligning", seq1, seq2
             aligned_regs = run_mafft_alignment(seq1, seq2)
+            if check_aln_coverage(aligned_regs) and calc_identity(aligned_regs[0], aligned_regs[1]) > 0.2:
+                new_core, left_var, right_var = get_newcorvar(aligned_regs)
+                if corevar2[i - 1] == "0":
+                    corevar2[i - 1] = left_var
+                else:
+                    corevar2[i - 1] += left_var
 
-
-def check_cores(cores1, cores2, mafft_identity_cutoff, whatif_identity_cutoff,
-                seq_id1, seq_id2, diff_check=True):
-    """
-    Checks if there any potential errors in the alignment of two cores
-    compares original alignment identity to mafft alignment identity
-    :return: dictionary of incorrect cores,
-        {core index:
-         ({id1: wif_core1, id2: wif_core2},
-         {id1: mafft_core1, id2: mafft_core2})
-        }
-    """
-    incorrect_cores = {}
-    for i, core_i1 in enumerate(cores1):
-        core_i1_nogaps = core_i1.replace('-', '')
-        core_i2 = cores2[i]
-        core_i2_nogaps = core_i2.replace('-', '')
-        if not (core_i1_nogaps and core_i2_nogaps):
-            # one of the cores contains only gaps
-            continue
-
-        # check identity - only try to align if the original identity is lower than cutoff
-        whatif_identity = aliDef.calculateCoreIdentity(core_i1, core_i2)
-        if whatif_identity < whatif_identity_cutoff:
-            # align cores
-            aligned_cores = run_mafft_alignment(core_i1_nogaps, core_i2_nogaps)
-            if not aligned_cores:
-                # MAFFT created an empty alignment
-                continue
-
-            # check if mafft alignment coverage is good enough
-            coverage_ok = check_aln_coverage(aligned_cores)
-            if not coverage_ok:
-                # mafft alignment not good enough to detect incorrect cores
-                continue
-
-            # compare mafft identity with whatif identity
-            mafft_identity = aliDef.calculateCoreIdentity(aligned_cores[0], aligned_cores[1])
-            if mafft_identity > mafft_identity_cutoff or \
-                    (diff_check and mafft_identity > whatif_identity + 0.35):
-                # whatif alignment incorrect because either mafft identity was higher than the cutoff or
-                # mafft idenrtity is more than 0.35 higher than whatif identity
-                incorrect_cores[i] = (
-                    {seq_id1: core_i1, seq_id2: core_i2},
-                    {seq_id1: aligned_cores[0], seq_id2: aligned_cores[1]},
-                    whatif_identity, mafft_identity)
-
-    return incorrect_cores
+                corevar2[i] = new_core
+                corevar2[i + 1] = right_var
+                print aligned_regs
+    return " ".join(corevar2)
 
 
 def run_mafft_alignment(core1, core2):
     """
     Align the two cores with mafft, return a list of two strings (aligned cores)
     """
-    fastapath = fasta.write_fasta({
-        'core1': core1, 'core2': core2})
+    fastapath = write_fasta({'core1': core1, 'core2': core2})
     sp_args = [MAFFT, '--op', '4', fastapath]
     output = subprocess.check_output(sp_args, stderr=subprocess.PIPE)
+    print output
 
     if os.path.exists(fastapath):
         os.remove(fastapath)
-    aligned_cores = fasta.parse_fasta_text(output).values()
+    alignment = parse_fasta(output)
+    aligned_cores = [alignment["core1"], alignment["core2"]]
     return aligned_cores
 
 
@@ -260,23 +283,14 @@ def write_core_errors_to_file(aligned_templates, errors, final_core_path):
     logger.info("Output written to: %s", output_path)
 
 
-def get_source_by_acc_string(acc):
-    """
-    Check if sequence source is pdb based on the sequence id
-    """
-    if len(acc) == 5 and acc[0].isdigit():
-        return 'pdb'
-    return 'other'
-
-
-def write_core_file(templates_order, aligned_templates, outpath):
+def write_corevar(aligned_templates, outpath, templates_order):
     """
     Write template cores to file
     """
     outlines = []
     for seq_id in templates_order:
         if seq_id in aligned_templates:
-            outlines.append("{}   {}".format(seq_id, " ".join(aligned_templates[seq_id])))
+            outlines.append("{}, {}".format(seq_id, aligned_templates[seq_id]))
     with open(outpath, 'w') as o:
         o.write("\n".join(outlines) + '\n')
 
@@ -290,17 +304,19 @@ def run_check(corevar_path, tmpl_identity=0.4,
     cutoffs = {'mafft': mafft_identity, 'whatif': whatif_identity, 'tmpl': tmpl_identity}
 
     # parse final_core.txt
-    aligned_templates, templates_order = parse_corevar_file(corevar_path)
+    aligned_templates, target_id, strcts_order = parse_var_file(corevar_path)
 
     # check cores
     check_result = check_template_cores(
-            aligned_templates, global_settings, cutoffs['tmpl'], cutoffs['mafft'],
+            aligned_templates, target_id, cutoffs['tmpl'], cutoffs['mafft'],
             cutoffs['whatif'], write_log, diff_check=diff_check)
 
+    write_corevar(check_result["new_templates"], corevar_path, strcts_order)
 
-def check_template_cores(aligned_templates, global_settings, tmpl_identity_cutoff=0.5,
+
+def check_template_cores(aligned_templates, tmpl_id, tmpl_identity_cutoff=0.5,
                          mafft_identity_cutoff=0.6, whatif_identity_cutoff=0.5,
-                         write_log=False, diff_check=True):
+                         write_log=False, diff_check=True, ):
     """
     Checks correctness of core alignments in the final_core alignment by comparison
         to MAFFT alignments and removed the possibly incorrect cores
@@ -312,18 +328,18 @@ def check_template_cores(aligned_templates, global_settings, tmpl_identity_cutof
     counter = 0
 
     # if more than 50 templates than only do a 1 vs all check, not all vs all
-    tmpl_id = aligned_templates.keys()[0]
     tmpl_cores = aligned_templates[tmpl_id]
     checks_to_run = len(aligned_templates) - 1
 
     seq_id1 = tmpl_id
     corevar1 = tmpl_cores
+    changed = 0
     # run per-template core checks
-    full_seq1 = "".join(cores1).replace("0", "").upper()
+
+    new_aligned_templates = {tmpl_id: tmpl_cores}
     core_seq1 = corevar1.split(" ")[1::2]
 
     for seq_id2, corevar2 in aligned_templates.iteritems():
-        # full_seq2 = "".join(cores2).replace("0", "").upper()
         core_seq2 = corevar2.split(" ")[1::2]
 
         # check if this templates pair wasn't already checked
@@ -339,15 +355,19 @@ def check_template_cores(aligned_templates, global_settings, tmpl_identity_cutof
 
         # run the check
         full_identity = calc_identity(core_seq1, core_seq2)
+        print full_identity
         if 0.1 < full_identity < tmpl_identity_cutoff:
             # only compare highly identical templates
+            print "skipping"
             continue
 
         # run core-by-core check
-        incorrect_cores = check_corevar(corevar1, corevar2, mafft_identity_cutoff, whatif_identity_cutoff,
-                                        seq_id1, seq_id2, diff_check=diff_check)
-        if incorrect_cores:
-            possible_core_errors[ids_set] = incorrect_cores
+        newcorevar = check_corevar(corevar1, corevar2, mafft_identity_cutoff, whatif_identity_cutoff,
+                                   seq_id1, seq_id2, diff_check=diff_check)
+        if newcorevar != corevar2:
+            changed += 1
+
+        new_aligned_templates[seq_id2] = newcorevar
 
         # check if all pairs have been checked
         if len(checked_pairs) == all_pairs:
@@ -360,9 +380,10 @@ def check_template_cores(aligned_templates, global_settings, tmpl_identity_cutof
         write_core_errors_to_file(aligned_templates, errors, logpath)
 
     # if no errors were found return
-    if (possible_core_errors or possible_full_seq_errors):
+    if possible_core_errors or possible_full_seq_errors:
         print "Found {} core errors".format(len(possible_core_errors))
 
+    print "Changed %d out of %d" % (changed, len(aligned_templates))
     return {
         'new_templates': new_aligned_templates,
         'old_templates': aligned_templates,
@@ -375,7 +396,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("corvar", help="corevar file")
     parser.add_argument("--tmpl_identity", help="template identity cutoff",
-                        default=0.6, type=float)
+                        default=0.2, type=float)
     parser.add_argument("--mafft_identity", help="mafft identity cutoff",
                         default=0.7, type=float)
     parser.add_argument("--whatif_identity", help="whatif identity cutoff",
@@ -386,6 +407,6 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
-    run_check(corevar_path=args.corevar, tmpl_identity=args.tmpl_identity,
+    run_check(corevar_path=args.corvar, tmpl_identity=args.tmpl_identity,
               mafft_identity=args.mafft_identity, whatif_identity=args.whatif_identity,
               write_log=args.write_log, diff_check=not args.nodiffcheck)
