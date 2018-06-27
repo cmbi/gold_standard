@@ -15,14 +15,13 @@ from collections import Counter
 from copy import deepcopy
 from numpy import isclose
 
-import fasta
 from gold_standard.parsers.var_file import parse_var_file
 
 # setup logging
 logger = logging.getLogger('3DM.' + __name__)
 fs = frozenset
 
-MAFFT = get_path('mafft')
+MAFFT = 'mafft'
 
 
 def calc_identity(seq1, seq2):
