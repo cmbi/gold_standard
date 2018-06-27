@@ -370,6 +370,8 @@ def run_check(corevar_path, tmpl_identity=0.4, tmpl_id="",
         print "No changes to the input alignment"
         return
 
+    print "Changed %d out of %d. target id: %s" % (changed, len(aligned_templates), target_id)
+
     if not outvar:
         # if output var not provided overwrite input var
         outvar = corevar_path
@@ -388,9 +390,6 @@ def check_template_cores(aligned_templates, tmpl_id, tmpl_identity_cutoff=0.5,
     """
     checked_pairs = set()
     all_pairs = (len(aligned_templates) * (len(aligned_templates) - 1)) / 2
-    possible_core_errors = {}
-    possible_full_seq_errors = set()
-    counter = 0
 
     # if more than 50 templates than only do a 1 vs all check, not all vs all
     tmpl_cores = aligned_templates[tmpl_id]
@@ -414,9 +413,6 @@ def check_template_cores(aligned_templates, tmpl_id, tmpl_identity_cutoff=0.5,
         checked_pairs.add(ids_set)
 
         # log progress
-        counter += 1
-        if counter % 10 == 0:
-            logger.info("Running check %s out of %s", counter, checks_to_run)
 
         # run the check
         # full_identity = calc_identity(core_seq1, core_seq2)
@@ -437,22 +433,9 @@ def check_template_cores(aligned_templates, tmpl_id, tmpl_identity_cutoff=0.5,
         if len(checked_pairs) == all_pairs:
             break
 
-    # write lgos to file
-    if write_log and possible_core_errors:
-        logpath = "template_core_check.log"
-        errors = {'errors': possible_core_errors, 'full_seq_errors': possible_full_seq_errors}
-        write_core_errors_to_file(aligned_templates, errors, logpath)
-
-    # if no errors were found return
-    if possible_core_errors or possible_full_seq_errors:
-        print "Found {} core errors".format(len(possible_core_errors))
-
-    print "Changed %d out of %d" % (changed, len(aligned_templates))
     return {
         'new_templates': new_aligned_templates,
         'old_templates': aligned_templates,
-        'errors': possible_core_errors,
-        'full_seq_errors': possible_full_seq_errors,
         "changed": changed
     }
 
