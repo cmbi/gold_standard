@@ -370,7 +370,7 @@ def run_check(corevar_path, tmpl_identity=0.4, tmpl_id="",
         print "No changes to the input alignment"
         return
 
-    print "Changed %d out of %d. target id: %s" % (changed, len(aligned_templates), target_id)
+    print "Changed %d out of %d. target id: %s" % (check_result["changed"], len(aligned_templates), target_id)
 
     if not outvar:
         # if output var not provided overwrite input var
