@@ -366,8 +366,9 @@ def merge_corvar(aligned_templates, merged=False):
     if not cannot_merge:
         # no residues at this position, merge these cores and rerun
         # merge_corevar
+        print "Can MERGE!!!!!!"
         merge_two_cores(aligned_templates, var_index)
-        merge_corvar(aligned_templates, merged=True)
+        merged = merge_corvar(aligned_templates, merged=True)
 
     # did not find any cores to merge, quit function
     return merged
@@ -398,6 +399,7 @@ def run_check(corevar_path, tmpl_identity=0.4, tmpl_id="",
 
     # merge cores with no var regions in between
     # merged = False
+    aligned_templates = check_result["new_templates"]
     tmp = deepcopy(aligned_templates)
     merged = merge_corvar(aligned_templates)
 
@@ -405,7 +407,7 @@ def run_check(corevar_path, tmpl_identity=0.4, tmpl_id="",
         print "No changes to the input alignment"
         return
     if merged:
-        print "Merged cores"
+        print "####   Merged cores  ####"
         assert tmp != aligned_templates
 
     print "Changed %d out of %d. target id: %s" % (check_result["changed"], len(aligned_templates), target_id)
