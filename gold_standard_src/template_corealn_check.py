@@ -334,38 +334,41 @@ def merge_two_cores(aligned_templates, var_index):
     """
     for seq_id, seq in aligned_templates.iteritems():
         regions = seq.split()
+        assert regions[var_index] == "0"
         new_seq = " ".join(
-            regions[:var_index - 2]  + [regions[var_index - 1] + regions[var_index + 1]] + regions[var_index + 2:]
+            regions[:var_index - 1]  + [regions[var_index - 1] + regions[var_index + 1]] + regions[var_index + 2:]
         )
         aligned_templates[seq_id] = new_seq
 
 
 def merge_corvar(aligned_templates, merged=False):
     """
-    If no templates have residues in a var merge neighbouring cores
+    If no templates have residues in a var and there are no neighbouring gaps merge neighbouring cores
     """
     var_index = -1
 
     # iterate over all vars except first and last - there are no 2 neighbouring
     # cores to merge there obviously
-    for i in range(2, len(aligned_templates.values()[0].split()) - 1):
-        if i % 2 == 1:
-            # core, skip it
-            continue
+    for i in range(2, len(aligned_templates.values()[0].split()) - 2, 2):
+        cannot_merge = False
 
-        has_residues = False
         for seq_id, seq in aligned_templates.iteritems():
-            regions = seq.split()
-            if regions[i] != '0':
-                has_residues = True
-                var_index = i
+            regions = seq.strip().split()
+            if regions[i] != '0' or regions[i - 1].endswith("-") or regions[i + 1].startswith("-"):
+                cannot_merge = True
                 break
 
-    if not has_residues:
+        if not cannot_merge:
+            var_index = i
+            break
+
+
+    if not cannot_merge:
         # no residues at this position, merge these cores and rerun
         # merge_corevar
         merge_two_cores(aligned_templates, var_index)
         merge_corvar(aligned_templates, merged=True)
+
     # did not find any cores to merge, quit function
     return merged
 
@@ -394,12 +397,16 @@ def run_check(corevar_path, tmpl_identity=0.4, tmpl_id="",
     filled_in = check_result["changed"]
 
     # merge cores with no var regions in between
-    merged = False
-    # merged = merge_corvar(aligned_templates)
+    # merged = False
+    tmp = deepcopy(aligned_templates)
+    merged = merge_corvar(aligned_templates)
 
     if not (filled_in or merged):
         print "No changes to the input alignment"
         return
+    if merged:
+        print "Merged cores"
+        assert tmp != aligned_templates
 
     print "Changed %d out of %d. target id: %s" % (check_result["changed"], len(aligned_templates), target_id)
     # sanity check to make sure that the changes are correct
