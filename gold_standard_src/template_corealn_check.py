@@ -46,25 +46,6 @@ def parse_var_file(var_path):
     return var_aln, target_id, strcts_order
 
 
-# def calc_similarity(seg1, seg2, short_seg):
-#     # first remove lowercase residues
-#     clean_seg1 = [i for i in seg1 if not i.islower()]
-#     clean_seg2 = [i for i in seg2 if not i.islower()]
-#     clean_short = [i for i in short_seg if not i.islower()]
-
-#     assert len(clean_seg1) == len(clean_seg2)
-#     score = 0
-#     max_sim_score = sum([get_blosum_score(i, i) for i in clean_short])
-#     if not max_sim_score:
-#         return 0
-
-#     for i, res_i in enumerate(clean_seg1):
-#         if res_i == '-' or clean_seg2[i] == '-':
-#             continue
-#         score += get_blosum_score(res_i, clean_seg2[i])
-#     return float(score) / max_sim_score
-
-
 def calc_similarity(seq1, seq2):
     if isinstance(seq1, list):
         seq1 = "".join(seq1)
@@ -347,6 +328,48 @@ def write_corevar(aligned_templates, outpath, templates_order):
         o.write("\n".join(outlines) + '\n')
 
 
+def merge_two_cores(aligned_templates, var_index):
+    """
+    Will merge 2 cores neighbouring with region of index 'var_index'
+    """
+    for seq_id, seq in aligned_templates.iteritems():
+        regions = seq.split()
+        new_seq = " ".join(
+            regions[:var_index - 2]  + [regions[var_index - 1] + regions[var_index + 1]] + regions[var_index + 2:]
+        )
+        aligned_templates[seq_id] = new_seq
+
+
+def merge_corvar(aligned_templates, merged=False):
+    """
+    If no templates have residues in a var merge neighbouring cores
+    """
+    var_index = -1
+
+    # iterate over all vars except first and last - there are no 2 neighbouring
+    # cores to merge there obviously
+    for i in range(2, len(aligned_templates.values()[0].split()) - 1):
+        if i % 2 == 1:
+            # core, skip it
+            continue
+
+        has_residues = False
+        for seq_id, seq in aligned_templates.iteritems():
+            regions = seq.split()
+            if regions[i] != '0':
+                has_residues = True
+                var_index = i
+                break
+
+    if not has_residues:
+        # no residues at this position, merge these cores and rerun
+        # merge_corevar
+        merge_two_cores(aligned_templates, var_index)
+        merge_corvar(aligned_templates, merged=True)
+    # did not find any cores to merge, quit function
+    return merged
+
+
 def run_check(corevar_path, tmpl_identity=0.4, tmpl_id="",
               mafft_identity=0.6, write_log=False, diff_check=True,
               outvar="", outfinal=""):
@@ -356,21 +379,38 @@ def run_check(corevar_path, tmpl_identity=0.4, tmpl_id="",
     """
     cutoffs = {'mafft': mafft_identity, 'tmpl': tmpl_identity}
 
-    # parse final_core.txt
+    # parse final_core.txt.Var
     aligned_templates, target_id, strcts_order = parse_var_file(corevar_path)
     if tmpl_id and tmpl_id in strcts_order:
         target_id = tmpl_id
+
+    full_sequences = get_full_sequences(aligned_templates)
 
     # check cores
     check_result = check_template_cores(
             aligned_templates, target_id, cutoffs['tmpl'], cutoffs['mafft'],
             write_log)
 
-    if not check_result["changed"]:
+    filled_in = check_result["changed"]
+
+    # merge cores with no var regions in between
+    merged = False
+    # merged = merge_corvar(aligned_templates)
+
+    if not (filled_in or merged):
         print "No changes to the input alignment"
         return
 
     print "Changed %d out of %d. target id: %s" % (check_result["changed"], len(aligned_templates), target_id)
+    # sanity check to make sure that the changes are correct
+    new_full_sequences = get_full_sequences(aligned_templates)
+
+    if new_full_sequences != full_sequences:
+        print "#### NEW ####"
+        print  new_full_sequences
+        print "#### OLD ####"
+        print  full_sequences
+        raise RuntimeError("Incorrect output: %s" % str(aligned_templates))
 
     if not outvar:
         # if output var not provided overwrite input var
@@ -380,6 +420,18 @@ def run_check(corevar_path, tmpl_identity=0.4, tmpl_id="",
         outfinal = outvar[:-4]
     if outfinal:
         write_core(check_result["new_templates"], outfinal, strcts_order)
+
+
+def get_full_sequences(aligned_templates):
+    """
+    Get full sequences from the corvar sequences
+    """
+    full_sequences = {}
+
+    for seq_id, seq in aligned_templates.iteritems():
+        full_seq = seq.replace(" ", "").replace("0", "").replace("-", "").upper()
+        full_sequences[seq_id] = full_seq
+    return full_sequences
 
 
 def check_template_cores(aligned_templates, tmpl_id, tmpl_identity_cutoff=0.5,
@@ -412,10 +464,7 @@ def check_template_cores(aligned_templates, tmpl_id, tmpl_identity_cutoff=0.5,
             continue
         checked_pairs.add(ids_set)
 
-        # log progress
-
         # run the check
-        # full_identity = calc_identity(core_seq1, core_seq2)
         full_identity = calc_similarity(core_seq1, core_seq2)
         if 0.1 < full_identity < tmpl_identity_cutoff:
             # only compare highly identical templates
