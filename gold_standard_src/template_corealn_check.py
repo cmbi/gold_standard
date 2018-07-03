@@ -110,57 +110,6 @@ def merge_sets(sets_list):
     return flat_list
 
 
-def fix_cores(incorrect_cores, sources, release_years, resolutions, aligned_templates):
-    """
-    Removes incorrect cores (== replace.them with gaps)
-    """
-    cores_by_index = convert_to_cores_by_index(incorrect_cores)
-    new_core_alignments = deepcopy(cores_by_index)
-    tmpl_no = len(sources)
-    for core_index, core_alignments in cores_by_index.iteritems():
-        not_corrected = core_alignments.keys()
-        while not_corrected:
-            # 1. first to go should be sequence templates,
-            # 2. then the ones that are most abundant in the error list
-            # 3. if there are only 2 templates or multiple templates are 'the most abundant'
-            # than the older one is removed
-            all_ids = merge_sets(not_corrected)
-
-            ids_counter = Counter(all_ids)
-            seq_id_to_remove = max(ids_counter, key=lambda x: ids_counter[x])  # pylint: disable=W0640
-            freq_count = ids_counter[seq_id_to_remove]
-
-            # if any template is very abundant in the incorrect_cores dict we will remove it
-            if ids_counter.values().count(freq_count) > 1:
-                # there is more than one template with the highest abundance
-                frequent_ids = [seq_id for seq_id, c in ids_counter.iteritems() if c == freq_count]
-                seq_id_to_remove = get_worst_template(frequent_ids, sources, release_years, resolutions)
-
-            for seq_ids, core_alns in core_alignments.iteritems():
-                if seq_id_to_remove in seq_ids:
-                    core_len = len(core_alns[0][seq_id_to_remove])
-                    new_aln = '-' * core_len
-                    if tmpl_no == 2:
-                        # if there are only 2 templates both cores are removed
-                        mafft_alns = new_core_alignments[core_index][seq_ids][1]
-                        new_core_alignments[core_index][seq_ids] = ([new_aln, new_aln], mafft_alns)
-                        second_id = list(seq_ids.difference([seq_id_to_remove]))[0]
-                        aligned_templates[seq_id_to_remove][core_index] = ''
-                        aligned_templates[second_id][core_index] = ''
-                    else:
-                        aligned_templates[seq_id_to_remove][core_index] = new_aln
-                        new_core_alignments[core_index][seq_ids][0][seq_id_to_remove] = new_aln
-                    new_not_corrected = not_corrected[::]
-                    for ids_pair in not_corrected:
-                        if seq_id_to_remove in ids_pair:
-                            new_not_corrected.remove(ids_pair)
-                    not_corrected = new_not_corrected
-    aligned_templates = {
-        seq_id: [c for c in cores if c] for seq_id, cores in aligned_templates.iteritems()
-    }
-    return new_core_alignments, aligned_templates
-
-
 def check_aln_coverage(aligned_cores):
     """
     Check if alignment coverage is good enough
@@ -502,7 +451,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("corvar", help="corevar file")
     parser.add_argument("--tmpl_identity", help="template identity cutoff",
-                        default=0.2, type=float)
+                        default=-10.0, type=float)
     parser.add_argument("--mafft_identity", help="mafft identity cutoff",
                         default=0.2, type=float)
     parser.add_argument('--write_log', action='store_true', default=False)
