@@ -325,7 +325,7 @@ def merge_corvar(aligned_templates, merged=False):
 
 def run_check(corevar_path, tmpl_identity=0.4, tmpl_id="",
               mafft_identity=0.6, write_log=False, diff_check=True,
-              outvar="", outfinal=""):
+              outvar="", outfinal="", only_merge=False):
     """
     Checks correctness of core alignments in the final_core alignment by comparison
         to MAFFT alignments and removed the possibly incorrect cores
@@ -340,9 +340,15 @@ def run_check(corevar_path, tmpl_identity=0.4, tmpl_id="",
     full_sequences = get_full_sequences(aligned_templates)
 
     # check cores
-    check_result = check_template_cores(
-            aligned_templates, target_id, cutoffs['tmpl'], cutoffs['mafft'],
-            write_log)
+    if not only_merge:
+        check_result = check_template_cores(
+                aligned_templates, target_id, cutoffs['tmpl'], cutoffs['mafft'],
+                write_log)
+    else:
+        check_result = {
+            "changed": 0,
+            "new_templates": deepcopy(aligned_templates)
+        }
 
     filled_in = check_result["changed"]
 
@@ -460,6 +466,7 @@ if __name__ == "__main__":
     parser.add_argument('--outvar')
     parser.add_argument('--outfinal')
     parser.add_argument('--tmpl_id')
+    parser.add_argument('--only_merge', default=False, action="store_true")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
@@ -467,4 +474,4 @@ if __name__ == "__main__":
     run_check(corevar_path=args.corvar, tmpl_identity=args.tmpl_identity,
               mafft_identity=args.mafft_identity, tmpl_id=args.tmpl_id,
               write_log=args.write_log, diff_check=not args.nodiffcheck, outvar=args.outvar,
-              outfinal=args.outfinal)
+              outfinal=args.outfinal, only_merge=args.only_merge)
