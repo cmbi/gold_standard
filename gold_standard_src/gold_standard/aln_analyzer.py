@@ -387,7 +387,7 @@ def compare_vars_complex(gold_alns, target_id, test_aln):
                 alrights += 1
                 # residue not aligned in gold one, OK
                 assert test_res_number not in per_residue_scores[seq_id]
-                per_residue_scores[seq_id][test_res_number] = (True, 0.0)
+                per_residue_scores[seq_id][int(test_res_number)] = (True, 0.0)
                 continue
 
             scores = gold_aln[test_res_number]
@@ -396,7 +396,7 @@ def compare_vars_complex(gold_alns, target_id, test_aln):
                 # residue not aligned in gold one, OK
                 # means residue should not be aligned with anything, also OK
                 assert test_res_number not in per_residue_scores[seq_id]
-                per_residue_scores[seq_id][test_res_number] = (True, 0.0)
+                per_residue_scores[seq_id][int(test_res_number)] = (True, 0.0)
                 continue
 
             # if we're here that means the residue is not aligned in the
@@ -406,7 +406,7 @@ def compare_vars_complex(gold_alns, target_id, test_aln):
             # that is the score for this one solution
             penalty = sum([SCORE_MODS[i] for i in scores.values()]) / len(scores)
             overall_score -= penalty
-            per_residue_scores[seq_id][test_res_number] = -penalty
+            per_residue_scores[seq_id][int(test_res_number)] = (False, -penalty)
             n += 1
 
     return {"n": n, "overall_score": overall_score, "per_residue_scores": per_residue_scores}

@@ -1,5 +1,5 @@
 from mock import mock_open, patch
-from nose.tools import eq_
+from nose.tools import eq_, ok_
 from pkg_resources import resource_filename
 
 from gold_standard_src.calc_alignment_quality import calculate_aln_quality_simple, calculate_aln_quality_complex
@@ -74,7 +74,55 @@ def test_calc_alignment_quality_multi(mock_process_results, mock_path_exists):
     eq_(calc_result, expected_result)
 
 
+def test_calc_alignment_quality_complex_dummy():
+    # testcase 1 - basic, all good
+    gold_json_path = "gold_standard_src/tests/testdata/complex_scoring/dummy_gold_aln.json"
+    # gold_corvar_path = "gold_standard_src/tests/testdata/complex_scoring/gold_tauto.txt.Var"
+
+    aln_path = "gold_standard_src/tests/testdata/complex_scoring/dummy_test_aln.txt"
+    paths = {
+        "gold_path": gold_json_path,
+        "aln_path": aln_path
+    }
+    # gold_in = parse_gold_json(gold_path, corvar_path)
+    # output = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core.txt_out"
+    output = ""
+    in_format = "3SSP"
+    calc_result = calculate_aln_quality_complex(paths, output, in_format, write_json=True)
+
+    expected_result = {
+        'overall_score': 1.0,
+        'per_residue_scores':
+        {
+            '2ABC': {1: (True, 0.0), 2: (True, 1.0), 3: (True, 1.0), 4: (True, 1.0), 5: (True, 0.0)},
+            '3ABC': {1: (True, 1.0), 2: (True, 1.0), 3: (True, 1.0), 4: (True, 1.0)},
+         }
+    }
+    eq_(calc_result, expected_result)
+
+    # testcase 2
+    aln_path = "gold_standard_src/tests/testdata/complex_scoring/dummy_test_aln_v2.txt"
+    paths = {
+        "gold_path": gold_json_path,
+        "aln_path": aln_path
+    }
+    calc_result = calculate_aln_quality_complex(paths, output, in_format, write_json=True)
+    expected_result = {
+        'overall_score': 0.7142857,
+        'per_residue_scores':
+        {
+            '2ABC': {1: (True, 0.0), 2: (True, 1.0), 3: (True, 1.0), 4: (False, -1.0), 5: (True, 0.0)},
+            '3ABC': {1: (True, 1.0), 2: (True, 1.0), 3: (True, 1.0), 4: (True, 1.0)},
+        }
+    }
+    eq_(calc_result["per_residue_scores"], expected_result["per_residue_scores"])
+    eq_(calc_result["per_residue_scores"], expected_result["per_residue_scores"])
+
+    ok_(abs(calc_result["overall_score"] - expected_result["overall_score"]) < 0.0001)
+
+
 def test_calc_alignment_quality_complex():
+    # testcase 1 - basic, all good
     gold_json_path = "gold_standard_src/tests/testdata/complex_scoring/gold_tauto.json"
     # gold_corvar_path = "gold_standard_src/tests/testdata/complex_scoring/gold_tauto.txt.Var"
 
@@ -87,3 +135,21 @@ def test_calc_alignment_quality_complex():
     output = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core.txt_out"
     in_format = "3SSP"
     calc_result = calculate_aln_quality_complex(paths, output, in_format, write_json=True)
+
+
+    # test case 2 - two solutions for first residue of 3ABFA - can be aligned
+    # either with 1 or 2 (each gets 0.5 score)
+    # gold_json_path = "gold_standard_src/tests/testdata/complex_scoring/gold_tauto_m5.json"
+    aln_path = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core_alternative.txt"
+    paths = {
+        "gold_path": gold_json_path,
+        "aln_path": aln_path
+    }
+    # gold_in = parse_gold_json(gold_path, corvar_path)
+    output = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core.txt_out"
+    calc_result2 = calculate_aln_quality_complex(paths, output, in_format, write_json=True)
+
+    print calc_result["overall_score"]
+    print calc_result2["overall_score"]
+
+    # eq_(calc_result, calc_result2)

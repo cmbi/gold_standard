@@ -112,8 +112,7 @@ def calculate_aln_quality_complex(paths, output, in_format, write_json):
 
     # calculate scores
     scores = calc_scores_3dm_complex(gold_in, num_aln_dict)
-
-    print scores["per_residue_scores"]
+    return scores
 
     # stats = process_results(scores['pairwise'], scores['full'], scores['sp_scores'],
     #                         output, len(strcts_order))
