@@ -271,8 +271,6 @@ def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
     gold_alns = gold_aln_data["alns"]
     score_mods = gold_aln_data["score_modifiers"]
 
-    print score_mods
-
     result_cores = compare_cores_complex(gold_alns, score_mods, target_id, test_aln)
     n = result_cores["n"]
     overall_score = result_cores["overall_score"]

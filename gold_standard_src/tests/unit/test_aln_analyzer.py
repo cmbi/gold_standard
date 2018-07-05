@@ -132,9 +132,13 @@ def test_score_core_regions_3dm():
     eq_(result, expected)
 
 
-def test_calc_scores_3dm_complex():
+def test_calc_scores_3dm_complex_easy():
+    """
+    This is to check against an easy gold alignment - so without multiple solutions etc.
+    """
+
     # -- prepare input data --
-    with open("gold_standard_src/tests/testdata/gold_alns_datadict.txt") as a:
+    with open("gold_standard_src/tests/testdata/complex_scoring/gold_alns_datadict.txt") as a:
         g = a.read()
 
     # retrieve gold aln
@@ -143,7 +147,7 @@ def test_calc_scores_3dm_complex():
 
     # TESTCASE 1 - good aln
     # retrieve test aln
-    aln_path = "gold_standard_src/tests/testdata/tautomerase_final_core.txt"
+    aln_path = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core.txt"
     aln_dict, strcts_order = parse_3SSP(aln_path)
 
     # convert to grounded
@@ -151,5 +155,106 @@ def test_calc_scores_3dm_complex():
             aln_dict, full_seq, golden_ids=gold_alns["ids"])
 
     # -- run test --
-    result = aa.calc_scores_3dm_complex(gold_alns, num_aln_dict)
-    ok_(1 - result < 0.01)
+    result_v1 = aa.calc_scores_3dm_complex(gold_alns, num_aln_dict)
+    ok_(1 - result_v1 < 0.01)
+    print result_v1
+
+    # TESTCASE 2 - worse aln (one res not aligned)
+    # retrieve test aln
+    aln_path = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core_v2.txt"
+    aln_dict, strcts_order = parse_3SSP(aln_path)
+
+    # convert to grounded
+    num_aln_dict, core_indexes = core_aln_to_num(
+            aln_dict, full_seq, golden_ids=gold_alns["ids"])
+
+    # -- run test --
+    result_v2 = aa.calc_scores_3dm_complex(gold_alns, num_aln_dict)
+    # ok_(1 - result < 0.01)
+    ok_(result_v1 > result_v2)
+    print result_v2
+
+    # TESTCASE 3 - worse aln (one res not aligned and one misaligned)
+    aln_path = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core_v3.txt"
+    aln_dict, strcts_order = parse_3SSP(aln_path)
+
+    # convert to grounded
+    num_aln_dict, core_indexes = core_aln_to_num(
+            aln_dict, full_seq, golden_ids=gold_alns["ids"])
+
+    # -- run test --
+    result_v3 = aa.calc_scores_3dm_complex(gold_alns, num_aln_dict)
+    ok_(result_v2 > result_v3)
+    print result_v3
+
+    # TESTCASE 4 - worse aln (one res not aligned and one misaligned, first
+    # column totally removed)
+    aln_path = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core_v4.txt"
+    aln_dict, strcts_order = parse_3SSP(aln_path)
+
+    # convert to grounded
+    num_aln_dict, core_indexes = core_aln_to_num(
+            aln_dict, full_seq, golden_ids=gold_alns["ids"])
+
+    # -- run test --
+    result_v4 = aa.calc_scores_3dm_complex(gold_alns, num_aln_dict)
+    ok_(result_v3 > result_v4)
+    print result_v4
+
+    # TESTCASE 5 - worst aln, nothing is aligned
+    aln_path = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core_v5.txt"
+    aln_dict, strcts_order = parse_3SSP(aln_path)
+
+    # convert to grounded
+    num_aln_dict, core_indexes = core_aln_to_num(
+            aln_dict, full_seq, golden_ids=gold_alns["ids"])
+
+    # -- run test --
+    result_v5 = aa.calc_scores_3dm_complex(gold_alns, num_aln_dict)
+    print result_v5
+
+    # results should be -1
+    ok_(abs(-1 - result_v5) < 0.01)
+
+    # TESTCASE 6 - only two non-target templates are aligned against each other
+    # - this should only get points in the all-vs-all comparison, but none in
+    # the all-vs-target comparison
+    # !!!! but for now we only do the all-vs-target comparison so the result should
+    # be the mininmum possible (=-1)
+    aln_path = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core_v5.txt"
+    aln_dict, strcts_order = parse_3SSP(aln_path)
+
+    # convert to grounded
+    num_aln_dict, core_indexes = core_aln_to_num(
+            aln_dict, full_seq, golden_ids=gold_alns["ids"])
+
+    # -- run test --
+    result_v6 = aa.calc_scores_3dm_complex(gold_alns, num_aln_dict)
+
+    # results should be -1
+    ok_(abs(-1 - result_v6) < 0.01)
+    print result_v6
+
+
+def test_calc_scores_3dm_complex_multi_solutions():
+    # TESTCASE 1 - good aln
+    # -- prepare input data --
+    with open("gold_standard_src/tests/testdata/complex_scoring/gold_alns_datadict_difficult.txt") as a:
+        g = a.read()
+    # retrieve gold aln
+    gold_alns = eval(g)
+    full_seq = gold_alns["full_seq"]
+
+    aln_path = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core_v5.txt"
+    aln_dict, strcts_order = parse_3SSP(aln_path)
+
+    # convert to grounded
+    num_aln_dict, core_indexes = core_aln_to_num(
+            aln_dict, full_seq, golden_ids=gold_alns["ids"])
+
+    # -- run test --
+    result_v5 = aa.calc_scores_3dm_complex(gold_alns, num_aln_dict)
+    print result_v5
+
+    # results should be almost 1
+    ok_(1 - result_v5 < 0.01)
