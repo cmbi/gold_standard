@@ -271,26 +271,55 @@ def calc_scores_3dm(golden_alns, test_aln, multi):
     return result
 
 
+def get_max_aln_score(gold_alns):
+    max_score = 0
+
+    for seq_id, seq_scores in gold_alns.iteritems():
+        ppos_scores = {}
+        for pos, res_scores in seq_scores.iteritems():
+            for target_pos, score_category in res_scores.iteritems():
+                if target_pos == "*" or score_category == "u":
+                    # this is a penalty, doesn't add up to the max score
+                    continue
+
+                if score_category.startswith("m"):
+                    value = get_m_score(score_category, SCORE_MODS["a"])
+                else:
+                    value = SCORE_MODS[score_category]
+
+                if target_pos not in ppos_scores:
+                    ppos_scores[target_pos] = value
+                elif ppos_scores[target_pos] < value:
+                    ppos_scores[target_pos] = value
+        max_score += sum(ppos_scores.values())
+    print "max score: ", max_score
+    return max_score
+
+
 def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
     """
     """
     target_id = gold_aln_data["target"]
     gold_alns = gold_aln_data["alns"]
-    # score_mods = gold_aln_data["score_modifiers"]
+
+    max_aln_score = get_max_aln_score(gold_alns)
 
     result_cores = compare_cores_complex(gold_alns, target_id, test_aln)
-    n = result_cores["n"]
+    # n = result_cores["n"]
     overall_score = result_cores["overall_score"]
     per_residue_scores = result_cores["per_residue_scores"]
+    print per_residue_scores["3M21A"]
 
     if mode == "strict":
         # this is to penalize false negatives, only done in the strict mode
         result_vars = compare_vars_complex(gold_alns, target_id, test_aln)
-        n += result_vars["n"]
+        # n += result_vars["n"]
         overall_score += result_vars["overall_score"]
         per_residue_scores = merge_nested_dicts(per_residue_scores, result_vars["per_residue_scores"])
 
-    overall_score /= n
+    # overall_score /= n
+    print overall_score
+    overall_score /= max_aln_score
     return {"overall_score": overall_score, "per_residue_scores": per_residue_scores}
 
 
@@ -343,10 +372,11 @@ def compare_cores_complex(gold_alns, target_id, test_aln):
                     break
 
             if not found_aln and test_target_res != '-':
-                # means this residue is aligned while it should not be aligned with anything
-                pairwise_score -= SCORE_MODS["u"]
+                # means this residue is incorrectly aligned
                 n += 1
-                res_score = "u"
+                res_score = SCORE_MODS["u"]
+                pairwise_score += res_score
+
             per_residue_scores[seq_id][res_number] = (found_aln, res_score)
 
         overall_score += pairwise_score
