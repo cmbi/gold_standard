@@ -77,15 +77,12 @@ def test_calc_alignment_quality_multi(mock_process_results, mock_path_exists):
 def test_calc_alignment_quality_complex_dummy():
     # testcase 1 - basic, all good
     gold_json_path = "gold_standard_src/tests/testdata/complex_scoring/dummy_gold_aln.json"
-    # gold_corvar_path = "gold_standard_src/tests/testdata/complex_scoring/gold_tauto.txt.Var"
 
     aln_path = "gold_standard_src/tests/testdata/complex_scoring/dummy_test_aln.txt"
     paths = {
         "gold_path": gold_json_path,
         "aln_path": aln_path
     }
-    # gold_in = parse_gold_json(gold_path, corvar_path)
-    # output = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core.txt_out"
     output = ""
     in_format = "3SSP"
     calc_result = calculate_aln_quality_complex(paths, output, in_format, write_json=True)
@@ -149,7 +146,11 @@ def test_calc_alignment_quality_complex():
     output = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core.txt_out"
     calc_result2 = calculate_aln_quality_complex(paths, output, in_format, write_json=True)
 
-    print calc_result["overall_score"]
-    print calc_result2["overall_score"]
+    expected_overall = 0.82642
+    ok_(abs(calc_result2["overall_score"] - expected_overall) < 0.0001)
 
-    # eq_(calc_result, calc_result2)
+    # check if all residues in 3M21A are incorrectcly aligned
+    all_incorrect = [
+        not i[0] for k, i in calc_result2["per_residue_scores"]["3M21A"].iteritems()
+    ]
+    ok_(all_incorrect)
