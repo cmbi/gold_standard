@@ -69,7 +69,7 @@ def convert_corvar_to_json_alignment(corvar_data):
             }
         }
     """
-    score_modifiers = {'a': 1, 'u': -1, 'd': 0, 'm0': 0, 'm1': 0.1, 'm2': 0.2}
+    score_modifiers = {'a': 1, 'b': 0.8, 'c': 0.5, 'd': 0, 'u': -1}
 
     var_regions = corvar_data["alns"]["var"]
 

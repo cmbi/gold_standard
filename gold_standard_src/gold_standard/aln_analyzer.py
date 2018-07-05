@@ -9,6 +9,13 @@ fs = frozenset
 
 _log = logging.getLogger(__name__)
 
+SCORE_MODS = {
+    "a": 1,
+    "b": 0.8,
+    "c": 0.5,
+    "u": -1.0
+}
+
 
 def compare_pairwise(cores):
     diff_cols1 = {cores['1']['id']: {}, cores['2']['id']: {}}
@@ -269,15 +276,15 @@ def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
     """
     target_id = gold_aln_data["target"]
     gold_alns = gold_aln_data["alns"]
-    score_mods = gold_aln_data["score_modifiers"]
+    # score_mods = gold_aln_data["score_modifiers"]
 
-    result_cores = compare_cores_complex(gold_alns, score_mods, target_id, test_aln)
+    result_cores = compare_cores_complex(gold_alns, target_id, test_aln)
     n = result_cores["n"]
     overall_score = result_cores["overall_score"]
 
     if mode == "strict":
         # this is to penalize false negatives, only done in the strict mode
-        result_vars = compare_vars_complex(gold_alns, score_mods, target_id, test_aln)
+        result_vars = compare_vars_complex(gold_alns, target_id, test_aln)
         n += result_vars["n"]
         overall_score += result_vars["overall_score"]
 
@@ -285,7 +292,7 @@ def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
     return overall_score
 
 
-def compare_cores_complex(gold_alns, score_mods, target_id, test_aln):
+def compare_cores_complex(gold_alns, target_id, test_aln):
     # number of comparisons for score normalization
     n = 0
     overall_score = 0
@@ -318,10 +325,10 @@ def compare_cores_complex(gold_alns, score_mods, target_id, test_aln):
                 if res_number_gold == test_target_res:
                     n += 1
                     if score_category.startswith('m'):
-                        pairwise_score += get_m_score(score_category, score_mods["a"])
+                        pairwise_score += get_m_score(score_category, SCORE_MODS["a"])
                         found_aln = True
                     else:
-                        pairwise_score += score_mods[score_category]
+                        pairwise_score += SCORE_MODS[score_category]
                         found_aln = True
                     break
 
@@ -347,14 +354,14 @@ def get_m_score(m, full_score):
     return (1. / part) * full_score
 
 
-def compare_vars_complex(gold_alns, score_mods, target_id, test_aln):
+def compare_vars_complex(gold_alns, target_id, test_aln):
     # number of comparisons for score normalization
     n = 0
     overall_score = 0
     # check the aligned ones in test alignment (FPs and TPs)
     # test_target_aln = test_aln["vars"][target_id]
 
-    penalty = score_mods["p"]
+    penalty = SCORE_MODS["u"]
     alrights = 0
     for seq_id, gold_aln in gold_alns.iteritems():
         test_seq_nonaligned = test_aln["var"][seq_id]

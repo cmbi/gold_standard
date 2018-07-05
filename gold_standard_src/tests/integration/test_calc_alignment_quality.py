@@ -1,7 +1,9 @@
 from mock import mock_open, patch
 from nose.tools import eq_
+from pkg_resources import resource_filename
 
-from gold_standard_src.calc_alignment_quality import calculate_aln_quality
+from gold_standard_src.calc_alignment_quality import calculate_aln_quality_simple, calculate_aln_quality_complex
+from gold_standard_src.gold_standard.parsers.gold import parse_gold_json
 
 
 @patch('gold_standard_src.gold_standard.parsers.fatcat.open', mock_open(
@@ -66,7 +68,22 @@ def test_calc_alignment_quality_multi(mock_process_results, mock_path_exists):
         'core_indexes': [0]
     }
 
-    calc_result = calculate_aln_quality(input_paths, output, input_format, multi)
+    calc_result = calculate_aln_quality_simple(input_paths, output, input_format, multi)
     process_res_call = list(mock_process_results.call_args[0])
     eq_(process_res_call, expected_call)
     eq_(calc_result, expected_result)
+
+
+def test_calc_alignment_quality_complex():
+    gold_json_path = "gold_standard_src/tests/testdata/complex_scoring/gold_tauto.json"
+    # gold_corvar_path = "gold_standard_src/tests/testdata/complex_scoring/gold_tauto.txt.Var"
+
+    aln_path = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core.txt"
+    paths = {
+        "gold_path": gold_json_path,
+        "aln_path": aln_path
+    }
+    # gold_in = parse_gold_json(gold_path, corvar_path)
+    output = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core.txt_out"
+    in_format = "3SSP"
+    calc_result = calculate_aln_quality_complex(paths, output, in_format, write_json=True)

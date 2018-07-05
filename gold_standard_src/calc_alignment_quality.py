@@ -104,28 +104,32 @@ def calculate_aln_quality_complex(paths, output, in_format, write_json):
         raise RuntimeError("No gold standard alignments were found")
     _log.debug("Sequences in the gold alignment: %s", gold_in['ids'])
 
+    # that's the test alignment in a final core format, not necessary
+    final_core = paths.get("final_core")
+
     aln_dict, strcts_order, num_aln_dict, core_indexes = parse_input_alignment(
-        paths['aln_path'], gold_in['full_seq'], gold_in['ids'], in_format, paths['final_core'])
+        paths['aln_path'], gold_in['full_seq'], gold_in['ids'], in_format, final_core)
 
     # calculate scores
-    scores = calc_scores_3dm_complex(gold_in['alns'], num_aln_dict)
-    stats = process_results(scores['pairwise'], scores['full'], scores['sp_scores'],
-                            output, len(strcts_order))
+    scores = calc_scores_3dm_complex(gold_in, num_aln_dict)
 
-    if write_json:
-        # write scores to a json file
-        with open(output + ".json", 'w') as o:
-            json.dump(stats, o)
+    # stats = process_results(scores['pairwise'], scores['full'], scores['sp_scores'],
+    #                         output, len(strcts_order))
 
-    return {
-        'wrong_cols': scores["wrong_cols"],
-        'aa_aln': aln_dict,
-        'gold_aln': gold_in['alns'],
-        'num_aln': num_aln_dict,
-        'full': gold_in['full_seq'],
-        'core_indexes': sorted(core_indexes),
-        'order': strcts_order
-    }
+    # if write_json:
+    #     # write scores to a json file
+    #     with open(output + ".json", 'w') as o:
+    #         json.dump(stats, o)
+
+    # return {
+    #     'wrong_cols': scores["wrong_cols"],
+    #     'aa_aln': aln_dict,
+    #     'gold_aln': gold_in['alns'],
+    #     'num_aln': num_aln_dict,
+    #     'full': gold_in['full_seq'],
+    #     'core_indexes': sorted(core_indexes),
+    #     'order': strcts_order
+    # }
 
 
 def calculate_aln_quality_simple(paths, output, in_format, multi, write_json, gold_json):
