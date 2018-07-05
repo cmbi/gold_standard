@@ -1,6 +1,6 @@
 from nose.tools import eq_
 
-from gold_standard_src.gold_standard.dict_utils import merge_dicts
+from gold_standard_src.gold_standard.dict_utils import merge_dicts, merge_nested_dicts
 
 
 def test_merge_dicts():
@@ -24,3 +24,23 @@ def test_merge_dicts():
 
     merged = merge_dicts(dict1, dict2)
     eq_(merged, expected_dict)
+
+
+def test_merge_nested_dicts():
+
+        dict1 = {
+            "a": {"1": 0, "2": 1},
+            "b": {"7": 400}
+        }
+        dict2 = {
+            "a": {"3": 3},
+            "b": {"3": 750}
+        }
+
+        expected = {
+            "a": {"1": 0, "2": 1, "3": 3},
+            "b": {"7": 400, "3": 750}
+        }
+
+        merged = merge_nested_dicts(dict1, dict2)
+        eq_(merged, expected)

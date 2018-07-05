@@ -1,6 +1,6 @@
 import logging
 
-from .dict_utils import merge_dicts
+from .dict_utils import merge_dicts, merge_nested_dicts
 from .sanity_checker import (
     check_pairwise_score, check_pairwise_score_3dm)
 
@@ -10,7 +10,7 @@ fs = frozenset
 _log = logging.getLogger(__name__)
 
 SCORE_MODS = {
-    "a": 1,
+    "a": 1.0,
     "b": 0.8,
     "c": 0.5,
     "u": -1.0
@@ -281,21 +281,25 @@ def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
     result_cores = compare_cores_complex(gold_alns, target_id, test_aln)
     n = result_cores["n"]
     overall_score = result_cores["overall_score"]
+    per_residue_scores = result_cores["per_residue_scores"]
 
     if mode == "strict":
         # this is to penalize false negatives, only done in the strict mode
         result_vars = compare_vars_complex(gold_alns, target_id, test_aln)
         n += result_vars["n"]
         overall_score += result_vars["overall_score"]
+        per_residue_scores = merge_nested_dicts(per_residue_scores, result_vars["per_residue_scores"])
 
     overall_score /= n
-    return overall_score
+    return {"overall_score": overall_score, "per_residue_scores": per_residue_scores}
 
 
 def compare_cores_complex(gold_alns, target_id, test_aln):
     # number of comparisons for score normalization
     n = 0
     overall_score = 0
+
+    per_residue_scores = {}
     # check the aligned ones in test alignment (FPs and TPs)
     test_target_aln = test_aln["cores"][target_id]
 
@@ -307,6 +311,8 @@ def compare_cores_complex(gold_alns, target_id, test_aln):
 
         pairwise_score = 0
 
+        per_residue_scores[seq_id] = {}
+
         for i, res_number in enumerate(aln):
             if res_number == '-':
                 continue
@@ -317,28 +323,34 @@ def compare_cores_complex(gold_alns, target_id, test_aln):
             test_target_res = str(test_target_aln[i])
 
             found_aln = False
+            res_score = None
             for res_number_gold, score_category in gold_residue_scores.iteritems():
                 if res_number_gold == '*':
-                    # means this residue should not be aligned with anything, give a penalty
+                    # means this residue should not be aligned with anything,
+                    # will give a penalty after exiting this loop ( because
+                    # found_aln will not be set to True)
                     break
 
                 if res_number_gold == test_target_res:
                     n += 1
                     if score_category.startswith('m'):
-                        pairwise_score += get_m_score(score_category, SCORE_MODS["a"])
+                        res_score = get_m_score(score_category, SCORE_MODS["a"])
                         found_aln = True
                     else:
-                        pairwise_score += SCORE_MODS[score_category]
+                        res_score = SCORE_MODS[score_category]
                         found_aln = True
+                    pairwise_score += res_score
                     break
 
             if not found_aln and test_target_res != '-':
                 # means this residue is aligned while it should not be aligned with anything
-                pairwise_score -= 1
+                pairwise_score -= SCORE_MODS["u"]
                 n += 1
+                res_score = "u"
+            per_residue_scores[seq_id][res_number] = (found_aln, res_score)
 
         overall_score += pairwise_score
-    return {"n": n, "overall_score": overall_score}
+    return {"n": n, "overall_score": overall_score, "per_residue_scores": per_residue_scores}
 
 
 def get_m_score(m, full_score):
@@ -355,15 +367,18 @@ def get_m_score(m, full_score):
 
 
 def compare_vars_complex(gold_alns, target_id, test_aln):
+    """
+    Check if the residues not aligned in gold are also not aligned in test aln
+    """
     # number of comparisons for score normalization
     n = 0
     overall_score = 0
-    # check the aligned ones in test alignment (FPs and TPs)
-    # test_target_aln = test_aln["vars"][target_id]
+    per_residue_scores = {}
 
-    penalty = SCORE_MODS["u"]
     alrights = 0
     for seq_id, gold_aln in gold_alns.iteritems():
+        per_residue_scores[seq_id] = {}
+
         test_seq_nonaligned = test_aln["var"][seq_id]
 
         for test_res_number in test_seq_nonaligned:
@@ -371,6 +386,8 @@ def compare_vars_complex(gold_alns, target_id, test_aln):
             if test_res_number not in gold_aln:
                 alrights += 1
                 # residue not aligned in gold one, OK
+                assert test_res_number not in per_residue_scores[seq_id]
+                per_residue_scores[seq_id][test_res_number] = (True, 0.0)
                 continue
 
             scores = gold_aln[test_res_number]
@@ -378,10 +395,18 @@ def compare_vars_complex(gold_alns, target_id, test_aln):
                 alrights += 1
                 # residue not aligned in gold one, OK
                 # means residue should not be aligned with anything, also OK
+                assert test_res_number not in per_residue_scores[seq_id]
+                per_residue_scores[seq_id][test_res_number] = (True, 0.0)
                 continue
 
             # if we're here that means the residue is not aligned in the
             # test alignment and aligned in gold
+            # the penalty is the average score you could get on this position
+            # in case of multiple solutions, if there is just one solution than
+            # that is the score for this one solution
+            penalty = sum([SCORE_MODS[i] for i in scores.values()]) / len(scores)
             overall_score -= penalty
+            per_residue_scores[seq_id][test_res_number] = -penalty
             n += 1
-    return {"n": n, "overall_score": overall_score}
+
+    return {"n": n, "overall_score": overall_score, "per_residue_scores": per_residue_scores}
