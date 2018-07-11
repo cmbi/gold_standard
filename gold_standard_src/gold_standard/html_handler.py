@@ -2,7 +2,7 @@ import copy
 import logging
 import os
 
-from .paths import CSS, TEMPLATE
+from .paths import TEMPLATE
 
 
 _log = logging.getLogger("__main__")

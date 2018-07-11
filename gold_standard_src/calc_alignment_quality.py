@@ -93,6 +93,17 @@ def parse_input_alignment(aln_path, full_seq, gold_ids, in_format, final_core_pa
     return aln_dict, strcts_order, num_aln_dict, core_indexes
 
 
+def process_per_residue_data(per_residue_scores):
+    """
+    Convert it to a simple dict, {seq_id: res_index: score}}
+    """
+    wrong_cols = {seq_id: {} for seq_id in per_residue_scores}
+    for seq_id, residue_scores in per_residue_scores.iteritems():
+        for res_index, score in residue_scores.iteritems():
+            wrong_cols[seq_id][res_index] = score[1]
+    return wrong_cols
+
+
 def calculate_aln_quality_complex(paths, output, in_format, write_json):
     # read the gold standard alignments
 
@@ -112,7 +123,24 @@ def calculate_aln_quality_complex(paths, output, in_format, write_json):
 
     # calculate scores
     scores = calc_scores_3dm_complex(gold_in, num_aln_dict)
-    return scores
+    if write_json:
+        # write scores to a json file
+        with open(output + ".json", 'w') as o:
+            json.dump(scores, o, indent=4)
+
+    wrong_cols = process_per_residue_data(scores['per_residue_scores'])
+
+    return {
+        'overall_score': scores['overall_score'],
+        'per_residue_scores': scores['per_residue_scores'],
+        'wrong_cols': wrong_cols,
+        'aa_aln': aln_dict,
+        'gold_aln': gold_in['alns'],
+        'num_aln': num_aln_dict,
+        'full': gold_in['full_seq'],
+        'core_indexes': sorted(core_indexes),
+        'order': strcts_order
+    }
 
     # stats = process_results(scores['pairwise'], scores['full'], scores['sp_scores'],
     #                         output, len(strcts_order))
@@ -225,11 +253,11 @@ if __name__ == "__main__":
     }
     if args.gold_json:
         quality_data = calculate_aln_quality_complex(input_paths, args.output,
-                                            args.input_format, args.json)
+                                                     args.input_format, args.json)
     else:
         quality_data = calculate_aln_quality_simple(input_paths, args.output,
-                                            args.input_format, args.multi, args.json,
-                                            args.gold_json)
+                                                    args.input_format, args.multi, args.json,
+                                                    args.gold_json)
 
     if args.html_pair:
         try:
