@@ -1,9 +1,8 @@
 from mock import mock_open, patch
 from nose.tools import eq_, ok_
-from pkg_resources import resource_filename
 
 from gold_standard_src.calc_alignment_quality import calculate_aln_quality_simple, calculate_aln_quality_complex
-from gold_standard_src.gold_standard.parsers.gold import parse_gold_json
+from gold_standard_src.gold_standard.html_handler import HtmlHandler
 
 
 @patch('gold_standard_src.gold_standard.parsers.fatcat.open', mock_open(
@@ -133,6 +132,9 @@ def test_calc_alignment_quality_complex():
     in_format = "3SSP"
     calc_result = calculate_aln_quality_complex(paths, output, in_format, write_json=True)
 
+    # create html output
+    hh = HtmlHandler()
+    hh.write_html(calc_result, "tmp", complex_scoring=True)
 
     # test case 2 - two solutions for first residue of 3ABFA - can be aligned
     # either with 1 or 2 (each gets 0.5 score)
@@ -145,6 +147,9 @@ def test_calc_alignment_quality_complex():
     # gold_in = parse_gold_json(gold_path, corvar_path)
     output = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core.txt_out"
     calc_result2 = calculate_aln_quality_complex(paths, output, in_format, write_json=True)
+    # create html output
+    hh = HtmlHandler()
+    hh.write_html(calc_result2, "tmp2", complex_scoring=True)
 
     expected_overall = 0.82642
     ok_(abs(calc_result2["overall_score"] - expected_overall) < 0.0001)

@@ -16,16 +16,20 @@ class HtmlHandler(object):
         self.long_len = long_len
         self.pairwise = pairwise
 
-    def write_html(self, quality_data, outname):
+    def write_html(self, quality_data, outname, complex_scoring=False):
         if self.var or self.var_short:
             outtxt = self.aln_to_html_var(quality_data)
         elif self.pairwise:
             outtxt = self.aln_to_html_pairwise(
                     quality_data['aa_aln'], quality_data["gold_aln"], quality_data["full"],
                     quality_data['wrong_cols'], quality_data["order"])
-        else:
+        elif not complex_scoring:
             outtxt = self.aln_to_html(
                 quality_data['aa_aln'], quality_data['wrong_cols'], quality_data["order"])
+        else:
+            outtxt = self.complex_aln_to_html(
+                    quality_data['aa_aln'], quality_data['wrong_cols'], quality_data["order"])
+
         script_dir = os.path.dirname(os.path.abspath(__file__))
         tmpl_full_path = '/'.join(list(os.path.split(script_dir)[:-1]) +
                                   [TEMPLATE])
@@ -179,6 +183,27 @@ class HtmlHandler(object):
         _log.info("Finished creating pairwise html")
         return html_out
 
+    def complex_aln_to_html(self, aa_aln, wrong, order):
+        html_out = ""
+        aln_length = len(aa_aln)
+        for seq_id in order:
+            seq = aa_aln[seq_id]
+            html_sequence = "{}    ".format(seq_id)
+            for r, res in enumerate(seq):
+                if res != "-" and res != " ":
+                    print seq_id
+                    level = self.get_level(wrong[seq_id][r + 1], aln_length)
+                    if level > 0:
+                        new_res = "<span class=featWRONG{}>{}</span>".format(
+                                level, res)
+                    else:
+                        new_res = "<span class=featOK>{}</span>".format(res)
+                else:
+                    new_res = res
+                html_sequence += new_res
+            html_out += html_sequence + "\n"
+        return html_out
+
     def aln_to_html(self, aa_aln, wrong, order):
         html_out = ""
         aln_length = len(aa_aln)
@@ -198,6 +223,22 @@ class HtmlHandler(object):
                 html_sequence += new_res
             html_out += html_sequence + "\n"
         return html_out
+
+    @staticmethod
+    def get_level_cmplx(number):
+        n = 1 - float(number)
+        if n >= 0.8:
+            return 5
+        elif n >= 0.6:
+            return 4
+        elif n >= 0.4:
+            return 3
+        elif n >= 0.2:
+            return 2
+        elif n >= 0:
+            return 1
+        else:
+            return 0
 
     @staticmethod
     def get_level(number, aln_length):
