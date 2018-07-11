@@ -80,9 +80,9 @@ def convert_corvar_to_json_alignment(corvar_data):
     # convert alignments
     json_alignments = {}
     for strct_id, core_aln in corvar_data["alns"]["cores"].iteritems():
-        if strct_id == target_id:
-            # don't compare the target to itself
-            continue
+        # if strct_id == target_id:
+        #     # don't compare the target to itself
+        #     continue
 
         json_pairwise_alignment = convert_pairwise_aln_to_json(target_cores, core_aln, var_regions[strct_id])
 

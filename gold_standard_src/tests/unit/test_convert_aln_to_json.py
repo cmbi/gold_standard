@@ -32,6 +32,15 @@ def test_convert_corvar_to_json_alignment():
         "target": "1ABCA",
         "score_modifiers": score_modifiers,
         "alignments": {
+            "1ABCA": {
+                1: {1: "a"},
+                2: {2: "a"},
+                3: {3: "a"},
+                4: {"*": "u"},
+                5: {5: "a"},
+                6: {6: "a"},
+                7: {7: "a"},
+            },
             "1DEFA": {
                 # first var region
                 1: {"*": "u"},
@@ -74,6 +83,13 @@ def test_convert_corvar_to_json_full():
             2: {3: 'a'},
             3: {4: 'a'},
             4: {5: 'a'}
+        },
+        "1ABC": {
+            1: {"*": "u"},
+            2: {2: "a"},
+            3: {3: "a"},
+            4: {4: "a"},
+            5: {5: "a"},
         }
     }
 
