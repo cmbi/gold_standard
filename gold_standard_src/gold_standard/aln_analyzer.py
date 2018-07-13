@@ -292,7 +292,6 @@ def get_max_aln_score(gold_alns):
                 elif ppos_scores[target_pos] < value:
                     ppos_scores[target_pos] = value
         max_score += sum(ppos_scores.values())
-    print "max score: ", max_score
     return max_score
 
 
@@ -308,7 +307,6 @@ def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
     # n = result_cores["n"]
     overall_score = result_cores["overall_score"]
     per_residue_scores = result_cores["per_residue_scores"]
-    print per_residue_scores["3M21A"]
 
     if mode == "strict":
         # this is to penalize false negatives, only done in the strict mode
@@ -318,7 +316,6 @@ def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
         per_residue_scores = merge_nested_dicts(per_residue_scores, result_vars["per_residue_scores"])
 
     # overall_score /= n
-    print overall_score
     overall_score /= max_aln_score
     return {"overall_score": overall_score, "per_residue_scores": per_residue_scores}
 

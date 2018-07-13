@@ -26,5 +26,4 @@ def parse_3SSP(aln_path):
         seq_dict[seq_id] = sequence
     # remove gap-only sequences
 
-    print strcts_order
     return seq_dict, strcts_order

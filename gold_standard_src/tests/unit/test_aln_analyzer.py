@@ -156,8 +156,9 @@ def test_calc_scores_3dm_complex_easy():
 
     # -- run test --
     result_v1 = aa.calc_scores_3dm_complex(gold_alns, num_aln_dict)
-    ok_(1 - result_v1 < 0.01)
-    print result_v1
+
+    ok_(1 - result_v1["overall_score"] < 0.01)
+
 
     # TESTCASE 2 - worse aln (one res not aligned)
     # retrieve test aln
@@ -170,9 +171,7 @@ def test_calc_scores_3dm_complex_easy():
 
     # -- run test --
     result_v2 = aa.calc_scores_3dm_complex(gold_alns, num_aln_dict)
-    # ok_(1 - result < 0.01)
-    ok_(result_v1 > result_v2)
-    print result_v2
+    ok_(result_v1["overall_score"] > result_v2["overall_score"])
 
     # TESTCASE 3 - worse aln (one res not aligned and one misaligned)
     aln_path = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core_v3.txt"
@@ -184,8 +183,7 @@ def test_calc_scores_3dm_complex_easy():
 
     # -- run test --
     result_v3 = aa.calc_scores_3dm_complex(gold_alns, num_aln_dict)
-    ok_(result_v2 > result_v3)
-    print result_v3
+    ok_(result_v2["overall_score"] > result_v3["overall_score"])
 
     # TESTCASE 4 - worse aln (one res not aligned and one misaligned, first
     # column totally removed)
@@ -198,8 +196,7 @@ def test_calc_scores_3dm_complex_easy():
 
     # -- run test --
     result_v4 = aa.calc_scores_3dm_complex(gold_alns, num_aln_dict)
-    ok_(result_v3 > result_v4)
-    print result_v4
+    ok_(result_v3["overall_score"] > result_v4["overall_score"])
 
     # TESTCASE 5 - worst aln, nothing is aligned
     aln_path = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core_v5.txt"
@@ -211,10 +208,9 @@ def test_calc_scores_3dm_complex_easy():
 
     # -- run test --
     result_v5 = aa.calc_scores_3dm_complex(gold_alns, num_aln_dict)
-    print result_v5
 
     # results should be -1
-    ok_(abs(-1 - result_v5) < 0.01)
+    ok_(abs(-1 - result_v5["overall_score"]) < 0.01)
 
     # TESTCASE 6 - only two non-target templates are aligned against each other
     # - this should only get points in the all-vs-all comparison, but none in
@@ -232,8 +228,7 @@ def test_calc_scores_3dm_complex_easy():
     result_v6 = aa.calc_scores_3dm_complex(gold_alns, num_aln_dict)
 
     # results should be -1
-    ok_(abs(-1 - result_v6) < 0.01)
-    print result_v6
+    ok_(abs(-1 - result_v6["overall_score"]) < 0.01)
 
 
 def test_calc_scores_3dm_complex_multi_solutions():
@@ -254,7 +249,7 @@ def test_calc_scores_3dm_complex_multi_solutions():
 
     # -- run test --
     result_v5 = aa.calc_scores_3dm_complex(gold_alns, num_aln_dict)
-    print result_v5
 
     # results should be almost 1
-    ok_(1 - result_v5 < 0.01)
+    print result_v5
+    ok_(1 - result_v5["overall_score"] < 0.01)
