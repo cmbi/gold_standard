@@ -159,7 +159,6 @@ def test_calc_scores_3dm_complex_easy():
 
     ok_(1 - result_v1["overall_score"] < 0.01)
 
-
     # TESTCASE 2 - worse aln (one res not aligned)
     # retrieve test aln
     aln_path = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core_v2.txt"
@@ -234,22 +233,42 @@ def test_calc_scores_3dm_complex_easy():
 def test_calc_scores_3dm_complex_multi_solutions():
     # TESTCASE 1 - good aln
     # -- prepare input data --
+    # in 3ABFA residue 28 can either be aligned to 27 or 28 and both solutions get score m5 (half of the full score)
     with open("gold_standard_src/tests/testdata/complex_scoring/gold_alns_datadict_difficult.txt") as a:
         g = a.read()
     # retrieve gold aln
-    gold_alns = eval(g)
-    full_seq = gold_alns["full_seq"]
+    gold_alns_multi_sol = eval(g)
+    full_seq = gold_alns_multi_sol["full_seq"]
 
-    aln_path = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core_v5.txt"
+    # same alignment but 28 is aligned to 27 and 29 to 28 (no multi solutions)
+    with open("gold_standard_src/tests/testdata/complex_scoring/gold_alns_datadict_difficult.txt") as a:
+        g = a.read()
+    # retrieve gold aln
+    gold_alns_no_multi_sol = eval(g)
+    full_seq = gold_alns_no_multi_sol["full_seq"]
+
+    aln_path = "gold_standard_src/tests/testdata/complex_scoring/tautomerase_final_core.txt"
     aln_dict, strcts_order = parse_3SSP(aln_path)
 
     # convert to grounded
     num_aln_dict, core_indexes = core_aln_to_num(
-            aln_dict, full_seq, golden_ids=gold_alns["ids"])
+            aln_dict, full_seq, golden_ids=gold_alns_multi_sol["ids"])
 
     # -- run test --
-    result_v5 = aa.calc_scores_3dm_complex(gold_alns, num_aln_dict)
+    result_v1 = aa.calc_scores_3dm_complex(gold_alns_multi_sol, num_aln_dict)
+    result_v2 = aa.calc_scores_3dm_complex(gold_alns_no_multi_sol, num_aln_dict)
 
     # results should be almost 1
-    print result_v5
-    ok_(1 - result_v5["overall_score"] < 0.01)
+    ok_(abs(result_v1["overall_score"] - result_v2["overall_score"]) < 0.01)
+
+    # in 3ABFA residue 28 can either be aligned to 27 with score of m1 or 28 with sxore of m9
+    # (0.1 and 0.9 of the full score, respectively)
+    with open("gold_standard_src/tests/testdata/complex_scoring/gold_alns_datadict_difficult_v2.txt") as a:
+        g = a.read()
+    # retrieve gold aln
+    gold_alns_multi_sol_v2 = eval(g)
+    result_v3 = aa.calc_scores_3dm_complex(gold_alns_multi_sol_v2, num_aln_dict)
+    print result_v3["overall_score"]
+    print result_v2["overall_score"]
+    print result_v1["overall_score"]
+    ok_(result_v3["overall_score"] < result_v2["overall_score"])

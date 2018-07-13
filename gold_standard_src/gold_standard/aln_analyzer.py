@@ -388,9 +388,9 @@ def get_m_score(m, full_score):
     :return: score (float)
     """
 
-    part = int(m.lstrip('m'))
+    mscore = float("0." + str(m.strip('m')))
 
-    return (1. / part) * full_score
+    return mscore
 
 
 def compare_vars_complex(gold_alns, target_id, test_aln):
