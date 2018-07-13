@@ -16,3 +16,4 @@ pep8>=1.7.0
 pylint>=1.5.5
 virtualenv>=15.0.1
 vulture>=0.8.1
+virtualenvwrapper==4.8.2

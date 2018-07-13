@@ -268,7 +268,13 @@ def test_calc_scores_3dm_complex_multi_solutions():
     # retrieve gold aln
     gold_alns_multi_sol_v2 = eval(g)
     result_v3 = aa.calc_scores_3dm_complex(gold_alns_multi_sol_v2, num_aln_dict)
-    print result_v3["overall_score"]
-    print result_v2["overall_score"]
-    print result_v1["overall_score"]
     ok_(result_v3["overall_score"] < result_v2["overall_score"])
+
+    # in 3ABFA residue 28 can either be aligned to 27 with score of m1 or 28 with sxore of m9
+    # (0.9 and 0.1 of the full score, respectively)
+    with open("gold_standard_src/tests/testdata/complex_scoring/gold_alns_datadict_difficult_v3.txt") as a:
+        g = a.read()
+    # retrieve gold aln
+    gold_alns_multi_sol_v2 = eval(g)
+    result_v4 = aa.calc_scores_3dm_complex(gold_alns_multi_sol_v2, num_aln_dict)
+    ok_(result_v3["overall_score"] < result_v4["overall_score"])
