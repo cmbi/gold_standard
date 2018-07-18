@@ -273,7 +273,7 @@ def calc_scores_3dm(golden_alns, test_aln, multi):
 
 def get_max_aln_score(gold_alns):
     max_score = 0
-
+    pseq_ppos_max_scores = {}
     for seq_id, seq_scores in gold_alns.iteritems():
         ppos_scores = {}
         for pos, res_scores in seq_scores.iteritems():
@@ -291,8 +291,9 @@ def get_max_aln_score(gold_alns):
                     ppos_scores[target_pos] = value
                 elif ppos_scores[target_pos] < value:
                     ppos_scores[target_pos] = value
+        pseq_ppos_max_scores[seq_id] = ppos_scores
         max_score += sum(ppos_scores.values())
-    return max_score
+    return max_score, pseq_ppos_max_scores
 
 
 def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
@@ -301,12 +302,14 @@ def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
     target_id = gold_aln_data["target"]
     gold_alns = gold_aln_data["alns"]
 
-    max_aln_score = get_max_aln_score(gold_alns)
+    max_aln_score, pseq_ppos_max_scores = get_max_aln_score(gold_alns)
 
     result_cores = compare_cores_complex(gold_alns, target_id, test_aln)
     # n = result_cores["n"]
     overall_score = result_cores["overall_score"]
     per_residue_scores = result_cores["per_residue_scores"]
+
+    print per_residue_scores
 
     if mode == "strict":
         # this is to penalize false negatives, only done in the strict mode
@@ -317,7 +320,8 @@ def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
 
     # overall_score /= n
     overall_score /= max_aln_score
-    return {"overall_score": overall_score, "per_residue_scores": per_residue_scores}
+    return {"overall_score": overall_score, "per_residue_scores": per_residue_scores,
+            "max_scores": pseq_ppos_max_scores}
 
 
 def compare_cores_complex(gold_alns, target_id, test_aln):

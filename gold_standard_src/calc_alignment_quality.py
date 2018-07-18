@@ -93,20 +93,37 @@ def parse_input_alignment(aln_path, full_seq, gold_ids, in_format, final_core_pa
     return aln_dict, strcts_order, num_aln_dict, core_indexes
 
 
-def process_per_residue_data(per_residue_scores, target_id, target_seq):
+def process_per_residue_data(per_residue_scores, target_id, target_seq, max_scores):
     """
     Convert it to a simple dict, {seq_id: res_index: score}}
     """
     wrong_cols = {seq_id: {} for seq_id in per_residue_scores}
     for seq_id, residue_scores in per_residue_scores.iteritems():
+        print "1: ", len(residue_scores), "2:", len(max_scores[seq_id])
+        #assert len(residue_scores) == len(max_scores[seq_id])
         for res_index, score in residue_scores.iteritems():
-            # wrong_cols[seq_id][res_index] = score[1]
-            wrong_cols[seq_id][res_index] = 1.0
+            #wrong_cols[seq_id][res_index] = score[1]
+            try:
+                max_score_on_pos = max_scores[seq_id][str(res_index)]
+            except:
+                max_score_on_pos = 0
+
+            if max_score_on_pos != 0:
+                normalized_score = score[1] / max_score_on_pos
+            else:
+                normalized_score = 1
+            print "sequence: ", seq_id, "pos:", res_index
+            print max_score_on_pos
+            print score[1]
+            assert max_score_on_pos >= score[1]
+
+            wrong_cols[seq_id][res_index] = (score[0], normalized_score)
 
     # add target sequence with a full score (it will not be in
     # the per_residue_scores if it wasn't in the final_core.json)
     if target_id not in wrong_cols:
-        wrong_cols[target_id] = {i: 1.0 for i in range(len(target_seq))}
+        #wrong_cols[target_id] = {i + 1: 1.0 for i in range(len(target_seq))}
+        wrong_cols[target_id] = {i + 1: (True, 1.0) for i in range(len(target_seq))}
 
     return wrong_cols
 
@@ -137,7 +154,7 @@ def calculate_aln_quality_complex(paths, output, in_format, write_json):
 
     target_id = gold_in['target']
 
-    wrong_cols = process_per_residue_data(scores['per_residue_scores'], target_id, gold_in['full_seq'][target_id])
+    wrong_cols = process_per_residue_data(scores['per_residue_scores'], target_id, gold_in['full_seq'][target_id], scores["max_scores"])
 
     return {
         'overall_score': scores['overall_score'],

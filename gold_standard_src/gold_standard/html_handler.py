@@ -186,18 +186,23 @@ class HtmlHandler(object):
     def complex_aln_to_html(self, aa_aln, wrong, order):
         html_out = ""
         aln_length = len(aa_aln)
+
         for seq_id in order:
             seq = aa_aln[seq_id]
             html_sequence = "{}    ".format(seq_id)
             for r, res in enumerate(seq):
                 if res != "-" and res != " ":
-                    print seq_id
-                    level = self.get_level(wrong[seq_id][r + 1], aln_length)
-                    if level > 0:
-                        new_res = "<span class=featWRONG{}>{}</span>".format(
-                                level, res)
-                    else:
+                    score = wrong[seq_id][r + 1]
+                    if score[0] and score[1] == 1:
+                        if seq_id == "3M21A":
+                            print score
+                            raise
                         new_res = "<span class=featOK>{}</span>".format(res)
+                    else:
+                        level = self.get_level_cmplx(score[1])
+                        print "level", level, "from", score[1]
+                        new_res = "<span class=featWRONG{}>{}</span>".format(
+                            level, res)
                 else:
                     new_res = res
                 html_sequence += new_res
@@ -235,7 +240,7 @@ class HtmlHandler(object):
             return 3
         elif n >= 0.2:
             return 2
-        elif n >= 0:
+        elif n > 0:
             return 1
         else:
             return 0
