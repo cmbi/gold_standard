@@ -76,6 +76,9 @@ class HtmlHandler(object):
         .asteriskFull{
             font-family: monospace;
         }
+        .noFeat{
+            font-family: monospace;
+        }
         </style>
         """
         with open(outname + ".html", 'w') as out:
@@ -83,7 +86,7 @@ class HtmlHandler(object):
 
     def aln_to_html_var(self, quality_data):
         # html_out = ""
-        html_out = "<div class=monospacediv>\n<br>"
+        html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
         aln_length = len(quality_data['aa_aln'])
         num_aln_c = self.split_cores(quality_data['num_aln'],
                                      quality_data['core_indexes'])
@@ -131,7 +134,8 @@ class HtmlHandler(object):
                     else:
                         new_res = "<span class=featOK>{}</span>".format(res)
                 else:
-                    new_res = res
+                    # new_res = res
+                    new_res = "<span class=noFeat>" + res + "</span>"
                 r_index += 1
                 html_seq += new_res
         var = corvar_seq["var"][-1].lower()
@@ -153,6 +157,7 @@ class HtmlHandler(object):
 
     def aln_to_html_pairwise(self, aa_aln, gold_aln, full, wrong, order):
         html_out = "<div class=monospacediv>\n<br>"
+        html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
         aln_length = len(aa_aln)
 
         _log.info("Creating pairiwse html")
@@ -185,10 +190,12 @@ class HtmlHandler(object):
                         new_res = "<span class=featOK>{}</span>".format(res)
                         new_gold_res = "<span class=featOK>{}</span>".format(gold_aa)
                 else:
-                    new_res = res
-                    new_gold_res = gold_aa
+                    # new_res = res
+                    new_res = "<span class=noFeat>" + res + "</span>"
+                    # new_gold_res = gold_aa
+                    new_gold_res = "<span class=noFeat>" + gold_aa + "</span>"
 
-                if new_res.upper() != new_gold_res.upper() and new_res != "-":
+                if res.upper() != gold_aa.upper() and new_res != "-":
                     asterisk_line += "<span class=asteriskFull>*</span>"
                 else:
                     asterisk_line += "<span class=asteriskBlank> </span>"
@@ -206,6 +213,7 @@ class HtmlHandler(object):
     def complex_aln_to_html(self, aa_aln, wrong, order):
         # html_out = ""
         html_out = "<div class=monospacediv>\n<br>"
+        html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
         aln_length = len(aa_aln)
 
         for seq_id in order:
@@ -225,7 +233,8 @@ class HtmlHandler(object):
                         new_res = "<span class=featWRONG{}>{}</span>".format(
                             level, res)
                 else:
-                    new_res = res
+                    # new_res = res
+                    new_res = "<span class=noFeat>" + res + "</span>"
                 html_sequence += new_res
             html_out += html_sequence + "\n"
         return html_out
@@ -233,6 +242,7 @@ class HtmlHandler(object):
     def aln_to_html(self, aa_aln, wrong, order):
         # html_out = ""
         html_out = "<div class=monospacediv>\n<br>"
+        html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
         aln_length = len(aa_aln)
         for seq_id in order:
             seq = aa_aln[seq_id]
@@ -246,7 +256,8 @@ class HtmlHandler(object):
                     else:
                         new_res = "<span class=featOK>{}</span>".format(res)
                 else:
-                    new_res = res
+                    # new_res = res
+                    new_res = "<span class=noFeat>" + res + "</span>"
                 html_sequence += new_res
             html_out += html_sequence + "\n"
         return html_out
