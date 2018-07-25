@@ -69,6 +69,10 @@ class HtmlHandler(object):
             font-family: monospace;
             background: #AAFF00;
         }
+        .featMeh{
+            font-family: monospace;
+            background: #FFEF96;
+        }
         .asteriskBlank{
             opacity: 1.0;
             font-family: monospace;
@@ -134,7 +138,6 @@ class HtmlHandler(object):
                     else:
                         new_res = "<span class=featOK>{}</span>".format(res)
                 else:
-                    # new_res = res
                     new_res = "<span class=noFeat>" + res + "</span>"
                 r_index += 1
                 html_seq += new_res
@@ -190,10 +193,14 @@ class HtmlHandler(object):
                         new_res = "<span class=featOK>{}</span>".format(res)
                         new_gold_res = "<span class=featOK>{}</span>".format(gold_aa)
                 else:
-                    # new_res = res
-                    new_res = "<span class=noFeat>" + res + "</span>"
-                    # new_gold_res = gold_aa
-                    new_gold_res = "<span class=noFeat>" + gold_aa + "</span>"
+                    if res == "-" and gold_aa == "-":
+                        new_res = "<span class=noFeat>" + res + "</span>"
+                        new_gold_res = "<span class=noFeat>" + gold_aa + "</span>"
+                    elif res == "-":
+                        new_res = "<span class=featMeh>" + res + "</span>"
+                        new_gold_res = "<span class=featMeh>" + gold_aa + "</span>"
+                    else:
+                        raise RuntimeError("res: {}; gold res: {}".format(res, gold_aa))
 
                 if res.upper() != gold_aa.upper() and new_res != "-":
                     asterisk_line += "<span class=asteriskFull>*</span>"
@@ -233,7 +240,6 @@ class HtmlHandler(object):
                         new_res = "<span class=featWRONG{}>{}</span>".format(
                             level, res)
                 else:
-                    # new_res = res
                     new_res = "<span class=noFeat>" + res + "</span>"
                 html_sequence += new_res
             html_out += html_sequence + "\n"
@@ -256,7 +262,6 @@ class HtmlHandler(object):
                     else:
                         new_res = "<span class=featOK>{}</span>".format(res)
                 else:
-                    # new_res = res
                     new_res = "<span class=noFeat>" + res + "</span>"
                 html_sequence += new_res
             html_out += html_sequence + "\n"
