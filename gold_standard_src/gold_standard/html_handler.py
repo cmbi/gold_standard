@@ -38,7 +38,7 @@ class HtmlHandler(object):
 
         css = """
         <style>
-        body {
+        monospacediv {
             font-family: monospace;
         }
         .featWRONG{
@@ -82,7 +82,8 @@ class HtmlHandler(object):
             out.write(template_fmt.format(css, outtxt))
 
     def aln_to_html_var(self, quality_data):
-        html_out = ""
+        # html_out = ""
+        html_out = "<div class=monospacediv>\n<br>"
         aln_length = len(quality_data['aa_aln'])
         num_aln_c = self.split_cores(quality_data['num_aln'],
                                      quality_data['core_indexes'])
@@ -151,7 +152,7 @@ class HtmlHandler(object):
         return short_var
 
     def aln_to_html_pairwise(self, aa_aln, gold_aln, full, wrong, order):
-        html_out = ""
+        html_out = "<div class=monospacediv>\n<br>"
         aln_length = len(aa_aln)
 
         _log.info("Creating pairiwse html")
@@ -198,11 +199,13 @@ class HtmlHandler(object):
             html_out += html_sequence + "\n"
             html_out += html_gold_sequence + "\n"
             html_out += "<br>"
+        html_out += "</div>"
         _log.info("Finished creating pairwise html")
         return html_out
 
     def complex_aln_to_html(self, aa_aln, wrong, order):
-        html_out = ""
+        # html_out = ""
+        html_out = "<div class=monospacediv>\n<br>"
         aln_length = len(aa_aln)
 
         for seq_id in order:
@@ -228,7 +231,8 @@ class HtmlHandler(object):
         return html_out
 
     def aln_to_html(self, aa_aln, wrong, order):
-        html_out = ""
+        # html_out = ""
+        html_out = "<div class=monospacediv>\n<br>"
         aln_length = len(aa_aln)
         for seq_id in order:
             seq = aa_aln[seq_id]
