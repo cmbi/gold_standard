@@ -38,26 +38,40 @@ class HtmlHandler(object):
 
         css = """
         <style>
+        body {
+            font-family: monospace;
+        }
         .featWRONG{
+            font-family: monospace;
             background: #FF0000;
         }
         .featWRONG5{
+            font-family: monospace;
             background: #FF2200;
         }
         .featWRONG4{
+            font-family: monospace;
             background: #FF9900;
         }
         .featWRONG3{
+            font-family: monospace;
             background: #FFAA00;
         }
         .featWRONG2{
+            font-family: monospace;
             background: #FFCC00;
         }
         .featWRONG1{
+            font-family: monospace;
             background: #FFFF00;
         }
         .featOK{
+            font-family: monospace;
             background: #AAFF00;
+        }
+        .asterisk{
+            font-family: monospace;
+            background: #FFFFFF;
         }
         </style>
         """
@@ -162,6 +176,7 @@ class HtmlHandler(object):
                                 level, res)
                         new_gold_res = "<span class=featWRONG{}>{}</span>".format(
                                 level, gold_aa)
+
                     else:
                         new_res = "<span class=featOK>{}</span>".format(res)
                         new_gold_res = "<span class=featOK>{}</span>".format(gold_aa)
@@ -170,9 +185,9 @@ class HtmlHandler(object):
                     new_gold_res = gold_aa
 
                 if new_res.upper() != new_gold_res.upper() and new_res != "-":
-                    asterisk_line += "*"
+                    asterisk_line += "<span class=asterisk>*</span>"
                 else:
-                    asterisk_line += " "
+                    asterisk_line += "<span class=asterisk> </span>"
 
                 html_sequence += new_res
                 html_gold_sequence += new_gold_res
