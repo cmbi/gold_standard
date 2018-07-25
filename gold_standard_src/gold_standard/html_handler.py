@@ -69,9 +69,12 @@ class HtmlHandler(object):
             font-family: monospace;
             background: #AAFF00;
         }
-        .asterisk{
+        .asteriskBlank{
+            opacity: 1.0;
             font-family: monospace;
-            background: #FFFFFF;
+        }
+        .asteriskFull{
+            font-family: monospace;
         }
         </style>
         """
@@ -185,9 +188,9 @@ class HtmlHandler(object):
                     new_gold_res = gold_aa
 
                 if new_res.upper() != new_gold_res.upper() and new_res != "-":
-                    asterisk_line += "<span class=asterisk>*</span>"
+                    asterisk_line += "<span class=asteriskFull>*</span>"
                 else:
-                    asterisk_line += "<span class=asterisk> </span>"
+                    asterisk_line += "<span class=asteriskBlank> </span>"
 
                 html_sequence += new_res
                 html_gold_sequence += new_gold_res
