@@ -160,7 +160,7 @@ class HtmlHandler(object):
             seq = aa_aln[seq_id]
             html_sequence = "<b>TEST</b> {}    ".format(seq_id)
             html_gold_sequence = "<b>GOLD</b> {}    ".format(seq_id)
-            asterisk_line = "         {}".format(" " * len(seq_id))
+            asterisk_line = "<span class=asteriskBlank>         {}</span>".format(" " * len(seq_id))
             gold_seq = gold_aln["cores"][seq_id]
             if len(gold_seq) != len(seq):
                 msg = "Sequences not of equal length ({} vs {}):\n{}\n{}".format(len(gold_seq), len(seq), gold_seq, seq)
