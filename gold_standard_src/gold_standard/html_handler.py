@@ -144,6 +144,11 @@ class HtmlHandler(object):
             html_sequence = "<b>TEST</b> {}    ".format(seq_id)
             html_gold_sequence = "<b>GOLD</b> {}    ".format(seq_id)
             asterisk_line = "         {}".format(" " * len(seq_id))
+
+            if seq_id not in gold_aln["cores"]:
+                logger.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
+                continue
+
             gold_seq = gold_aln["cores"][seq_id]
             if len(gold_seq) != len(seq):
                 msg = "Sequences not of equal length ({} vs {}):\n{}\n{}".format(len(gold_seq), len(seq), gold_seq, seq)
