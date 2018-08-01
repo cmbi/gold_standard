@@ -104,22 +104,26 @@ def process_per_residue_data(per_residue_scores, target_id, target_seq, max_scor
     wrong_cols = {seq_id: {} for seq_id in per_residue_scores}
     for seq_id, residue_scores in per_residue_scores.iteritems():
         print "1: ", len(residue_scores), "2:", len(max_scores[seq_id])
-        #assert len(residue_scores) == len(max_scores[seq_id])
         for res_index, score in residue_scores.iteritems():
-            #wrong_cols[seq_id][res_index] = score[1]
             try:
                 max_score_on_pos = max_scores[seq_id][str(res_index)]
             except:
                 max_score_on_pos = 0
 
-            if max_score_on_pos != 0:
+            if max_score_on_pos != 0 and score[0]:
                 normalized_score = score[1] / max_score_on_pos
-            else:
+            elif score[0]:
                 normalized_score = 1
+            else:
+                normalized_score = -1
             print "sequence: ", seq_id, "pos:", res_index
             print max_score_on_pos
             print score[1]
-            assert max_score_on_pos >= score[1]
+            if max_score_on_pos < score[1]:
+                msg = "Score on position {} is higher than the max score. {} vs {}".format(
+                    res_index, score, max_score_on_pos)
+                _log.error(msg)
+                raise RuntimeError(msg)
 
             wrong_cols[seq_id][res_index] = (score[0], normalized_score)
 

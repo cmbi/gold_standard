@@ -298,6 +298,10 @@ def get_max_aln_score(gold_alns):
 
 def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
     """
+    Calculate alignment scores based on a json alignment
+    (we call it complex because there are partial scores,
+    and multi-solution alignments as opposed to the simple mode where each pair
+    of aligned residues gets the same score or penalty and can be aligned only in one way)
     """
     target_id = gold_aln_data["target"]
     gold_alns = gold_aln_data["alns"]
