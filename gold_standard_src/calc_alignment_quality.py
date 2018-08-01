@@ -54,6 +54,7 @@ def parse_input_alignment(aln_path, full_seq, gold_ids, in_format, final_core_pa
         core_indexes = None
 
     strcts_order = []
+    write_pairwise_html = True
     if in_format != 'csv':
         if not in_format:
             # detect input format (only for fatcat, 3dm, 3SSP)
@@ -71,13 +72,16 @@ def parse_input_alignment(aln_path, full_seq, gold_ids, in_format, final_core_pa
         # fill in the alignment with gaps so that the full master sequence is in
         # the test alignment
         old_aln_dict = deepcopy(aln_dict)
-        try:
+        if gold_ids[0] in aln_dict:
             aln_dict = make_master_seq_full(aln_dict, full_seq, gold_ids)
-        except:
-            aln_dict = old_aln_dict
+        else:
+            _log.warning("Will not be able to create a pairwise comparison because "
+                         "target sequence is not present in the test alignment")
+            write_pairwise_html = False
 
         # create alignment of grounded sequences
         num_aln_dict, core_indexes = core_aln_to_num(aln_dict, full_seq, golden_ids=gold_ids)
+        print num_aln_dict["cores"].keys()
     else:
         # input format is 'csv'
         aln_dict, num_aln_dict, core_indexes = parse_csv_alignment(aln_path, gold_ids)
@@ -90,7 +94,7 @@ def parse_input_alignment(aln_path, full_seq, gold_ids, in_format, final_core_pa
                         "sequences from the gold standard alignment?")
     _log.debug("Sequences in the test alignment: %s",
                str(num_aln_dict['cores'].keys()))
-    return aln_dict, strcts_order, num_aln_dict, core_indexes
+    return aln_dict, strcts_order, num_aln_dict, core_indexes, write_pairwise_html
 
 
 def process_per_residue_data(per_residue_scores, target_id, target_seq, max_scores):
@@ -142,8 +146,9 @@ def calculate_aln_quality_complex(paths, output, in_format, write_json):
     # that's the test alignment in a final core format, not necessary
     final_core = paths.get("final_core")
 
-    aln_dict, strcts_order, num_aln_dict, core_indexes = parse_input_alignment(
-        paths['aln_path'], gold_in['full_seq'], gold_in['ids'], in_format, final_core)
+    aln_dict, strcts_order, num_aln_dict, core_indexes, write_pairwise_html = \
+        parse_input_alignment(
+            paths['aln_path'], gold_in['full_seq'], gold_in['ids'], in_format, final_core)
 
     # calculate scores
     scores = calc_scores_3dm_complex(gold_in, num_aln_dict)
@@ -157,6 +162,7 @@ def calculate_aln_quality_complex(paths, output, in_format, write_json):
     wrong_cols = process_per_residue_data(scores['per_residue_scores'], target_id, gold_in['full_seq'][target_id], scores["max_scores"])
 
     return {
+        'write_pairwise_html': write_pairwise_html,
         'overall_score': scores['overall_score'],
         'per_residue_scores': scores['per_residue_scores'],
         'wrong_cols': wrong_cols,
@@ -199,7 +205,7 @@ def calculate_aln_quality_simple(paths, output, in_format, multi, write_json, go
     _log.info("'SIMPLE' score calculation")
     _log.debug("Sequences in the gold alignment: %s", gold_in['ids'])
 
-    aln_dict, strcts_order, num_aln_dict, core_indexes = parse_input_alignment(
+    aln_dict, strcts_order, num_aln_dict, core_indexes, write_pairwise_html = parse_input_alignment(
         paths['aln_path'], gold_in['full_seq'], gold_in['ids'], in_format, paths['final_core'])
 
     # calculate scores
@@ -213,6 +219,7 @@ def calculate_aln_quality_simple(paths, output, in_format, multi, write_json, go
             json.dump(stats, o)
 
     return {
+        "write_pairwise_html": write_pairwise_html,
         'wrong_cols': scores["wrong_cols"],
         'aa_aln': aln_dict,
         'gold_aln': gold_in['alns'],
@@ -289,7 +296,9 @@ if __name__ == "__main__":
     if args.html_pair:
         try:
             hh = HtmlHandler(pairwise=args.html_pair)
-            hh.write_html(quality_data, args.output + "_pairwise")
+            hh.write_html(
+                quality_data, args.output + "_pairwise", target_in_test=quality_data["write_pairwise_html"])
+
         except:
             _log.error("pairwise html creation failed")
             raise

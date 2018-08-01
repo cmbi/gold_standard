@@ -16,13 +16,15 @@ class HtmlHandler(object):
         self.long_len = long_len
         self.pairwise = pairwise
 
-    def write_html(self, quality_data, outname, complex_scoring=False):
+    def write_html(self, quality_data, outname, complex_scoring=False, target_in_test=True):
         if self.var or self.var_short:
             outtxt = self.aln_to_html_var(quality_data)
-        elif self.pairwise:
+        elif self.pairwise and target_in_test:
             outtxt = self.aln_to_html_pairwise(
                     quality_data['aa_aln'], quality_data["gold_aln"], quality_data["full"],
                     quality_data['wrong_cols'], quality_data["order"])
+        elif self.pairwise and not target_in_test:
+            outtxt = self.write_warning_about_pairwise()
         elif not complex_scoring:
             outtxt = self.aln_to_html(
                 quality_data['aa_aln'], quality_data['wrong_cols'], quality_data["order"])
@@ -87,6 +89,11 @@ class HtmlHandler(object):
         """
         with open(outname + ".html", 'w') as out:
             out.write(template_fmt.format(css, outtxt))
+
+    def write_warning_about_pairwise(self):
+        outtext = "<b>Sorry, pairwise comparison cannot be displayed because the " \
+            "target structure was not provided in the test alignment.</b>"
+        return outtext
 
     def aln_to_html_var(self, quality_data):
         # html_out = ""
