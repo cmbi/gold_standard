@@ -230,21 +230,32 @@ def split_core(core, full_seq, add_index=0):
     _log.debug("Splitting up a core: %s\n full seq: %s\
             add_index: %s", core, full_seq, add_index)
     new_cores = []
+
     if full_seq[add_index:].find(core) != -1 and len(core) == 1:
         return [{'pos': full_seq[add_index:].find(core) + add_index,
                  'seq': core}]
+
     for i in xrange(1, len(core)):
         core1_pos = full_seq[add_index:].find(core[:-i])
+        if core1_pos == -1 and core.find("X") != -1:
+            tmp_core = core.replace("X", "G")
+            core1_pos = full_seq[add_index:].find(tmp_core[:-i])
+
         core2_pos = full_seq[add_index + core1_pos + len(core[:-i]):].find(
             core[-i:])
+
         if core1_pos != -1 and core2_pos != -1:
+            # means all cores are split up, can exit the function
             new_cores = [
                 {"seq": core[:-i],
                  "pos": core1_pos + add_index},
                 {"seq": core[-i:],
                  "pos": core2_pos + add_index + core1_pos + len(core[:-i])}]
             break
+
         elif core1_pos != -1:
+            # core1 was found, core2 not, so core 2 needs to be split up
+            # further - call split_core on core2 now
             position = core1_pos + add_index
             new_cores.append({"seq": core[:-i],
                               "pos": position})
@@ -252,6 +263,7 @@ def split_core(core, full_seq, add_index=0):
             new_cores.extend(split_core(core[-i:], full_seq,
                                         add_index))
             break
+
     _log.debug("Split up core %s in two cores: %s", core, new_cores)
     if not new_cores:
         #raise Exception("Didn't find a way to split up the core {}\n"

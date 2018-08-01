@@ -196,6 +196,7 @@ def calculate_aln_quality_simple(paths, output, in_format, multi, write_json, go
 
     if not gold_in['ids']:
         raise RuntimeError("No gold standard alignments were found")
+    _log.info("'SIMPLE' score calculation")
     _log.debug("Sequences in the gold alignment: %s", gold_in['ids'])
 
     aln_dict, strcts_order, num_aln_dict, core_indexes = parse_input_alignment(

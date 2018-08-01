@@ -18,11 +18,13 @@ def calc_stats(confusion_matrices):
             stats[m_id]['ppv'] = float(m['TP']) / (m['TP'] + m['FP'])
         if m['TN'] + m['FN'] != 0:
             stats[m_id]['npv'] = float(m['TN']) / (m['TN'] + m['FN'])
+
         up = (m['TP'] * m['TN']) - (m['FP'] * m['FN'])
         down = (m['TP'] + m['FP']) * (m['TP'] + m['FN']) * \
             (m['TN'] + m['FP']) * (m['TN'] + m['FN'])
+
         if down != 0:
-            stats[m_id]['mcc'] = up / sqrt(down)
+            stats[m_id]['mcc'] = up / sqrt(float(down))
         else:
             stats[m_id]['mcc'] = 0
 
