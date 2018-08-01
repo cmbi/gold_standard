@@ -292,6 +292,7 @@ if __name__ == "__main__":
             hh.write_html(quality_data, args.output + "_pairwise")
         except:
             _log.error("pairwise html creation failed")
+            raise
 
     if args.html or args.html_var or args.html_var_short:
         # create html output
@@ -299,5 +300,6 @@ if __name__ == "__main__":
         hh.write_html(quality_data, args.output)
 
         if args.html_var or args.html_var_short:
+            # create html output with variable regions (full or trimmed)
             hh = HtmlHandler(var=args.html_var, var_short=args.html_var_short)
             hh.write_html(quality_data, args.output + "_varshort")

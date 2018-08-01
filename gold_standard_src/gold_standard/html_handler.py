@@ -99,6 +99,9 @@ class HtmlHandler(object):
         aa_aln_corvar = self.make_corvar(quality_data['full'], num_aln_v)
         var_lengths = self.get_max_var_lengths(num_aln_v)
         for seq_id in quality_data["order"]:
+            if seq_id not in quality_data["gold_aln"]["cores"]:
+                _log.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
+                continue
             seq = aa_aln_corvar[seq_id]
             html_seq = self.make_html_var_seq(
                 seq, quality_data['wrong_cols'][seq_id], var_lengths,
@@ -167,7 +170,7 @@ class HtmlHandler(object):
 
         for seq_id in order:
             if seq_id not in gold_aln["cores"]:
-                logger.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
+                _log.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
                 continue
 
             seq = aa_aln[seq_id]
@@ -257,6 +260,10 @@ class HtmlHandler(object):
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
         aln_length = len(aa_aln)
         for seq_id in order:
+            if seq_id not in wrong:
+                _log.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
+                continue
+
             seq = aa_aln[seq_id]
             html_sequence = "{}    ".format(seq_id)
             for r, res in enumerate(seq):
