@@ -27,7 +27,7 @@ fs = frozenset
 
 FORMAT = '%(asctime)s:%(levelname)s:%(funcName)s - %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT)
-_log = logging.getLogger(__name__)
+_log = logging.getLogger("__main__")
 
 
 def detect_input_format(aln_path):
@@ -81,7 +81,6 @@ def parse_input_alignment(aln_path, full_seq, gold_ids, in_format, final_core_pa
 
         # create alignment of grounded sequences
         num_aln_dict, core_indexes = core_aln_to_num(aln_dict, full_seq, golden_ids=gold_ids)
-        print num_aln_dict["cores"].keys()
     else:
         # input format is 'csv'
         aln_dict, num_aln_dict, core_indexes = parse_csv_alignment(aln_path, gold_ids)
@@ -103,7 +102,6 @@ def process_per_residue_data(per_residue_scores, target_id, target_seq, max_scor
     """
     wrong_cols = {seq_id: {} for seq_id in per_residue_scores}
     for seq_id, residue_scores in per_residue_scores.iteritems():
-        print "1: ", len(residue_scores), "2:", len(max_scores[seq_id])
         for res_index, score in residue_scores.iteritems():
             try:
                 max_score_on_pos = max_scores[seq_id][str(res_index)]
@@ -116,9 +114,6 @@ def process_per_residue_data(per_residue_scores, target_id, target_seq, max_scor
                 normalized_score = 1
             else:
                 normalized_score = -1
-            print "sequence: ", seq_id, "pos:", res_index
-            print max_score_on_pos
-            print score[1]
             if max_score_on_pos < score[1]:
                 msg = "Score on position {} is higher than the max score. {} vs {}".format(
                     res_index, score, max_score_on_pos)
@@ -130,7 +125,6 @@ def process_per_residue_data(per_residue_scores, target_id, target_seq, max_scor
     # add target sequence with a full score (it will not be in
     # the per_residue_scores if it wasn't in the final_core.json)
     if target_id not in wrong_cols:
-        #wrong_cols[target_id] = {i + 1: 1.0 for i in range(len(target_seq))}
         wrong_cols[target_id] = {i + 1: (True, 1.0) for i in range(len(target_seq))}
 
     return wrong_cols
@@ -166,6 +160,7 @@ def calculate_aln_quality_complex(paths, output, in_format, write_json):
     wrong_cols = process_per_residue_data(scores['per_residue_scores'], target_id, gold_in['full_seq'][target_id], scores["max_scores"])
 
     return {
+        'target_id': target_id,
         'write_pairwise_html': write_pairwise_html,
         'overall_score': scores['overall_score'],
         'per_residue_scores': scores['per_residue_scores'],
@@ -296,23 +291,28 @@ if __name__ == "__main__":
         quality_data = calculate_aln_quality_simple(input_paths, args.output,
                                                     args.input_format, args.multi, args.json,
                                                     args.gold_json)
+    hh = HtmlHandler()
+    if not args.gold_json:
+        if args.html_pair and quality_data["write_pairwise_html"]:
+            # write pairwise html output
+            hh.write_html(quality_data, args.output + "_pairwise", mode="pairwise")
 
-    if args.html_pair:
-        try:
-            hh = HtmlHandler(pairwise=args.html_pair)
-            hh.write_html(
-                quality_data, args.output + "_pairwise", target_in_test=quality_data["write_pairwise_html"])
+        if args.html:
+            # create html output
+            hh.write_html(quality_data, args.output, mode="cores")
 
-        except:
-            _log.error("pairwise html creation failed")
-            raise
-
-    if args.html or args.html_var or args.html_var_short:
-        # create html output
-        hh = HtmlHandler()
-        hh.write_html(quality_data, args.output)
-
-        if args.html_var or args.html_var_short:
+        if args.html_var:
             # create html output with variable regions (full or trimmed)
-            hh = HtmlHandler(var=args.html_var, var_short=args.html_var_short)
-            hh.write_html(quality_data, args.output + "_varshort")
+            hh.write_html(quality_data, args.output + "_var", mode="var")
+
+        if args.html_var_short:
+            # create html output with variable regions (full or trimmed)
+            hh.write_html(quality_data, args.output + "_varshort", mode="var_short")
+    else:
+        if args.html_pair and quality_data["write_pairwise_html"]:
+            # write pairwise html output
+            hh.write_html(quality_data, args.output + "_pairwise", mode="pairwise_complex")
+
+        if args.html:
+            # create html output
+            hh.write_html(quality_data, args.output, mode="cores_complex")

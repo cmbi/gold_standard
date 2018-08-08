@@ -287,10 +287,11 @@ def get_max_aln_score(gold_alns):
                 else:
                     value = SCORE_MODS[score_category]
 
-                if target_pos not in ppos_scores:
-                    ppos_scores[target_pos] = value
-                elif ppos_scores[target_pos] < value:
-                    ppos_scores[target_pos] = value
+                if pos not in ppos_scores:
+                    ppos_scores[pos] = value
+                elif ppos_scores[pos] < value:
+                    ppos_scores[pos] = value
+
         pseq_ppos_max_scores[seq_id] = ppos_scores
         max_score += sum(ppos_scores.values())
     return max_score, pseq_ppos_max_scores
@@ -312,8 +313,6 @@ def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
     # n = result_cores["n"]
     overall_score = result_cores["overall_score"]
     per_residue_scores = result_cores["per_residue_scores"]
-
-    print per_residue_scores
 
     if mode == "strict":
         # this is to penalize false negatives, only done in the strict mode

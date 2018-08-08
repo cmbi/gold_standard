@@ -9,26 +9,26 @@ _log = logging.getLogger("__main__")
 
 
 class HtmlHandler(object):
-    def __init__(self, var=False, var_short=False, long_len=20, short=False, pairwise=False):
-        self.var = var
-        self.var_short = var_short
-        self.short = short
+    def __init__(self, long_len=20):
         self.long_len = long_len
-        self.pairwise = pairwise
 
-    def write_html(self, quality_data, outname, complex_scoring=False, target_in_test=True):
-        if self.var or self.var_short:
-            outtxt = self.aln_to_html_var(quality_data)
-        elif self.pairwise and target_in_test:
+    def write_html(self, quality_data, outname, mode="cores"):
+        if mode in ["var", "var_short"]:
+            outtxt = self.aln_to_html_var(quality_data, mode)
+
+        elif mode == "pairwise":
             outtxt = self.aln_to_html_pairwise(
                     quality_data['aa_aln'], quality_data["gold_aln"], quality_data["full"],
                     quality_data['wrong_cols'], quality_data["order"])
-        elif self.pairwise and not target_in_test:
-            outtxt = self.write_warning_about_pairwise()
-        elif not complex_scoring:
+
+        elif mode == "pairwise_complex":
+            outtxt = self.aln_to_html_pairwise_complex(quality_data)
+
+        elif mode == "cores":
             outtxt = self.aln_to_html(
                 quality_data['aa_aln'], quality_data['wrong_cols'], quality_data["order"])
-        else:
+
+        elif mode == "cores_complex":
             outtxt = self.complex_aln_to_html(
                     quality_data['aa_aln'], quality_data['wrong_cols'], quality_data["order"])
 
@@ -90,13 +90,8 @@ class HtmlHandler(object):
         with open(outname + ".html", 'w') as out:
             out.write(template_fmt.format(css, outtxt))
 
-    def write_warning_about_pairwise(self):
-        outtext = "<b>Sorry, pairwise comparison cannot be displayed because the " \
-            "target structure was not provided in the test alignment.</b>"
-        return outtext
-
-    def aln_to_html_var(self, quality_data):
-        # html_out = ""
+    def aln_to_html_var(self, quality_data, mode):
+        short_var = mode == "var_short"
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
         aln_length = len(quality_data['aa_aln'])
         num_aln_c = self.split_cores(quality_data['num_aln'],
@@ -104,7 +99,7 @@ class HtmlHandler(object):
         num_aln_v = self.split_vars(num_aln_c)
 
         aa_aln_corvar = self.make_corvar(quality_data['full'], num_aln_v)
-        var_lengths = self.get_max_var_lengths(num_aln_v)
+        var_lengths = self.get_max_var_lengths(num_aln_v, short_var)
         for seq_id in quality_data["order"]:
             if seq_id not in quality_data["gold_aln"]["cores"]:
                 _log.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
@@ -112,30 +107,30 @@ class HtmlHandler(object):
             seq = aa_aln_corvar[seq_id]
             html_seq = self.make_html_var_seq(
                 seq, quality_data['wrong_cols'][seq_id], var_lengths,
-                aln_length)
+                aln_length, short_var)
             html_sequence = "{}    {}".format(seq_id, html_seq)
             html_out += html_sequence + "\n"
         return html_out
 
-    def get_max_var_lengths(self, num_aln):
+    def get_max_var_lengths(self, num_aln, short_var):
         max_lengths = []
         for v in range(len(num_aln['var'].values()[0])):
             lengths = [len(num_aln['var'][s_id][v]) for
                        s_id in num_aln['var'].keys()]
             m_len = max(lengths)
-            if self.short and m_len > self.long_len:
+            if short_var and m_len > self.long_len:
                 # if max var is longer than allowed
                 m_len = self.long_len + len(str(m_len - self.long_len)) + 2
 
             max_lengths.append(m_len)
         return max_lengths
 
-    def make_html_var_seq(self, corvar_seq, wrong, max_lengths, aln_length):
+    def make_html_var_seq(self, corvar_seq, wrong, max_lengths, aln_length, short_var=False):
         html_seq = ""
         r_index = 0
         for c, core in enumerate(corvar_seq["cores"]):
             var = corvar_seq["var"][c].lower()
-            if self.short:
+            if short_var:
                 var = self.make_short_var(var)
             var = " " + var + " " * (max_lengths[c] - len(var)) + " "
             html_seq += var
@@ -152,7 +147,7 @@ class HtmlHandler(object):
                 r_index += 1
                 html_seq += new_res
         var = corvar_seq["var"][-1].lower()
-        if self.short:
+        if short_var:
             var = self.make_short_var(var)
         html_seq += " " + var + " " * (max_lengths[-1] - len(var))
         return html_seq
@@ -168,8 +163,127 @@ class HtmlHandler(object):
             short_var = var
         return short_var
 
+    def aln_to_html_pairwise_complex(self, quality_data):
+        aa_aln = quality_data["aa_aln"]
+        gold_aln = quality_data["gold_aln"]
+        full = quality_data["full"]
+        wrong = quality_data["wrong_cols"]
+        order = quality_data["order"]
+        target_id = quality_data["target_id"]
+
+        target_seq = full[target_id]
+
+        html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
+        aln_length = len(aa_aln)
+
+        _log.info("Creating pairiwse html")
+        for seq_id in order:
+            if seq_id not in gold_aln:
+                _log.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
+                continue
+            for pos, res in enumerate(target_seq, start=1):
+                # find out which residue is aligned with this in the gold aln
+
+                # find out which residue is aligned with this in the test aln
+
+
+        for seq_id in order:
+            if seq_id not in gold_aln:
+                _log.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
+                continue
+
+            seq = aa_aln[seq_id]
+            html_sequence = "<b>TEST</b> {}    ".format(seq_id)
+            html_gold_sequence = "<b>GOLD</b> {}    ".format(seq_id)
+            asterisk_line = "<span class=asteriskBlank>         {}</span>".format(" " * len(seq_id))
+
+            pairwise_gold_aln = gold_aln[seq_id]
+            print seq_id, "running..."
+            for position, score in wrong[seq_id].iteritems():
+                print seq_id, position, len(full[seq_id])
+                res = full[seq_id][position - 1]
+                # if res != "-":
+                #     real_pos += 1
+                # else:
+                #     continue
+
+                # full_seq_index = self.get_index_in_full_seq()
+                gold_aa = self.get_gold_aa(pairwise_gold_aln, full[seq_id], position)
+                add_asterisk = False
+                if res != "-" and res != " ":
+                    if score[0] and score[1] == 1:
+                        new_res = "<span class=featOK>{}</span>".format(res)
+                        new_gold_res = "<span class=featOK>{}</span>".format(gold_aa)
+                    else:
+                        level = self.get_level_cmplx(score[1])
+                        new_res = "<span class=featWRONG{}>{}</span>".format(
+                                level, res)
+                        new_gold_res = "<span class=featWRONG{}>{}</span>".format(
+                                level, gold_aa)
+                        add_asterisk = True
+
+                else:
+                    if res == "-" and gold_aa == "-":
+                        new_res = "<span class=noFeat>" + res + "</span>"
+                        new_gold_res = "<span class=noFeat>" + gold_aa + "</span>"
+                    elif res == "-":
+                        new_res = "<span class=featMeh>" + res + "</span>"
+                        new_gold_res = "<span class=featMeh>" + gold_aa + "</span>"
+                        add_asterisk = True
+                    else:
+                        raise RuntimeError("res: {}; gold res: {}".format(res, gold_aa))
+                if add_asterisk:
+                    asterisk_line += "<span class=asteriskFull>*</span>"
+                else:
+                    asterisk_line += "<span class=asteriskBlank> </span>"
+                # if res.upper() != gold_aa.upper() and new_res != "-":
+                #     asterisk_line += "<span class=asteriskFull>*</span>"
+                # else:
+                #     asterisk_line += "<span class=asteriskBlank> </span>"
+
+                html_sequence += new_res
+                html_gold_sequence += new_gold_res
+            html_out += asterisk_line + "\n"
+            html_out += html_sequence + "\n"
+            html_out += html_gold_sequence + "\n"
+            html_out += "<br>"
+            print seq_id, "OK"
+        html_out += "</div>"
+        _log.info("Finished creating pairwise html")
+        return html_out
+
+    @ staticmethod
+    def get_gold_aa(pairwise_gold_aln, full_seq, pos):
+        """
+        Get residue in the gold aln that's aligned to residue 'pos'
+        """
+        try:
+            aln_solutions = pairwise_gold_aln[str(pos)]
+        except:
+            for k in sorted(pairwise_gold_aln.keys()):
+                print "R", k, pairwise_gold_aln[k]
+
+            raise
+        if "*" in aln_solutions:
+            # this residue should not be aligned to anything
+            gold_aa = "-"
+        elif len(aln_solutions) == 1:
+            # there is only one solution, take it
+            aa_index = int(aln_solutions.keys()[0]) - 1
+            gold_aa = full_seq[aa_index]
+        else:
+            # multiple solutions, go through them and select the best one
+            max_score = 0
+            index_of_max = -1
+            for index, score in aln_solutions.iteritems():
+                if score > max_score:
+                    max_score = score
+                    index_of_max = int(index)
+
+            gold_aa = full_seq[index_of_max - 1]
+        return gold_aa
+
     def aln_to_html_pairwise(self, aa_aln, gold_aln, full, wrong, order):
-        html_out = "<div class=monospacediv>\n<br>"
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
         aln_length = len(aa_aln)
 
@@ -234,10 +348,7 @@ class HtmlHandler(object):
         return html_out
 
     def complex_aln_to_html(self, aa_aln, wrong, order):
-        # html_out = ""
-        html_out = "<div class=monospacediv>\n<br>"
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
-        aln_length = len(aa_aln)
 
         for seq_id in order:
             seq = aa_aln[seq_id]
@@ -246,13 +357,9 @@ class HtmlHandler(object):
                 if res != "-" and res != " ":
                     score = wrong[seq_id][r + 1]
                     if score[0] and score[1] == 1:
-                        if seq_id == "3M21A":
-                            print score
-                            raise
                         new_res = "<span class=featOK>{}</span>".format(res)
                     else:
                         level = self.get_level_cmplx(score[1])
-                        print "level", level, "from", score[1]
                         new_res = "<span class=featWRONG{}>{}</span>".format(
                             level, res)
                 else:
@@ -263,7 +370,6 @@ class HtmlHandler(object):
 
     def aln_to_html(self, aa_aln, wrong, order):
         # html_out = ""
-        html_out = "<div class=monospacediv>\n<br>"
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
         aln_length = len(aa_aln)
         for seq_id in order:
