@@ -115,3 +115,22 @@ def test_make_short_var():
     res = hh.make_short_var(var)
     expected = "ABCFGH"
     eq_(expected, res)
+
+
+def test_find_residues_neighbouring_insertions():
+    gold_aln_cores = {
+        "1ABCA": ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+        "1ABCB": ['2', '3', '4', '5', '-', '7', '8', '9', '10', '11'],
+        "1ABCC": ['-', '3', '4', '-', '-', '7', '8', '9', '10', '11'],
+    }
+
+    expected = {
+        "1ABCA": [],
+        "1ABCB": ['5', '7'],
+        "1ABCC": ['3', '4', '7'],
+    }
+
+    hh = HtmlHandler()
+    result = hh.find_residues_neighbouring_insertions(gold_aln_cores)
+
+    eq_(result, expected)

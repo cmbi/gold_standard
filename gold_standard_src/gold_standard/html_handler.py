@@ -183,9 +183,9 @@ class HtmlHandler(object):
                 continue
             for pos, res in enumerate(target_seq, start=1):
                 # find out which residue is aligned with this in the gold aln
+                pass
 
                 # find out which residue is aligned with this in the test aln
-
 
         for seq_id in order:
             if seq_id not in gold_aln:
@@ -283,12 +283,61 @@ class HtmlHandler(object):
             gold_aa = full_seq[index_of_max - 1]
         return gold_aa
 
+    @staticmethod
+    def int_or_gap(c):
+        if c.isdigit():
+            return int(c)
+        else:
+            return c
+
+    @staticmethod
+    def find_first_res(sequence):
+        for i in sequence:
+            if i != '-':
+                return i
+
+    def find_residues_neighbouring_insertions(self, gold_aln_cores):
+        lowercase_res = {}
+        for seq_id, seq_cores in gold_aln_cores.iteritems():
+            #print seq_cores
+            #seq_cores = map(self.int_or_gap, seq_cores)
+            lowercase_res[seq_id] = []
+            for i, curr_pos in enumerate(seq_cores):
+                lower = False
+                if curr_pos != "-":
+                    last_res_pos = curr_pos
+                else:
+                    continue
+
+                if i < len(seq_cores) - 1:
+                    next_res = self.find_first_res(seq_cores[i + 1:])
+                    # this is NOT the last residue
+                    if curr_pos + 1 != next_res:
+                        print "after: comparing {} to {}, {}".format(
+                            curr_pos + 1, seq_cores[i + 1], i + 1)
+                        # there is insertion after this one, make lowercase
+                        lower = True
+                if not lower and i > 0:
+                    # haven't made it lower yet and it's not first residue
+                    prev_res = self.find_first_res(seq_cores[:i][::-1])
+                    if curr_pos - 1 != seq_cores[i - 1]:
+                        print "before: comparing {} to {}, {}".format(
+                            curr_pos - 1, seq_cores[i - 1], i - 1)
+                        # there is insertion before this one, make lowercase
+                        lower = True
+
+                if lower:
+                    #lowercase_res[seq_id].append(str(curr_pos))
+                    lowercase_res[seq_id].append(curr_pos)
+        return lowercase_res
+
+
     def aln_to_html_pairwise(self, aa_aln, gold_aln, full, wrong, order):
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
         aln_length = len(aa_aln)
 
         _log.info("Creating pairiwse html")
-
+        gold_lowercase_residues = self.find_residues_neighbouring_insertions(gold_aln["cores"])
         for seq_id in order:
             if seq_id not in gold_aln["cores"]:
                 _log.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
@@ -309,6 +358,10 @@ class HtmlHandler(object):
                 if gold_seq[r] != "-":
                     gold_aa_index = gold_seq[r] - 1
                     gold_aa = full[seq_id][gold_aa_index]
+                    if gold_aa_index in gold_lowercase_residues[seq_id]:
+                        print "change to lower"
+                        gold_aa = gold_aa.lower()
+
                 else:
                     gold_aa = "-"
                 if res != "-" and res != " ":
