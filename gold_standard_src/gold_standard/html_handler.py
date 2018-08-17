@@ -165,6 +165,7 @@ class HtmlHandler(object):
 
     def aln_to_html_pairwise_complex(self, quality_data):
         aa_aln = quality_data["aa_aln"]
+        num_aln = quality_data["num_aln"]
         gold_aln = quality_data["gold_aln"]
         full = quality_data["full"]
         wrong = quality_data["wrong_cols"]
@@ -186,7 +187,7 @@ class HtmlHandler(object):
                 pass
 
                 # find out which residue is aligned with this in the test aln
-
+        master_num_seq = num_aln["cores"][target_id]
         for seq_id in order:
             if seq_id not in gold_aln:
                 _log.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
@@ -198,11 +199,23 @@ class HtmlHandler(object):
             asterisk_line = "<span class=asteriskBlank>         {}</span>".format(" " * len(seq_id))
 
             pairwise_gold_aln = gold_aln[seq_id]
-            for position, score in wrong[seq_id].iteritems():
-                res = full[seq_id][position - 1]
+            num_seq = num_aln["cores"][seq_id]
+            # for position, score in wrong[seq_id].iteritems():
+            print num_seq
+            for aln_pos, full_seq_pos in enumerate(num_seq):
+                if full_seq_pos != "-":
+                    full_seq_pos = int(full_seq_pos) - 1
+                    res = full[seq_id][full_seq_pos]
+                    score = wrong[seq_id][full_seq_pos + 1]
+                else:
+                    res = "-"
+                    score = 0
 
                 # full_seq_index = self.get_index_in_full_seq()
-                gold_aa = self.get_gold_aa(pairwise_gold_aln, full[seq_id], position)
+                print master_num_seq
+                master_index = int(master_num_seq[aln_pos])
+                # gold_aa = full[target_id][master_index]
+                gold_aa = self.get_gold_aa(pairwise_gold_aln, full[seq_id], master_index)
                 add_asterisk = False
                 if res != "-" and res != " ":
                     if score[0] and score[1] == 1:
@@ -246,9 +259,15 @@ class HtmlHandler(object):
         """
         Get residue in the gold aln that's aligned to residue 'pos'
         """
-        aln_solutions = pairwise_gold_aln[str(pos)]
+        aln_solutions = {}
+        for res, res_alns in pairwise_gold_aln.iteritems():
+            if str(pos) in res_alns:
+                aln_solutions[res] = res_alns[str(pos)]
+        print "solutions for residue {}:\n{}".format(pos, aln_solutions)
 
-        if "*" in aln_solutions:
+        # aln_solutions = pairwise_gold_aln[str(pos)]
+
+        if not aln_solutions:
             # this residue should not be aligned to anything
             gold_aa = "-"
         elif len(aln_solutions) == 1:
@@ -328,7 +347,6 @@ class HtmlHandler(object):
             seq = aa_aln[seq_id]
             html_sequence = "<b>TEST</b> {}    ".format(seq_id)
             html_gold_sequence = "<b>GOLD</b> {}    ".format(seq_id)
-            asterisk_line = "         {}".format(" " * len(seq_id))
             asterisk_line = "<span class=asteriskBlank>         {}</span>".format(" " * len(seq_id))
 
             gold_seq = gold_aln["cores"][seq_id]
@@ -387,10 +405,6 @@ class HtmlHandler(object):
         for seq_id in order:
             seq = aa_aln[seq_id]
             html_sequence = "{}    ".format(seq_id)
-            print wrong[seq_id]
-            print len(seq)
-            print seq
-            print seq_id
             num_seq = num_aln["cores"][seq_id]
             for r, res in enumerate(seq):
                 if res != "-" and res != " ":
