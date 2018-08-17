@@ -411,6 +411,8 @@ def compare_vars_complex(gold_alns, target_id, test_aln):
 
     alrights = 0
     for seq_id, gold_aln in gold_alns.iteritems():
+        if seq_id not in test_aln["var"]:
+            continue
         per_residue_scores[seq_id] = {}
 
         test_seq_nonaligned = test_aln["var"][seq_id]

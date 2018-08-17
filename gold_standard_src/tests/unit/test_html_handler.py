@@ -134,3 +134,32 @@ def test_find_residues_neighbouring_insertions():
     result = hh.find_residues_neighbouring_insertions(gold_aln_cores)
 
     eq_(result, expected)
+
+
+def test_get_full_seq_pos():
+    hh = HtmlHandler()
+
+    merged_corvar_seq = "vhINLKVKGQDGNEVFFRIKRSTQMRKLMNAY----SVDMNSIAFLFDGRRLRAEQTPDELEMEEGDEIDAMLH--"
+
+    corvar_index = 0
+    expected_pos = 2
+    pos = hh.get_full_seq_pos(merged_corvar_seq, corvar_index)
+    eq_(pos, expected_pos)
+
+    corvar_index = 67
+    expected_pos = 65
+    pos = hh.get_full_seq_pos(merged_corvar_seq, corvar_index)
+    eq_(pos, expected_pos)
+
+    merged_corvar_seq = "pethINLKVSDGS-SEI"
+    corvar_index = 10
+    expected_pos = 13
+    pos = hh.get_full_seq_pos(merged_corvar_seq, corvar_index)
+    eq_(pos, expected_pos)
+
+    merged_corvar_seq = "pethINLKVSDGS-SEIFFKIKKTTPLRRLMEAF--RQGKEMDSLRFLYDGIRIQADQTPEDLDMEDNDIIEAHR---"
+    corvar_index = 32
+    expected_pos = 35
+    pos = hh.get_full_seq_pos(merged_corvar_seq, corvar_index)
+    eq_(pos, expected_pos)
+
