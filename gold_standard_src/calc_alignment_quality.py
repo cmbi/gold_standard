@@ -297,7 +297,7 @@ if __name__ == "__main__":
             # write pairwise html output
             hh.write_html(quality_data, args.output + "_pairwise", mode="pairwise")
 
-        if args.html:
+        if (args.html or args.html_var or args.html_var_short):
             # create html output
             hh.write_html(quality_data, args.output, mode="cores")
 
