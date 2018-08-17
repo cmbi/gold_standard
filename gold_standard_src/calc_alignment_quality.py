@@ -43,7 +43,7 @@ def detect_input_format(aln_path):
         return "3dm"
 
 
-def parse_input_alignment(aln_path, full_seq, gold_ids, in_format, final_core_path):
+def parse_input_alignment(aln_path, full_seq, gold_ids, in_format, final_core_path, master_id):
     """
     parse and assess test alignments
     """
@@ -72,8 +72,8 @@ def parse_input_alignment(aln_path, full_seq, gold_ids, in_format, final_core_pa
         # fill in the alignment with gaps so that the full master sequence is in
         # the test alignment
         old_aln_dict = deepcopy(aln_dict)
-        if gold_ids[0] in aln_dict:
-            aln_dict = make_master_seq_full(aln_dict, full_seq, gold_ids)
+        if master_id in aln_dict:
+            aln_dict = make_master_seq_full(aln_dict, full_seq, gold_ids, master_id)
         else:
             _log.warning("Will not be able to create a pairwise comparison because "
                          "target sequence is not present in the test alignment")
@@ -146,7 +146,8 @@ def calculate_aln_quality_complex(paths, output, in_format, write_json):
 
     aln_dict, strcts_order, num_aln_dict, core_indexes, write_pairwise_html = \
         parse_input_alignment(
-            paths['aln_path'], gold_in['full_seq'], gold_in['ids'], in_format, final_core)
+            paths['aln_path'], gold_in['full_seq'], gold_in['ids'], in_format, final_core,
+            gold_in["target"])
 
     # calculate scores
     scores = calc_scores_3dm_complex(gold_in, num_aln_dict)
@@ -205,7 +206,7 @@ def calculate_aln_quality_simple(paths, output, in_format, multi, write_json, go
     _log.debug("Sequences in the gold alignment: %s", gold_in['ids'])
 
     aln_dict, strcts_order, num_aln_dict, core_indexes, write_pairwise_html = parse_input_alignment(
-        paths['aln_path'], gold_in['full_seq'], gold_in['ids'], in_format, paths['final_core'])
+        paths['aln_path'], gold_in['full_seq'], gold_in['ids'], in_format, paths['final_core'], gold_in["ids"])
 
     # calculate scores
     scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)
@@ -297,7 +298,7 @@ if __name__ == "__main__":
             # write pairwise html output
             hh.write_html(quality_data, args.output + "_pairwise", mode="pairwise")
 
-        if (args.html or args.html_var or args.html_var_short):
+        if args.html or args.html_var or args.html_var_short:
             # create html output
             hh.write_html(quality_data, args.output, mode="cores")
 
@@ -313,6 +314,6 @@ if __name__ == "__main__":
             # write pairwise html output
             hh.write_html(quality_data, args.output + "_pairwise", mode="pairwise_complex")
 
-        if args.html:
+        if args.html or args.html_var or args.html_var_short:
             # create html output
             hh.write_html(quality_data, args.output, mode="cores_complex")

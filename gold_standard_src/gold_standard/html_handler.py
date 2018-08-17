@@ -30,7 +30,7 @@ class HtmlHandler(object):
 
         elif mode == "cores_complex":
             outtxt = self.complex_aln_to_html(
-                    quality_data['aa_aln'], quality_data['wrong_cols'], quality_data["order"])
+                    quality_data['aa_aln'], quality_data["num_aln"], quality_data['wrong_cols'], quality_data["order"])
 
         script_dir = os.path.dirname(os.path.abspath(__file__))
         tmpl_full_path = '/'.join(list(os.path.split(script_dir)[:-1]) +
@@ -230,10 +230,6 @@ class HtmlHandler(object):
                     asterisk_line += "<span class=asteriskFull>*</span>"
                 else:
                     asterisk_line += "<span class=asteriskBlank> </span>"
-                # if res.upper() != gold_aa.upper() and new_res != "-":
-                #     asterisk_line += "<span class=asteriskFull>*</span>"
-                # else:
-                #     asterisk_line += "<span class=asteriskBlank> </span>"
 
                 html_sequence += new_res
                 html_gold_sequence += new_gold_res
@@ -257,8 +253,13 @@ class HtmlHandler(object):
             gold_aa = "-"
         elif len(aln_solutions) == 1:
             # there is only one solution, take it
-            aa_index = int(aln_solutions.keys()[0]) - 1
-            gold_aa = full_seq[aa_index]
+            tmp_index = aln_solutions.keys()[0]
+            if tmp_index != "-":
+                aa_index = int(tmp_index) - 1
+                gold_aa = full_seq[aa_index]
+            else:
+                gold_aa = "-"
+
         else:
             # multiple solutions, go through them and select the best one
             max_score = 0
@@ -312,7 +313,6 @@ class HtmlHandler(object):
                         lowercase_res[seq_id].add(curr_pos)
                         lowercase_res[seq_id].add(next_res)
         return lowercase_res
-
 
     def aln_to_html_pairwise(self, aa_aln, gold_aln, full, wrong, order):
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
@@ -381,15 +381,22 @@ class HtmlHandler(object):
         _log.info("Finished creating pairwise html")
         return html_out
 
-    def complex_aln_to_html(self, aa_aln, wrong, order):
+    def complex_aln_to_html(self, aa_aln, num_aln, wrong, order):
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
 
         for seq_id in order:
             seq = aa_aln[seq_id]
             html_sequence = "{}    ".format(seq_id)
+            print wrong[seq_id]
+            print len(seq)
+            print seq
+            print seq_id
+            num_seq = num_aln["cores"][seq_id]
             for r, res in enumerate(seq):
                 if res != "-" and res != " ":
-                    score = wrong[seq_id][r + 1]
+                    real_pos = num_seq[r]
+
+                    score = wrong[seq_id][real_pos]
                     if score[0] and score[1] == 1:
                         new_res = "<span class=featOK>{}</span>".format(res)
                     else:

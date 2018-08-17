@@ -1,3 +1,8 @@
+import logging
+
+_log = logging.getLogger("__main__")
+
+
 def remove_positions(aln_dict, positions_to_remove):
     for i in sorted(positions_to_remove, reverse=True):
         for seq_id, seq in aln_dict.iteritems():
@@ -71,19 +76,21 @@ def fill_in_gaps(aln_dict, positions_to_fill_in, master_id, master_full_seq):
     # there should be no residues missing in the master seq now,
     # we can make it all uppercase
     aln_dict[master_id] = aln_dict[master_id].upper()
-    assert aln_dict[master_id].replace("-", "") == master_full_seq
+    if aln_dict[master_id].replace("-", "") != master_full_seq:
+        msg = "Master sequence not equal to full master sequence:"
+        _log.error(msg)
+        _log.error(aln_dict[master_id].replace("-", ""))
+        _log.error(master_full_seq)
+        raise RuntimeError(msg)
 
 
-def make_master_seq_full(aln_dict, full_seqs, gold_ids):
+def make_master_seq_full(aln_dict, full_seqs, gold_ids, master_id):
     """
     fill in the alignment with gaps so that the full master sequence is in
     the test alignment
 
     and remove positions on which master sequence has gaps
     """
-
-    # retrieve data about the master sequence
-    master_id = gold_ids[0]
 
     master_full_seq = full_seqs[master_id]
     master_aln_seq = aln_dict[master_id]
