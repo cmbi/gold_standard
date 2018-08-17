@@ -171,6 +171,7 @@ def calculate_aln_quality_complex(paths, output, in_format, write_json):
         'num_aln': num_aln_dict,
         'full': gold_in['full_seq'],
         'core_indexes': sorted(core_indexes),
+        'gold_ids': gold_in['ids'],
         'order': strcts_order
     }
 
@@ -223,6 +224,7 @@ def calculate_aln_quality_simple(paths, output, in_format, multi, write_json, go
         'wrong_cols': scores["wrong_cols"],
         'aa_aln': aln_dict,
         'gold_aln': gold_in['alns'],
+        'gold_ids': gold_in['ids'],
         'num_aln': num_aln_dict,
         'full': gold_in['full_seq'],
         'core_indexes': sorted(core_indexes),
@@ -302,13 +304,13 @@ if __name__ == "__main__":
             # create html output
             hh.write_html(quality_data, args.output, mode="cores")
 
-        if args.html_var:
-            # create html output with variable regions (full or trimmed)
-            hh.write_html(quality_data, args.output + "_var", mode="var")
+            if args.html_var:
+                # create html output with variable regions (full or trimmed)
+                hh.write_html(quality_data, args.output + "_var", mode="var")
 
-        if args.html_var_short:
-            # create html output with variable regions (full or trimmed)
-            hh.write_html(quality_data, args.output + "_varshort", mode="var_short")
+            if args.html_var_short:
+                # create html output with variable regions (full or trimmed)
+                hh.write_html(quality_data, args.output + "_varshort", mode="var_short")
     else:
         if args.html_pair and quality_data["write_pairwise_html"]:
             # write pairwise html output
@@ -317,3 +319,9 @@ if __name__ == "__main__":
         if args.html or args.html_var or args.html_var_short:
             # create html output
             hh.write_html(quality_data, args.output, mode="cores_complex")
+            if args.html_var_short:
+                # create html output with variable regions (full or trimmed)
+                hh.write_html(quality_data, args.output + "_varshort", mode="var_short_complex")
+            if args.html_var:
+                # create html output with variable regions (full or trimmed)
+                hh.write_html(quality_data, args.output + "_varshort", mode="var_complex")

@@ -15,6 +15,8 @@ class HtmlHandler(object):
     def write_html(self, quality_data, outname, mode="cores"):
         if mode in ["var", "var_short"]:
             outtxt = self.aln_to_html_var(quality_data, mode)
+        elif mode in ["var_complex", "var_short_complex"]:
+            outtxt = self.aln_to_html_var(quality_data, mode)
 
         elif mode == "pairwise":
             outtxt = self.aln_to_html_pairwise(
@@ -31,6 +33,8 @@ class HtmlHandler(object):
         elif mode == "cores_complex":
             outtxt = self.complex_aln_to_html(
                     quality_data['aa_aln'], quality_data["num_aln"], quality_data['wrong_cols'], quality_data["order"])
+        else:
+            return
 
         script_dir = os.path.dirname(os.path.abspath(__file__))
         tmpl_full_path = '/'.join(list(os.path.split(script_dir)[:-1]) +
@@ -91,7 +95,7 @@ class HtmlHandler(object):
             out.write(template_fmt.format(css, outtxt))
 
     def aln_to_html_var(self, quality_data, mode):
-        short_var = mode == "var_short"
+        short_var = mode in ["var_short", "var_short_complex"]
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
         aln_length = len(quality_data['aa_aln'])
         num_aln_c = self.split_cores(quality_data['num_aln'],
@@ -101,13 +105,18 @@ class HtmlHandler(object):
         aa_aln_corvar = self.make_corvar(quality_data['full'], num_aln_v)
         var_lengths = self.get_max_var_lengths(num_aln_v, short_var)
         for seq_id in quality_data["order"]:
-            if seq_id not in quality_data["gold_aln"]["cores"]:
+            if seq_id not in quality_data["gold_ids"]:
                 _log.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
                 continue
             seq = aa_aln_corvar[seq_id]
-            html_seq = self.make_html_var_seq(
-                seq, quality_data['wrong_cols'][seq_id], var_lengths,
-                aln_length, short_var)
+            if mode.endswith("complex"):
+                html_seq = self.make_html_var_seq_complex(
+                        seq, quality_data['wrong_cols'][seq_id], var_lengths,
+                        aln_length, short_var)
+            else:
+                html_seq = self.make_html_var_seq(
+                    seq, quality_data['wrong_cols'][seq_id], var_lengths,
+                    aln_length, short_var)
             html_sequence = "{}    {}".format(seq_id, html_seq)
             html_out += html_sequence + "\n"
         return html_out
@@ -124,6 +133,40 @@ class HtmlHandler(object):
 
             max_lengths.append(m_len)
         return max_lengths
+
+    @staticmethod
+    def get_full_seq_pos(merged_corvar_seq, corvar_index):
+        number_of_gaps = merged_corvar_seq[:corvar_index].count("-")
+        return corvar_index - number_of_gaps
+
+    def make_html_var_seq_complex(self, corvar_seq, wrong, max_lengths, aln_length, short_var=False):
+        html_seq = ""
+        r_index = 0
+        corvar_merged = ""
+        for c, core in enumerate(corvar_seq["cores"]):
+            var = corvar_seq["var"][c].lower()
+            if short_var:
+                var = self.make_short_var(var)
+            corvar_merged += var + core
+            var = " " + var + " " * (max_lengths[c] - len(var)) + " "
+            html_seq += var
+            for res in core:
+                print wrong
+                full_seq_pos = self.get_full_seq_pos(corvar_merged, r_index)
+                score = wrong[full_seq_pos]
+                if score[0] and score[1] == 1:
+                    new_res = "<span class=featOK>{}</span>".format(res)
+                else:
+                    level = self.get_level_cmplx(score[1])
+                    new_res = "<span class=featWRONG{}>{}</span>".format(
+                            level, res)
+                r_index += 1
+                html_seq += new_res
+        var = corvar_seq["var"][-1].lower()
+        if short_var:
+            var = self.make_short_var(var)
+        html_seq += " " + var + " " * (max_lengths[-1] - len(var))
+        return html_seq
 
     def make_html_var_seq(self, corvar_seq, wrong, max_lengths, aln_length, short_var=False):
         html_seq = ""
@@ -175,7 +218,6 @@ class HtmlHandler(object):
         target_seq = full[target_id]
 
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
-        aln_length = len(aa_aln)
 
         _log.info("Creating pairiwse html")
         for seq_id in order:
