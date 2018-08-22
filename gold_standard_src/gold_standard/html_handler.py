@@ -94,16 +94,28 @@ class HtmlHandler(object):
         with open(outname + ".html", 'w') as out:
             out.write(template_fmt.format(css, outtxt))
 
+    @staticmethod
+    def get_insertion_positions(num_aln):
+        insertion_positions = set()
+        return insertion_positions
+
+    def make_corvar_new(self, full_seqs, num_aln):
+        insertion_positions = self.get_insertion_positions(num_aln)
+
     def aln_to_html_var(self, quality_data, mode):
         short_var = mode in ["var_short", "var_short_complex"]
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
         aln_length = len(quality_data['aa_aln'])
-        num_aln_c = self.split_cores(quality_data['num_aln'],
-                                     quality_data['core_indexes'])
-        num_aln_v = self.split_vars(num_aln_c)
 
-        aa_aln_corvar = self.make_corvar(quality_data['full'], num_aln_v)
-        var_lengths = self.get_max_var_lengths(num_aln_v, short_var)
+        # num_aln_c = self.split_cores(quality_data['num_aln'],
+        #                              quality_data['core_indexes'])
+        # num_aln_v = self.split_vars(num_aln_c)
+
+        # aa_aln_corvar = self.make_corvar(quality_data['full'], num_aln_v)
+        # var_lengths = self.get_max_var_lengths(num_aln_v, short_var)
+        aa_aln_corvar, num_aln_v = self.make_corvar_new(quality_data['full'], quality_data["num_aln"])
+        var_lengths = self.get_max_var_lengths_new(num_aln_v, short_var)
+
         for seq_id in quality_data["order"]:
             if seq_id not in quality_data["gold_ids"]:
                 _log.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
