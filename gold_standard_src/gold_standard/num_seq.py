@@ -140,6 +140,7 @@ def core_to_num_seq(aligned_seq, full_seq):
     start = 0
     finished = False
     prev_core = 0
+    all_cores = []
     if aligned_seq.count("-") == len(aligned_seq):
         grounded_seq = list(aligned_seq)
         finished = True
@@ -154,8 +155,13 @@ def core_to_num_seq(aligned_seq, full_seq):
         grounded_seq += '-' * (core_aligned_start - start)
         start = core_aligned_start + len(core)
         # position of the core in the full sequence
-        cores = split_core(core, full_seq[prev_core:])
+        try:
+            cores = split_core(core, full_seq[prev_core:])
+        except Exception as e:
+            _log.error("Found these cores: %s", all_cores)
+            raise e
         cores = sorted(cores, key=lambda x: x["pos"])
+        all_cores.extend(cores)
         for c in cores:
             grounded_seq.extend([c['pos'] + i + 1 + prev_core
                                  for i in range(len(c['seq']))])
@@ -270,6 +276,6 @@ def split_core(core, full_seq, add_index=0):
         #                "full sequence[{}:]: {}\nfull sequence:\n{}\n.".format(
         #                    core, add_index, full_seq[add_index:], full_seq))
         raise Exception("Didn't find a way to split up the core {}\n"
-                        "full sequence[{}:]: {}\n".format(
-                            core, add_index, full_seq[add_index:]))
+                        "full sequence[{}:]: {} newcores: {}\n".format(
+                            core, add_index, full_seq[add_index:], new_cores))
     return new_cores
