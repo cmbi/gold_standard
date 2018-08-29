@@ -8,6 +8,10 @@ import re
 _log = logging.getLogger(__name__)
 
 
+class ParsingError(Exception):
+    pass
+
+
 def corvar_to_num(corvar_line):
     aln = {'cores': [], 'var': [], 'full': ''}
     # remove numbers and whitespaces form the corvar line
@@ -25,8 +29,8 @@ def corvar_to_num(corvar_line):
             aln['var'].append(count)
             count += 1
         else:
-            raise Exception("Incorrect character ({}) in the corvar line "
-                            "({})".format(res_i, corvar_line))
+            raise ParsingError("Incorrect character ({}) in the corvar line "
+                               "({})".format(res_i, corvar_line))
     return aln
 
 
@@ -50,9 +54,10 @@ def core_aln_to_num(aln_dict, full_seq, golden_ids=None):
             core_indexes = core_indexes.union(set(core_indexes_tmp))
             aln_3dm["var"][seq_id] = get_var_pos(aln_3dm["cores"][seq_id],
                                                  full_seq[seq_id])
-        except:
-            _log.error("There was an error processing sequence %s.\nfull sequence:\n%s\ncore sequence:\n%s", seq_id, full_seq[seq_id], seq)
-            raise
+        except ParsingError as e:
+            msg = "There was an error processing sequence %s.\nfull sequence:\n%s\ncore sequence:\n%s" % ( seq_id, full_seq[seq_id], seq)
+            e.message = msg + "\n" + e.message
+            raise e
 
     return aln_3dm, list(core_indexes)
 
@@ -86,7 +91,7 @@ def get_core_indexes(final_core_file):
     elif len(final_core[0]) == 4 and len(final_core[1]) == 1:
         cores = final_core[2:]
     else:
-        raise Exception("final_core file has incorrect format")
+        raise ParsingError("final_core file has incorrect format")
     indexes = []
     prev_end = -1
     for i in cores:
@@ -109,8 +114,8 @@ def core_to_num_seq_known_cores(aligned_seq, full_seq, core_indexes):
         degapped = re.sub('-', '', core)
         seq_index = full_seq.find(degapped)
         if seq_index < 0:
-            raise Exception("Didn't find the {} core in the full "
-                            "sequence".format(core))
+            raise ParsingError("Didn't find the {} core in the full "
+                               "sequence".format(core))
         res_count = 0
         for res in core:
             if res == '-':
@@ -157,7 +162,7 @@ def core_to_num_seq(aligned_seq, full_seq):
         # position of the core in the full sequence
         try:
             cores = split_core(core, full_seq[prev_core:])
-        except Exception as e:
+        except ParsingError as e:
             _log.error("Found these cores: %s", all_cores)
             raise e
         cores = sorted(cores, key=lambda x: x["pos"])
@@ -272,10 +277,7 @@ def split_core(core, full_seq, add_index=0):
 
     _log.debug("Split up core %s in two cores: %s", core, new_cores)
     if not new_cores:
-        #raise Exception("Didn't find a way to split up the core {}\n"
-        #                "full sequence[{}:]: {}\nfull sequence:\n{}\n.".format(
-        #                    core, add_index, full_seq[add_index:], full_seq))
-        raise Exception("Didn't find a way to split up the core {}\n"
+        raise ParsingError("Didn't find a way to split up the core {}\n"
                         "full sequence[{}:]: {} newcores: {}\n".format(
                             core, add_index, full_seq[add_index:], new_cores))
     return new_cores
