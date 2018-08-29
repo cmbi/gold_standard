@@ -124,6 +124,7 @@ class HtmlHandler(object):
                 continue
             seq = aa_aln_corvar[seq_id]
             if mode.endswith("complex"):
+                print quality_data['wrong_cols'][seq_id]
                 html_seq = self.make_html_var_seq_complex(
                         seq, quality_data['wrong_cols'][seq_id], var_lengths,
                         aln_length, short_var)

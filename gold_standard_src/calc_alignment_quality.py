@@ -16,7 +16,7 @@ from gold_standard.parsers.gold import (parse_gold_pairwise,
 from gold_standard.parsers.fasta import parse_fasta
 from gold_standard.parsers.fatcat import parse_fatcat
 from gold_standard.num_seq import (core_aln_to_num,
-                                   get_core_indexes)
+                                   get_core_indexes, ParsingError)
 
 from gold_standard.aln_analyzer import calc_scores_3dm, calc_scores_3dm_complex
 from gold_standard.result_processor import process_results
@@ -332,7 +332,7 @@ if __name__ == "__main__":
                                                         args.input_format, args.multi, args.json,
                                                         args.gold_json)
         write_html_files(args)
-    except Exception as e:
+    except ParsingError as e:
         with open(args.output + ".err", "w") as o:
             o.write(e.message)
         raise e
