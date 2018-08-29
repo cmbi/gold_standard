@@ -55,7 +55,7 @@ def core_aln_to_num(aln_dict, full_seq, golden_ids=None):
             aln_3dm["var"][seq_id] = get_var_pos(aln_3dm["cores"][seq_id],
                                                  full_seq[seq_id])
         except ParsingError as e:
-            msg = "There was an error processing sequence %s.\nfull sequence:\n%s\ncore sequence:\n%s" % ( seq_id, full_seq[seq_id], seq)
+            msg = "There was an error processing sequence <b>%s</b>.\n<b>full sequence:</b>\n%s\n<b>aligned sequence:</b>\n%s" % ( seq_id, full_seq[seq_id], seq)
             e.message = msg + "\n" + e.message
             raise e
 
