@@ -30,6 +30,40 @@ logging.basicConfig(level=logging.INFO, format=FORMAT)
 _log = logging.getLogger("__main__")
 
 
+def write_html_files(args):
+    hh = HtmlHandler()
+    if not args.gold_json:
+        if args.html_pair and quality_data["write_pairwise_html"]:
+            # write pairwise html output
+            hh.write_html(quality_data, args.output + "_pairwise", mode="pairwise")
+
+        if args.html or args.html_var or args.html_var_short:
+            # create html output
+            hh.write_html(quality_data, args.output, mode="cores")
+
+            if args.html_var:
+                # create html output with variable regions (full or trimmed)
+                hh.write_html(quality_data, args.output + "_var", mode="var")
+
+            if args.html_var_short:
+                # create html output with variable regions (full or trimmed)
+                hh.write_html(quality_data, args.output + "_varshort", mode="var_short")
+    else:
+        if args.html_pair and quality_data["write_pairwise_html"]:
+            # write pairwise html output
+            hh.write_html(quality_data, args.output + "_pairwise", mode="pairwise_complex")
+
+        if args.html or args.html_var or args.html_var_short:
+            # create html output
+            hh.write_html(quality_data, args.output, mode="cores_complex")
+            if args.html_var_short:
+                # create html output with variable regions (full or trimmed)
+                hh.write_html(quality_data, args.output + "_varshort", mode="var_short_complex")
+            if args.html_var:
+                # create html output with variable regions (full or trimmed)
+                hh.write_html(quality_data, args.output + "_varshort", mode="var_complex")
+
+
 def detect_input_format(aln_path):
     """
     Check if input format is 3dm or 3SSP
@@ -287,41 +321,16 @@ if __name__ == "__main__":
         'aln_path': args.test_aln_path,
         'final_core': args.final_core
     }
-    if args.gold_json:
-        quality_data = calculate_aln_quality_complex(input_paths, args.output,
-                                                     args.input_format, args.json)
-    else:
-        quality_data = calculate_aln_quality_simple(input_paths, args.output,
-                                                    args.input_format, args.multi, args.json,
-                                                    args.gold_json)
-    hh = HtmlHandler()
-    if not args.gold_json:
-        if args.html_pair and quality_data["write_pairwise_html"]:
-            # write pairwise html output
-            hh.write_html(quality_data, args.output + "_pairwise", mode="pairwise")
-
-        if args.html or args.html_var or args.html_var_short:
-            # create html output
-            hh.write_html(quality_data, args.output, mode="cores")
-
-            if args.html_var:
-                # create html output with variable regions (full or trimmed)
-                hh.write_html(quality_data, args.output + "_var", mode="var")
-
-            if args.html_var_short:
-                # create html output with variable regions (full or trimmed)
-                hh.write_html(quality_data, args.output + "_varshort", mode="var_short")
-    else:
-        if args.html_pair and quality_data["write_pairwise_html"]:
-            # write pairwise html output
-            hh.write_html(quality_data, args.output + "_pairwise", mode="pairwise_complex")
-
-        if args.html or args.html_var or args.html_var_short:
-            # create html output
-            hh.write_html(quality_data, args.output, mode="cores_complex")
-            if args.html_var_short:
-                # create html output with variable regions (full or trimmed)
-                hh.write_html(quality_data, args.output + "_varshort", mode="var_short_complex")
-            if args.html_var:
-                # create html output with variable regions (full or trimmed)
-                hh.write_html(quality_data, args.output + "_varshort", mode="var_complex")
+    try:
+        if args.gold_json:
+            quality_data = calculate_aln_quality_complex(input_paths, args.output,
+                                                        args.input_format, args.json)
+        else:
+            quality_data = calculate_aln_quality_simple(input_paths, args.output,
+                                                        args.input_format, args.multi, args.json,
+                                                        args.gold_json)
+        write_html_files(args)
+    except Exception as e:
+        with open(args.output + ".err", "w") as o:
+            o.write(e.message)
+        raise e
