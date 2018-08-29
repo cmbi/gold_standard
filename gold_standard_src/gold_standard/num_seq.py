@@ -44,13 +44,17 @@ def core_aln_to_num(aln_dict, full_seq, golden_ids=None):
     """
     _log.info("Converting 3DM alignment to grounded sequences")
     aln_3dm = {"cores": {}, "var": {}}
+    num_corvar_aln = {}
     core_indexes = set()
     for seq_id, seq in aln_dict.iteritems():
         if golden_ids and seq_id not in golden_ids:
             continue
         try:
-            aln_3dm["cores"][seq_id], core_indexes_tmp = core_to_num_seq(
+            aln_3dm["cores"][seq_id], core_indexes_tmp, res_cores = core_to_num_seq(
                 seq, full_seq[seq_id])
+            print "NEW INDEXES:"
+            print core_indexes_tmp
+            num_corvar_aln[seq_id] = res_cores
             core_indexes = core_indexes.union(set(core_indexes_tmp))
             aln_3dm["var"][seq_id] = get_var_pos(aln_3dm["cores"][seq_id],
                                                  full_seq[seq_id])
@@ -59,7 +63,7 @@ def core_aln_to_num(aln_dict, full_seq, golden_ids=None):
             e.message = msg + "\n" + e.message
             raise e
 
-    return aln_3dm, list(core_indexes)
+    return aln_3dm, list(core_indexes), num_corvar_aln
 
 
 def get_var_pos(num_seq, full_seq):
@@ -142,6 +146,7 @@ def core_to_num_seq(aligned_seq, full_seq):
         return list(aligned_seq), [0]
     # 1-based!!!
     grounded_seq = []
+    res_cores = []
     start = 0
     finished = False
     prev_core = 0
@@ -166,7 +171,7 @@ def core_to_num_seq(aligned_seq, full_seq):
             _log.error("Found these cores: %s", all_cores)
             raise e
         cores = sorted(cores, key=lambda x: x["pos"])
-        all_cores.extend(cores)
+        res_cores.extend(cores)
         for c in cores:
             grounded_seq.extend([c['pos'] + i + 1 + prev_core
                                  for i in range(len(c['seq']))])
@@ -174,17 +179,18 @@ def core_to_num_seq(aligned_seq, full_seq):
     # fill in the c-terminal gaps
     grounded_seq += '-' * (len(aligned_seq) - len(grounded_seq))
     new_core_indexes = get_core_indexes_from_grounded(grounded_seq)
-    return grounded_seq, new_core_indexes
+    return grounded_seq, new_core_indexes, res_cores
 
 
 def get_core_indexes_from_grounded(grounded_seq):
     prev = get_first_num(grounded_seq) - 1
     core_indexes = [0]
+    print grounded_seq
     for i, res in enumerate(grounded_seq):
-        if prev == '-' or res == '-':
-            prev = res
+        if res == "-":
             continue
         if prev != int(res) - 1:
+            print "prev: %d new: %d" % (prev, int(res) - 1)
             core_indexes.append(i)
         prev = int(res)
     return core_indexes
@@ -242,7 +248,7 @@ def split_core(core, full_seq, add_index=0):
             add_index: %s", core, full_seq, add_index)
     new_cores = []
 
-    if full_seq[add_index:].find(core) != -1 and len(core) == 1:
+    if full_seq[add_index:].find(core) != -1 and len(core) != 1:
         return [{'pos': full_seq[add_index:].find(core) + add_index,
                  'seq': core}]
 

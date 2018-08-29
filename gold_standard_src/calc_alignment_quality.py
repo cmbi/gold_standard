@@ -114,7 +114,9 @@ def parse_input_alignment(aln_path, full_seq, gold_ids, in_format, final_core_pa
             write_pairwise_html = False
 
         # create alignment of grounded sequences
-        num_aln_dict, core_indexes = core_aln_to_num(aln_dict, full_seq, golden_ids=gold_ids)
+        num_aln_dict, core_indexes, num_corvar = core_aln_to_num(aln_dict, full_seq, golden_ids=gold_ids)
+        print "indexes"
+        print core_indexes
     else:
         # input format is 'csv'
         aln_dict, num_aln_dict, core_indexes = parse_csv_alignment(aln_path, gold_ids)
