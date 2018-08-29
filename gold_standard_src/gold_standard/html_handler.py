@@ -106,15 +106,17 @@ class HtmlHandler(object):
         short_var = mode in ["var_short", "var_short_complex"]
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
         aln_length = len(quality_data['aa_aln'])
+        print quality_data["core_indexes"]
+        # quality_data["core_indexes"] = [0, 4]
+        num_aln_c = self.split_cores(quality_data['num_aln'],
+                                     quality_data['core_indexes'])
+        num_aln_v = self.split_vars(num_aln_c)
+        print num_aln_v
 
-        # num_aln_c = self.split_cores(quality_data['num_aln'],
-        #                              quality_data['core_indexes'])
-        # num_aln_v = self.split_vars(num_aln_c)
-
-        # aa_aln_corvar = self.make_corvar(quality_data['full'], num_aln_v)
-        # var_lengths = self.get_max_var_lengths(num_aln_v, short_var)
-        aa_aln_corvar, num_aln_v = self.make_corvar_new(quality_data['full'], quality_data["num_aln"])
-        var_lengths = self.get_max_var_lengths_new(num_aln_v, short_var)
+        aa_aln_corvar = self.make_corvar(quality_data['full'], num_aln_v)
+        var_lengths = self.get_max_var_lengths(num_aln_v, short_var)
+        #aa_aln_corvar, num_aln_v = self.make_corvar_new(quality_data['full'], quality_data["num_aln"])
+        #var_lengths = self.get_max_var_lengths_new(num_aln_v, short_var)
 
         for seq_id in quality_data["order"]:
             if seq_id not in quality_data["gold_ids"]:
@@ -179,13 +181,6 @@ class HtmlHandler(object):
                     new_res = "<span>-</span>"
                 else:
                     full_seq_pos = self.get_full_seq_pos(corvar_merged, r_index)
-                    print "i:", i
-                    print "res:", res
-                    print "wrong", wrong
-                    print corvar_seq
-                    print "corvar part", corvar_merged
-                    print "r_index", r_index
-                    print "full seq pos", full_seq_pos
                     score = wrong[full_seq_pos + 1]
                     if score[0] and score[1] == 1:
                         new_res = "<span class=featOK>{}</span>".format(res)
