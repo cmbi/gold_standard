@@ -277,7 +277,8 @@ def split_core(core, full_seq, add_index=0):
 
     _log.debug("Split up core %s in two cores: %s", core, new_cores)
     if not new_cores:
-        raise ParsingError("Didn't find a way to split up the core {}\n"
-                        "full sequence[{}:]: {} newcores: {}\n".format(
-                            core, add_index, full_seq[add_index:], new_cores))
+        raise ParsingError(
+            "Didn't find the segment {} in the remaining sequence. There is probably "
+            "an error in the input sequence right before this segment\nremaining "
+            "sequence[{}:]: {} newcores: {}\n".format(core, add_index, full_seq[add_index:], new_cores))
     return new_cores
