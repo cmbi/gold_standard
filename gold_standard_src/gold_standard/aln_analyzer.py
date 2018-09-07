@@ -13,7 +13,8 @@ SCORE_MODS = {
     "a": 1.0,
     "b": 0.8,
     "c": 0.5,
-    "u": -1.0
+    "u": -1.0,
+    "d": 0
 }
 
 
@@ -391,14 +392,18 @@ def get_m_score(m, full_score):
     """
     Get a score for a position with multiple solutions
     :param m: m modifier name, m + int
-    :param full_score: full score
     :return: score (float)
     """
 
-    mscore = float("0." + str(m.strip('m')))
+    mscore = float("0." + str(m.strip('m'))) * full_score
 
     return mscore
 
+def get_score_mod_value(mod_name):
+    if mod_name.startswith('m'):
+        return get_m_score(mod_name, SCORE_MODS['a'])
+    else:
+        return SCORE_MODS[mod_name]
 
 def compare_vars_complex(gold_alns, target_id, test_aln):
     """
@@ -439,8 +444,8 @@ def compare_vars_complex(gold_alns, target_id, test_aln):
             # test alignment and aligned in gold
             # the penalty is the average score you could get on this position
             # in case of multiple solutions, if there is just one solution than
-            # that is the score for this one solution
-            penalty = sum([SCORE_MODS[i] for i in scores.values()]) / len(scores)
+            # that is the sore for this one solution
+            penalty = sum([get_score_mod_value(i) for i in scores.values()]) / len(scores)
             overall_score -= penalty
             per_residue_scores[seq_id][int(test_res_number)] = (False, -penalty)
             n += 1

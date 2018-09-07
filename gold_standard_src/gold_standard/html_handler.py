@@ -106,12 +106,10 @@ class HtmlHandler(object):
         short_var = mode in ["var_short", "var_short_complex"]
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
         aln_length = len(quality_data['aa_aln'])
-        print quality_data["core_indexes"]
         # quality_data["core_indexes"] = [0, 4]
         num_aln_c = self.split_cores(quality_data['num_aln'],
                                      quality_data['core_indexes'])
         num_aln_v = self.split_vars(num_aln_c)
-        print num_aln_v
 
         aa_aln_corvar = self.make_corvar(quality_data['full'], num_aln_v)
         var_lengths = self.get_max_var_lengths(num_aln_v, short_var)
@@ -124,7 +122,7 @@ class HtmlHandler(object):
                 continue
             seq = aa_aln_corvar[seq_id]
             if mode.endswith("complex"):
-                print quality_data['wrong_cols'][seq_id]
+                print "#### ", seq_id, " #####"
                 html_seq = self.make_html_var_seq_complex(
                         seq, quality_data['wrong_cols'][seq_id], var_lengths,
                         aln_length, short_var)
@@ -161,7 +159,8 @@ class HtmlHandler(object):
                 if c == core_index:
                     return pos - gaps
                 c += 1
-        return -1
+        raise RuntimeError("Did not find full seq pos for core index %d in seq: %s" % (core_index, merged_corvar_seq))
+        #return -1
         # number_of_lower = len([i for i in merged_corvar_seq[:core_index + 1] if i.islower()])
         # number_of_gaps = merged_corvar_seq[:core_index].count("-")
         # return core_index - number_of_gaps + number_of_lower
@@ -172,9 +171,10 @@ class HtmlHandler(object):
         corvar_merged = ""
         for c, core in enumerate(corvar_seq["cores"]):
             var = corvar_seq["var"][c].lower()
+            full_var = var
             if short_var:
                 var = self.make_short_var(var)
-            corvar_merged += var + core
+            corvar_merged += full_var + core
             var = " " + var + " " * (max_lengths[c] - len(var)) + " "
             html_seq += var
             for i, res in enumerate(core):
@@ -187,6 +187,7 @@ class HtmlHandler(object):
                         new_res = "<span class=featOK>{}</span>".format(res)
                     else:
                         level = self.get_level_cmplx(score[1])
+                        print "WRONG", level, full_seq_pos
                         new_res = "<span class=featWRONG{}>{}</span>".format(
                                 level, res)
                 r_index += 1
