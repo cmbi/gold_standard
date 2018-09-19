@@ -124,7 +124,6 @@ class HtmlHandler(object):
                 continue
             seq = aa_aln_corvar[seq_id]
             if mode.endswith("complex"):
-                print "#### ", seq_id, " #####"
                 html_seq = self.make_html_var_seq_complex(
                         seq, quality_data['wrong_cols'][seq_id], var_lengths,
                         aln_length, short_var)
@@ -189,7 +188,6 @@ class HtmlHandler(object):
                         new_res = "<span class=featOK>{}</span>".format(res)
                     else:
                         level = self.get_level_cmplx(score[1])
-                        print "WRONG", level, full_seq_pos
                         new_res = "<span class=featWRONG{}>{}</span>".format(
                                 level, res)
                 r_index += 1
@@ -345,7 +343,6 @@ class HtmlHandler(object):
             if str(master_index) in alns:
                 score = get_score_mod_value(alns[str(master_index)])
                 if score > highest_score:
-                    print score, alns[str(master_index)]
                     highest_score = score
                     found = True
         if not found:

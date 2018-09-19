@@ -52,8 +52,6 @@ def core_aln_to_num(aln_dict, full_seq, golden_ids=None):
         try:
             aln_3dm["cores"][seq_id], core_indexes_tmp, res_cores = core_to_num_seq(
                 seq, full_seq[seq_id])
-            print "NEW INDEXES:"
-            print core_indexes_tmp
             num_corvar_aln[seq_id] = res_cores
             core_indexes = core_indexes.union(set(core_indexes_tmp))
             aln_3dm["var"][seq_id] = get_var_pos(aln_3dm["cores"][seq_id],
@@ -185,12 +183,10 @@ def core_to_num_seq(aligned_seq, full_seq):
 def get_core_indexes_from_grounded(grounded_seq):
     prev = get_first_num(grounded_seq) - 1
     core_indexes = [0]
-    print grounded_seq
     for i, res in enumerate(grounded_seq):
         if res == "-":
             continue
         if prev != int(res) - 1:
-            print "prev: %d new: %d" % (prev, int(res) - 1)
             core_indexes.append(i)
         prev = int(res)
     return core_indexes
@@ -247,7 +243,6 @@ def split_core(core, full_seq, add_index=0):
     _log.debug("Splitting up a core: %s\n full seq: %s\
             add_index: %s", core, full_seq, add_index)
     new_cores = []
-    print core, add_index
 
     if full_seq[add_index:].find(core) != -1 and len(core) != 1:
         return [{'pos': full_seq[add_index:].find(core) + add_index,
