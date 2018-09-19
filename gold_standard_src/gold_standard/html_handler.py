@@ -2,7 +2,7 @@ import copy
 import logging
 import os
 
-from gold_standard_src.gold_standard.aln_analyzer import get_score_mod_value
+from .aln_analyzer import get_score_mod_value
 
 from .paths import TEMPLATE
 
