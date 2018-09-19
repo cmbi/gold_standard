@@ -16,7 +16,7 @@ from gold_standard.parsers.gold import (parse_gold_pairwise,
 from gold_standard.parsers.fasta import parse_fasta
 from gold_standard.parsers.fatcat import parse_fatcat
 from gold_standard.num_seq import (core_aln_to_num,
-                                   get_core_indexes)
+                                   get_core_indexes, ParsingError)
 
 from gold_standard.aln_analyzer import calc_scores_3dm, calc_scores_3dm_complex
 from gold_standard.result_processor import process_results
@@ -28,6 +28,40 @@ fs = frozenset
 FORMAT = '%(asctime)s:%(levelname)s:%(funcName)s - %(message)s'
 logging.basicConfig(level=logging.INFO, format=FORMAT)
 _log = logging.getLogger("__main__")
+
+
+def write_html_files(args):
+    hh = HtmlHandler()
+    if not args.gold_json:
+        if args.html_pair and quality_data["write_pairwise_html"]:
+            # write pairwise html output
+            hh.write_html(quality_data, args.output + "_pairwise", mode="pairwise")
+
+        if args.html or args.html_var or args.html_var_short:
+            # create html output
+            hh.write_html(quality_data, args.output, mode="cores")
+
+            if args.html_var:
+                # create html output with variable regions (full or trimmed)
+                hh.write_html(quality_data, args.output + "_var", mode="var")
+
+            if args.html_var_short:
+                # create html output with variable regions (full or trimmed)
+                hh.write_html(quality_data, args.output + "_varshort", mode="var_short")
+    else:
+        if args.html_pair and quality_data["write_pairwise_html"]:
+            # write pairwise html output
+            hh.write_html(quality_data, args.output + "_pairwise", mode="pairwise_complex")
+
+        if args.html or args.html_var or args.html_var_short:
+            # create html output
+            hh.write_html(quality_data, args.output, mode="cores_complex")
+            if args.html_var_short:
+                # create html output with variable regions (full or trimmed)
+                hh.write_html(quality_data, args.output + "_varshort", mode="var_short_complex")
+            if args.html_var:
+                # create html output with variable regions (full or trimmed)
+                hh.write_html(quality_data, args.output + "_varshort", mode="var_complex")
 
 
 def detect_input_format(aln_path):
@@ -80,7 +114,7 @@ def parse_input_alignment(aln_path, full_seq, gold_ids, in_format, final_core_pa
             write_pairwise_html = False
 
         # create alignment of grounded sequences
-        num_aln_dict, core_indexes = core_aln_to_num(aln_dict, full_seq, golden_ids=gold_ids)
+        num_aln_dict, core_indexes, num_corvar = core_aln_to_num(aln_dict, full_seq, golden_ids=gold_ids)
     else:
         # input format is 'csv'
         aln_dict, num_aln_dict, core_indexes = parse_csv_alignment(aln_path, gold_ids)
@@ -287,41 +321,16 @@ if __name__ == "__main__":
         'aln_path': args.test_aln_path,
         'final_core': args.final_core
     }
-    if args.gold_json:
-        quality_data = calculate_aln_quality_complex(input_paths, args.output,
-                                                     args.input_format, args.json)
-    else:
-        quality_data = calculate_aln_quality_simple(input_paths, args.output,
-                                                    args.input_format, args.multi, args.json,
-                                                    args.gold_json)
-    hh = HtmlHandler()
-    if not args.gold_json:
-        if args.html_pair and quality_data["write_pairwise_html"]:
-            # write pairwise html output
-            hh.write_html(quality_data, args.output + "_pairwise", mode="pairwise")
-
-        if args.html or args.html_var or args.html_var_short:
-            # create html output
-            hh.write_html(quality_data, args.output, mode="cores")
-
-            if args.html_var:
-                # create html output with variable regions (full or trimmed)
-                hh.write_html(quality_data, args.output + "_var", mode="var")
-
-            if args.html_var_short:
-                # create html output with variable regions (full or trimmed)
-                hh.write_html(quality_data, args.output + "_varshort", mode="var_short")
-    else:
-        if args.html_pair and quality_data["write_pairwise_html"]:
-            # write pairwise html output
-            hh.write_html(quality_data, args.output + "_pairwise", mode="pairwise_complex")
-
-        if args.html or args.html_var or args.html_var_short:
-            # create html output
-            hh.write_html(quality_data, args.output, mode="cores_complex")
-            if args.html_var_short:
-                # create html output with variable regions (full or trimmed)
-                hh.write_html(quality_data, args.output + "_varshort", mode="var_short_complex")
-            if args.html_var:
-                # create html output with variable regions (full or trimmed)
-                hh.write_html(quality_data, args.output + "_varshort", mode="var_complex")
+    try:
+        if args.gold_json:
+            quality_data = calculate_aln_quality_complex(input_paths, args.output,
+                                                        args.input_format, args.json)
+        else:
+            quality_data = calculate_aln_quality_simple(input_paths, args.output,
+                                                        args.input_format, args.multi, args.json,
+                                                        args.gold_json)
+        write_html_files(args)
+    except ParsingError as e:
+        with open(args.output + ".err", "w") as o:
+            o.write(e.message)
+        raise e

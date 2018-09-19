@@ -169,3 +169,20 @@ def test_core_aln_to_num():
 
     num_aln = ns.core_aln_to_num(aln_dict, full_seq)[0]
     eq_(num_aln, expected)
+
+
+def test_core_aln_to_num_real():
+    aln_dict = {
+        '1NDDA':
+            'mLIKVKTLTGKEIEIDIEPTDKVERIKERVEEKEGIPPQQQRLIYSGKQMNDEKTAADYKILGGSVLHLVLALr',
+        '3UF8A':
+            'iNLKVSDGS-SEIFFKIKKTTPLRRLMEAf--rQGKEMDSLRFLYDGIRIQADQTPEDLDMEDNDIIEAHr---'
+    }
+    full_seq = {
+        '1NDDA':
+            'MLIKVKTLTGKEIEIDIEPTDKVERIKERVEEKEGIPPQQQRLIYSGKQMNDEKTAADYKILGGSVLHLVLALR',
+        '3UF8A':
+            'PETHINLKVSDGSSEIFFKIKKTTPLRRLMEAFAKRQGKEMDSLRFLYDGIRIQADQTPEDLDMEDNDIIEAHREQIGGSTVVTTESGLKYEDLTEGSGAEARAGQTVSVHYTGWLTDGQKFDSSKDRNDPFAFVLGGGMVIKGWDEGVQGMKVGGVRRLTIPPQLGYGARGAAGVIPPNATLVFEVELLDV'
+    }
+    num_aln, core_indexes, num_var  = ns.core_aln_to_num(aln_dict, full_seq)
+    eq_(core_indexes, [0, 32])

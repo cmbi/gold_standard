@@ -94,22 +94,35 @@ class HtmlHandler(object):
         with open(outname + ".html", 'w') as out:
             out.write(template_fmt.format(css, outtxt))
 
+    @staticmethod
+    def get_insertion_positions(num_aln):
+        insertion_positions = set()
+        return insertion_positions
+
+    def make_corvar_new(self, full_seqs, num_aln):
+        insertion_positions = self.get_insertion_positions(num_aln)
+
     def aln_to_html_var(self, quality_data, mode):
         short_var = mode in ["var_short", "var_short_complex"]
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
         aln_length = len(quality_data['aa_aln'])
+        # quality_data["core_indexes"] = [0, 4]
         num_aln_c = self.split_cores(quality_data['num_aln'],
                                      quality_data['core_indexes'])
         num_aln_v = self.split_vars(num_aln_c)
 
         aa_aln_corvar = self.make_corvar(quality_data['full'], num_aln_v)
         var_lengths = self.get_max_var_lengths(num_aln_v, short_var)
+        #aa_aln_corvar, num_aln_v = self.make_corvar_new(quality_data['full'], quality_data["num_aln"])
+        #var_lengths = self.get_max_var_lengths_new(num_aln_v, short_var)
+
         for seq_id in quality_data["order"]:
             if seq_id not in quality_data["gold_ids"]:
                 _log.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
                 continue
             seq = aa_aln_corvar[seq_id]
             if mode.endswith("complex"):
+                print "#### ", seq_id, " #####"
                 html_seq = self.make_html_var_seq_complex(
                         seq, quality_data['wrong_cols'][seq_id], var_lengths,
                         aln_length, short_var)
@@ -146,7 +159,8 @@ class HtmlHandler(object):
                 if c == core_index:
                     return pos - gaps
                 c += 1
-        return -1
+        raise RuntimeError("Did not find full seq pos for core index %d in seq: %s" % (core_index, merged_corvar_seq))
+        #return -1
         # number_of_lower = len([i for i in merged_corvar_seq[:core_index + 1] if i.islower()])
         # number_of_gaps = merged_corvar_seq[:core_index].count("-")
         # return core_index - number_of_gaps + number_of_lower
@@ -157,9 +171,10 @@ class HtmlHandler(object):
         corvar_merged = ""
         for c, core in enumerate(corvar_seq["cores"]):
             var = corvar_seq["var"][c].lower()
+            full_var = var
             if short_var:
                 var = self.make_short_var(var)
-            corvar_merged += var + core
+            corvar_merged += full_var + core
             var = " " + var + " " * (max_lengths[c] - len(var)) + " "
             html_seq += var
             for i, res in enumerate(core):
@@ -167,18 +182,12 @@ class HtmlHandler(object):
                     new_res = "<span>-</span>"
                 else:
                     full_seq_pos = self.get_full_seq_pos(corvar_merged, r_index)
-                    print "i:", i
-                    print "res:", res
-                    print "wrong", wrong
-                    print corvar_seq
-                    print "corvar part", corvar_merged
-                    print "r_index", r_index
-                    print "full seq pos", full_seq_pos
                     score = wrong[full_seq_pos + 1]
                     if score[0] and score[1] == 1:
                         new_res = "<span class=featOK>{}</span>".format(res)
                     else:
                         level = self.get_level_cmplx(score[1])
+                        print "WRONG", level, full_seq_pos
                         new_res = "<span class=featWRONG{}>{}</span>".format(
                                 level, res)
                 r_index += 1
