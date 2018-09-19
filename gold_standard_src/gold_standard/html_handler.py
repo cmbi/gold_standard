@@ -2,6 +2,8 @@ import copy
 import logging
 import os
 
+from gold_standard_src.gold_standard.aln_analyzer import get_score_mod_value
+
 from .paths import TEMPLATE
 
 
@@ -300,8 +302,14 @@ class HtmlHandler(object):
                         new_res = "<span class=noFeat>" + res + "</span>"
                         new_gold_res = "<span class=noFeat>" + gold_aa + "</span>"
                     elif res == "-":
-                        new_res = "<span class=featMeh>" + res + "</span>"
-                        new_gold_res = "<span class=featMeh>" + gold_aa + "</span>"
+                        master_score = self.get_master_score(master_index, gold_aln[seq_id])
+                        # new_res = "<span class=featMeh>" + res + "</span>"
+                        # new_gold_res = "<span class=featMeh>" + gold_aa + "</span>"
+                        level = self.get_level_cmplx(master_score)
+                        new_res = "<span class=featWRONG{}>{}</span>".format(
+                                level, res)
+                        new_gold_res = "<span class=featWRONG{}>{}</span>".format(
+                                level, gold_aa)
                         add_asterisk = True
                     else:
                         raise RuntimeError("res: {}; gold res: {}".format(res, gold_aa))
@@ -319,6 +327,31 @@ class HtmlHandler(object):
         html_out += "</div>"
         _log.info("Finished creating pairwise html")
         return html_out
+
+    @staticmethod
+    def get_master_score(master_index, gold_aln):
+        """
+        Find what's the score for alignment of this residue from the master sequence
+        (this is for false negatives)
+        :param master_index: 1-based position in the mnaster sequence
+        :param gold_aln: pairwise alignment (like in the final_core.json file)
+        :return:
+        """
+        # this master residue might have multiple alns allowed, find all then take the one
+        # with the highest score
+        highest_score = -1000
+        found = False
+        for res_i, alns in gold_aln.iteritems():
+            if str(master_index) in alns:
+                score = get_score_mod_value(alns[str(master_index)])
+                if score > highest_score:
+                    print score, alns[str(master_index)]
+                    highest_score = score
+                    found = True
+        if not found:
+            raise RuntimeError("could not find aln for master residue {}".format(highest_score))
+
+        return 1 - highest_score
 
     @ staticmethod
     def get_gold_aa(pairwise_gold_aln, full_seq, pos):

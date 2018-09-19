@@ -48,7 +48,7 @@ def test_core_to_num_seq_1hg4f():
                     216, 217, 218, 224, 225, 226, 227, 228, 229, 230, 231, 232,
                     233, 234, 235, 236]
     expected_indexes = [0, 17, 75, 80, 159, 187]
-    num_seq, indexes = ns.core_to_num_seq(aln_seq, full_seq)
+    num_seq, indexes, num_var = ns.core_to_num_seq(aln_seq, full_seq)
 
     eq_(num_seq, expected_num)
     eq_(indexes, expected_indexes)
@@ -184,5 +184,5 @@ def test_core_aln_to_num_real():
         '3UF8A':
             'PETHINLKVSDGSSEIFFKIKKTTPLRRLMEAFAKRQGKEMDSLRFLYDGIRIQADQTPEDLDMEDNDIIEAHREQIGGSTVVTTESGLKYEDLTEGSGAEARAGQTVSVHYTGWLTDGQKFDSSKDRNDPFAFVLGGGMVIKGWDEGVQGMKVGGVRRLTIPPQLGYGARGAAGVIPPNATLVFEVELLDV'
     }
-    num_aln, core_indexes, num_var  = ns.core_aln_to_num(aln_dict, full_seq)
+    num_aln, core_indexes, num_var = ns.core_aln_to_num(aln_dict, full_seq)
     eq_(core_indexes, [0, 32])

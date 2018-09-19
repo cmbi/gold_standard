@@ -36,9 +36,9 @@ def corvar_to_num(corvar_line):
 
 def core_aln_to_num(aln_dict, full_seq, golden_ids=None):
     """
-    :param aln_path: path to the core alignment file
-    :param full_seq_path: path to the full plain sequences in fasta format
-    :param final_core: path to the final_core.txt file
+    :param aln_dict: core alignment
+    :param full_seq: full plain sequences
+    :param golden_ids: pdb id of templates in the gold aln
     :return: dict with core alignment (num), and var - a dict of the positions
     in the variable regions
     """
@@ -247,6 +247,7 @@ def split_core(core, full_seq, add_index=0):
     _log.debug("Splitting up a core: %s\n full seq: %s\
             add_index: %s", core, full_seq, add_index)
     new_cores = []
+    print core, add_index
 
     if full_seq[add_index:].find(core) != -1 and len(core) != 1:
         return [{'pos': full_seq[add_index:].find(core) + add_index,
@@ -283,6 +284,10 @@ def split_core(core, full_seq, add_index=0):
 
     _log.debug("Split up core %s in two cores: %s", core, new_cores)
     if not new_cores:
+        # we only allow a core of length one if we didn't find any larger cores
+        if full_seq[add_index:].find(core) != -1 and len(core) == 1:
+            return [{'pos': full_seq[add_index:].find(core) + add_index,
+                     'seq': core}]
         raise ParsingError(
             "Didn't find the segment {} in the remaining sequence. There is probably "
             "an error in the input sequence right before this segment\nremaining "
