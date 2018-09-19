@@ -137,6 +137,8 @@ def check_aln_coverage(aligned_cores):
 def get_newcorvar(aligned_regs):
     """
     Get core and var of the 2nd sequence based on the alignmnet
+    expected no deleteions and insertions - if there are any will return empty
+    left var, empty core, and the whole region's sequence will be in right var
     :param aligned_regs:
     :return:
     """
@@ -148,7 +150,14 @@ def get_newcorvar(aligned_regs):
     for i in range(len(aligned_regs[0])):
         if aligned_regs[0][i] != '-':
             if right_var:
-                raise RuntimeError
+                # means there are deletions in target sequence, reject this
+                # alignment
+                logger.warning("Deletions in target sequence: %s", aligned_regs)
+                left_var = ""
+                core = ""
+                right_var = aligned_regs[1].replace("-", "").lower()
+
+                return core, left_var, right_var
 
             core2 += aligned_regs[1][i]
         elif core2:
@@ -159,6 +168,9 @@ def get_newcorvar(aligned_regs):
         right_var = "0"
     if not left_var:
         left_var = "0"
+    if re.search('[A-Z]-[A-Z]', core2):
+        print "gaps in core: ", core2
+
     return core2, left_var, right_var
 
 
@@ -186,7 +198,6 @@ def check_corevar(corevar1, corevar2, mafft_identity_cutoff):
                 continue
 
             aligned_regs = run_mafft_alignment(seq1, seq2)
-            # if check_aln_coverage(aligned_regs) and calc_identity(aligned_regs[0], aligned_regs[1]) > mafft_identity_cutoff:
             if check_aln_coverage(aligned_regs) and calc_similarity(aligned_regs[0], aligned_regs[1]) > mafft_identity_cutoff:
                 new_core, left_var, right_var = get_newcorvar(aligned_regs)
                 if corevar2[i - 1] == "0":
@@ -436,6 +447,7 @@ def check_template_cores(aligned_templates, tmpl_id, tmpl_identity_cutoff=0.5,
             continue
 
         # run core-by-core check
+        print seq_id2
         newcorevar = check_corevar(corevar1, corevar2, mafft_identity_cutoff)
         if newcorevar != corevar2:
             changed += 1
