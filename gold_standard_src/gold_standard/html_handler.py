@@ -561,13 +561,14 @@ class HtmlHandler(object):
     @staticmethod
     def get_level_cmplx(number):
         n = 1 - float(number)
-        if n >= 0.8:
+
+        if n > 0.8:
             return 5
-        elif n >= 0.6:
+        elif n > 0.5:
             return 4
-        elif n >= 0.4:
+        elif n > 0.4:
             return 3
-        elif n >= 0.2:
+        elif n > 0.2:
             return 2
         elif n > 0:
             return 1
