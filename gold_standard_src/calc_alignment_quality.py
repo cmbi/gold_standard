@@ -169,6 +169,7 @@ def calculate_aln_quality_complex(paths, output, in_format, write_json):
 
     gold_path = paths['gold_path']
     corvar_path = gold_path.replace('.json', '.txt.Var')
+    gold_corvar = parse_gold_multi(corvar_path)
     gold_in = parse_gold_json(gold_path, corvar_path)
 
     if not gold_in['ids']:
@@ -206,26 +207,9 @@ def calculate_aln_quality_complex(paths, output, in_format, write_json):
         'full': gold_in['full_seq'],
         'core_indexes': sorted(core_indexes),
         'gold_ids': gold_in['ids'],
-        'order': strcts_order
+        'order': strcts_order,
+        'gold_corvar': gold_corvar
     }
-
-    # stats = process_results(scores['pairwise'], scores['full'], scores['sp_scores'],
-    #                         output, len(strcts_order))
-
-    # if write_json:
-    #     # write scores to a json file
-    #     with open(output + ".json", 'w') as o:
-    #         json.dump(stats, o)
-
-    # return {
-    #     'wrong_cols': scores["wrong_cols"],
-    #     'aa_aln': aln_dict,
-    #     'gold_aln': gold_in['alns'],
-    #     'num_aln': num_aln_dict,
-    #     'full': gold_in['full_seq'],
-    #     'core_indexes': sorted(core_indexes),
-    #     'order': strcts_order
-    # }
 
 
 def calculate_aln_quality_simple(paths, output, in_format, multi, write_json, gold_json):

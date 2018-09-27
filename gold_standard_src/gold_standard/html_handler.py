@@ -240,15 +240,16 @@ class HtmlHandler(object):
         return short_var
 
     def aln_to_html_pairwise_complex(self, quality_data):
-        aa_aln = quality_data["aa_aln"]
         num_aln = quality_data["num_aln"]
         gold_aln = quality_data["gold_aln"]
         full = quality_data["full"]
         wrong = quality_data["wrong_cols"]
         order = quality_data["order"]
         target_id = quality_data["target_id"]
+        gold_corvar = quality_data["gold_corvar"]["alns"]
 
         target_seq = full[target_id]
+        gold_lowercase_residues = self.find_residues_neighbouring_insertions(gold_corvar["cores"], full)
 
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
 
@@ -285,6 +286,8 @@ class HtmlHandler(object):
 
                 master_index = int(master_num_seq[aln_pos])
                 gold_aa = self.get_gold_aa(pairwise_gold_aln, full[seq_id], master_index)
+                if full_seq_pos != "-" and full_seq_pos + 1 in gold_lowercase_residues[seq_id]:
+                    gold_aa = gold_aa.lower()
                 add_asterisk = False
                 if res != "-" and res != " ":
                     if score[0] and score[1] == 1:
