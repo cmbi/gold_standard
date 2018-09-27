@@ -34,7 +34,10 @@ class HtmlHandler(object):
 
         elif mode == "cores_complex":
             outtxt = self.complex_aln_to_html(
-                    quality_data['aa_aln'], quality_data["num_aln"], quality_data['wrong_cols'], quality_data["order"])
+                    quality_data['aa_aln'], quality_data["num_aln"],
+                    quality_data["gold_aln"], quality_data['wrong_cols'],
+                    quality_data["order"], quality_data["target_id"],
+                    quality_data["full"])
         else:
             return
 
@@ -301,8 +304,6 @@ class HtmlHandler(object):
                         new_gold_res = "<span class=noFeat>" + gold_aa + "</span>"
                     elif res == "-":
                         master_score = self.get_master_score(master_index, gold_aln[seq_id])
-                        # new_res = "<span class=featMeh>" + res + "</span>"
-                        # new_gold_res = "<span class=featMeh>" + gold_aa + "</span>"
                         level = self.get_level_cmplx(master_score)
                         new_res = "<span class=featWRONG{}>{}</span>".format(
                                 level, res)
@@ -492,13 +493,15 @@ class HtmlHandler(object):
         _log.info("Finished creating pairwise html")
         return html_out
 
-    def complex_aln_to_html(self, aa_aln, num_aln, wrong, order):
+    def complex_aln_to_html(self, aa_aln, num_aln, gold_aln, wrong, order, target_id, full):
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
 
+        master_num_seq = num_aln["cores"][target_id]
         for seq_id in order:
             seq = aa_aln[seq_id]
             html_sequence = "{}    ".format(seq_id)
             num_seq = num_aln["cores"][seq_id]
+            pairwise_gold_aln = gold_aln[seq_id]
             for r, res in enumerate(seq):
                 if res != "-" and res != " ":
                     real_pos = num_seq[r]
@@ -510,6 +513,20 @@ class HtmlHandler(object):
                         level = self.get_level_cmplx(score[1])
                         new_res = "<span class=featWRONG{}>{}</span>".format(
                             level, res)
+                elif res == "-":
+                    master_residue = master_num_seq[r]
+                    if master_residue == "-":
+                        new_res = "<span class=noFeat>" + res + "</span>"
+                    else:
+                        master_index = int(master_residue)
+                        gold_aa = self.get_gold_aa(pairwise_gold_aln, full[seq_id], master_index)
+                        if gold_aa == "-":
+                            new_res = "<span class=noFeat>" + res + "</span>"
+                        else:
+                            master_score = self.get_master_score(master_index, gold_aln[seq_id])
+                            level = self.get_level_cmplx(master_score)
+                            new_res = "<span class=featWRONG{}>{}</span>".format(
+                                    level, res)
                 else:
                     new_res = "<span class=noFeat>" + res + "</span>"
                 html_sequence += new_res
