@@ -254,7 +254,6 @@ class HtmlHandler(object):
 
         target_seq = full[target_id]
         gold_lowercase_residues = self.find_residues_neighbouring_insertions(gold_corvar["cores"], full)
-        print gold_lowercase_residues["3A4RB"]
 
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
 
