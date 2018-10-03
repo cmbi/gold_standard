@@ -280,6 +280,8 @@ class HtmlHandler(object):
             pairwise_gold_aln = gold_aln[seq_id]
             num_seq = num_aln["cores"][seq_id]
             for aln_pos, full_seq_pos in enumerate(num_seq):
+                # full seq pos is 1-based, aln pos is 0-based, will change
+                # full_seq pos to 0-based right below
                 if full_seq_pos != "-":
                     full_seq_pos = int(full_seq_pos) - 1
                     res = full[seq_id][full_seq_pos]
@@ -289,9 +291,13 @@ class HtmlHandler(object):
                     score = 0
 
                 master_index = int(master_num_seq[aln_pos])
-                gold_aa = self.get_gold_aa(pairwise_gold_aln, full[seq_id], master_index)
-                if full_seq_pos != "-" and full_seq_pos + 1 in gold_lowercase_residues[seq_id]:
+
+                # gold_aa_full_seq_pos is also 0-based just like full_seq_pos
+                gold_aa, gold_aa_full_seq_pos = self.get_gold_aa(pairwise_gold_aln, full[seq_id], master_index)
+
+                if gold_aa != "-" and gold_aa_full_seq_pos + 1 in gold_lowercase_residues[seq_id]:
                     gold_aa = gold_aa.lower()
+
                 add_asterisk = False
                 if res != "-" and res != " ":
                     if score[0] and score[1] == 1:
@@ -364,6 +370,7 @@ class HtmlHandler(object):
         Get residue in the gold aln that's aligned to residue 'pos'
         """
         aln_solutions = {}
+        gold_aa_full_seq_pos = None
         for res, res_alns in pairwise_gold_aln.iteritems():
             if str(pos) in res_alns:
                 aln_solutions[res] = res_alns[str(pos)]
@@ -377,8 +384,11 @@ class HtmlHandler(object):
             if tmp_index != "-":
                 aa_index = int(tmp_index) - 1
                 gold_aa = full_seq[aa_index]
+                gold_aa_full_seq_pos = aa_index
             else:
                 gold_aa = "-"
+
+
 
         else:
             # multiple solutions, go through them and select the best one
@@ -390,7 +400,8 @@ class HtmlHandler(object):
                     index_of_max = int(index)
 
             gold_aa = full_seq[index_of_max - 1]
-        return gold_aa
+            gold_aa_full_seq_pos = index_of_max - 1
+        return gold_aa, gold_aa_full_seq_pos
 
     @staticmethod
     def int_or_gap(c):
@@ -526,7 +537,7 @@ class HtmlHandler(object):
                         new_res = "<span class=noFeat>" + res + "</span>"
                     else:
                         master_index = int(master_residue)
-                        gold_aa = self.get_gold_aa(pairwise_gold_aln, full[seq_id], master_index)
+                        gold_aa, gold_aa_full_seq_pos = self.get_gold_aa(pairwise_gold_aln, full[seq_id], master_index)
                         if gold_aa == "-":
                             new_res = "<span class=noFeat>" + res + "</span>"
                         else:
