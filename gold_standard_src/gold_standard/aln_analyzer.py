@@ -284,7 +284,7 @@ def get_max_aln_score(gold_alns):
                     continue
 
                 if score_category.startswith("m"):
-                    value = get_m_score(score_category, SCORE_MODS["a"])
+                    value = get_m_score(score_category)
                 else:
                     value = SCORE_MODS[score_category]
 
@@ -311,21 +311,26 @@ def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
     max_aln_score, pseq_ppos_max_scores = get_max_aln_score(gold_alns)
 
     result_cores = compare_cores_complex(gold_alns, target_id, test_aln)
-    # n = result_cores["n"]
     overall_score = result_cores["overall_score"]
     per_residue_scores = result_cores["per_residue_scores"]
 
+    # this is to penalize false negatives, only done in the strict mode
+    result_vars = compare_vars_complex(gold_alns, target_id, test_aln)
+
+    # combined confusion matrices from cores and vars - one from cores contains
+    # only TPs and FPs, and the one from vars only FNs and TNs
+    confusion_matrix = result_cores["confusion_matrix"].update(result_vars["confusion_matrix"])
+
     if mode == "strict":
-        # this is to penalize false negatives, only done in the strict mode
-        result_vars = compare_vars_complex(gold_alns, target_id, test_aln)
-        # n += result_vars["n"]
         overall_score += result_vars["overall_score"]
         per_residue_scores = merge_nested_dicts(per_residue_scores, result_vars["per_residue_scores"])
 
-    # overall_score /= n
     overall_score /= max_aln_score
-    return {"overall_score": overall_score, "per_residue_scores": per_residue_scores,
-            "max_scores": pseq_ppos_max_scores}
+    return {
+        "overall_score": overall_score, "per_residue_scores": per_residue_scores,
+        "max_scores": pseq_ppos_max_scores,
+        "confusion_matrix": confusion_matrix
+    }
 
 
 def compare_cores_complex(gold_alns, target_id, test_aln):
@@ -336,6 +341,10 @@ def compare_cores_complex(gold_alns, target_id, test_aln):
     per_residue_scores = {}
     # check the aligned ones in test alignment (FPs and TPs)
     test_target_aln = test_aln["cores"][target_id]
+
+    confusion_matrix = {"TP": 0, "FP": 0}
+
+    full_score = SCORE_MODS["a"]
 
     for seq_id, aln in test_aln["cores"].iteritems():
         if seq_id == target_id:
@@ -352,12 +361,17 @@ def compare_cores_complex(gold_alns, target_id, test_aln):
                 continue
             # alignment scores on this position
             gold_residue_scores = gold_aln[str(res_number)]
+            if seq_id == "2FAZA":
+                print gold_residue_scores
 
             # target residue aligned with residue 'res_number' from sequence 'seq_id'
             test_target_res = str(test_target_aln[i])
 
             found_aln = False
             res_score = None
+
+            # iterate over alignment solutions (usually there is just one so in
+            # most cases this loop will just have one iteration)
             for res_number_gold, score_category in gold_residue_scores.iteritems():
                 if res_number_gold == '*':
                     # means this residue should not be aligned with anything,
@@ -367,43 +381,60 @@ def compare_cores_complex(gold_alns, target_id, test_aln):
 
                 if res_number_gold == test_target_res:
                     n += 1
+                    found_aln = True
                     if score_category.startswith('m'):
-                        res_score = get_m_score(score_category, SCORE_MODS["a"])
-                        found_aln = True
+                        res_score = get_m_score(score_category)
                     else:
                         res_score = SCORE_MODS[score_category]
-                        found_aln = True
                     pairwise_score += res_score
                     break
 
+            # find what score should be added to the confusion matrix
+            if res_score is not None:
+                confusion_mat_score = float(abs(res_score)) / full_score
+            else:
+                confusion_mat_score = full_score
+
             if not found_aln and test_target_res != '-':
-                # means this residue is incorrectly aligned
+                # means this residue is incorrectly aligned (FP)
                 n += 1
                 res_score = SCORE_MODS["u"]
                 pairwise_score += res_score
+                confusion_matrix["FP"] += confusion_mat_score
+            else:
+                # it's a true positive
+                confusion_matrix["TP"] += confusion_mat_score
 
             per_residue_scores[seq_id][res_number] = (found_aln, res_score)
 
         overall_score += pairwise_score
-    return {"n": n, "overall_score": overall_score, "per_residue_scores": per_residue_scores}
+
+    print confusion_matrix
+    return {
+        "n": n, "overall_score": overall_score,
+        "per_residue_scores": per_residue_scores,
+        "confusion_matrix": confusion_matrix
+    }
 
 
-def get_m_score(m, full_score):
+def get_m_score(m):
     """
     Get a score for a position with multiple solutions
     :param m: m modifier name, m + int
     :return: score (float)
     """
 
-    mscore = float("0." + str(m.strip('m'))) * full_score
+    mscore = float("0." + str(m.strip('m'))) * SCORE_MODS["a"]
 
     return mscore
 
+
 def get_score_mod_value(mod_name):
     if mod_name.startswith('m'):
-        return get_m_score(mod_name, SCORE_MODS['a'])
+        return get_m_score(mod_name)
     else:
         return SCORE_MODS[mod_name]
+
 
 def compare_vars_complex(gold_alns, target_id, test_aln):
     """
@@ -415,6 +446,7 @@ def compare_vars_complex(gold_alns, target_id, test_aln):
     per_residue_scores = {}
 
     alrights = 0
+    confusion_matrix = {"FN": 0, "TN": 0}
     for seq_id, gold_aln in gold_alns.iteritems():
         if seq_id not in test_aln["var"]:
             continue
@@ -426,6 +458,7 @@ def compare_vars_complex(gold_alns, target_id, test_aln):
             test_res_number = str(test_res_number)
             if test_res_number not in gold_aln:
                 alrights += 1
+                confusion_matrix["TN"] += 1
                 # residue not aligned in gold one, OK
                 assert test_res_number not in per_residue_scores[seq_id]
                 per_residue_scores[seq_id][int(test_res_number)] = (True, 0.0)
@@ -433,6 +466,7 @@ def compare_vars_complex(gold_alns, target_id, test_aln):
 
             scores = gold_aln[test_res_number]
             if scores.keys()[0] == '*':
+                confusion_matrix["TN"] += 1
                 alrights += 1
                 # residue not aligned in gold one, OK
                 # means residue should not be aligned with anything, also OK
@@ -446,8 +480,15 @@ def compare_vars_complex(gold_alns, target_id, test_aln):
             # in case of multiple solutions, if there is just one solution than
             # that is the sore for this one solution
             penalty = sum([get_score_mod_value(i) for i in scores.values()]) / len(scores)
+            # confusion_matrix["FN"] += abs(float(penalty) / SCORE_MODS["u"])
+            print seq_id, test_res_number
+            confusion_matrix["FN"] += 1
             overall_score -= penalty
             per_residue_scores[seq_id][int(test_res_number)] = (False, -penalty)
             n += 1
+    return {
+        "n": n, "overall_score": overall_score,
+        "per_residue_scores": per_residue_scores,
+        "confusion_matrix": confusion_matrix
 
-    return {"n": n, "overall_score": overall_score, "per_residue_scores": per_residue_scores}
+    }

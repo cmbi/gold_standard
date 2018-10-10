@@ -388,8 +388,6 @@ class HtmlHandler(object):
             else:
                 gold_aa = "-"
 
-
-
         else:
             # multiple solutions, go through them and select the best one
             max_score = 0
