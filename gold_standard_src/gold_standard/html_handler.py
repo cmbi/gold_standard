@@ -260,15 +260,6 @@ class HtmlHandler(object):
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
 
         _log.info("Creating pairiwse html")
-        for seq_id in order:
-            if seq_id not in gold_aln:
-                _log.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
-                continue
-            for pos, res in enumerate(target_seq, start=1):
-                # find out which residue is aligned with this in the gold aln
-                pass
-
-                # find out which residue is aligned with this in the test aln
         master_num_seq = num_aln["cores"][target_id]
         html_target_sequence = self.make_html_target_sequence(target_seq, target_id)
 
