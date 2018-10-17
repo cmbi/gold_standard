@@ -252,7 +252,7 @@ def calculate_aln_quality_simple(paths, output, in_format, multi, write_json, go
     }
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(description="Calculates quality of the"
                                                  " multiple sequence alignment"
                                                  " based on the provided golden"
@@ -321,3 +321,7 @@ if __name__ == "__main__":
         with open(args.output + ".err", "w") as o:
             o.write(e.message)
         raise e
+
+
+if __name__ == "__main__":
+    main()

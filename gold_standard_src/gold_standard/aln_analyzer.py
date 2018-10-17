@@ -275,6 +275,7 @@ def calc_scores_3dm(golden_alns, test_aln, multi):
 def get_max_aln_score(gold_alns):
     max_score = 0
     pseq_ppos_max_scores = {}
+    per_core_pos_max_scores = {}
     for seq_id, seq_scores in gold_alns.iteritems():
         ppos_scores = {}
         for pos, res_scores in seq_scores.iteritems():
@@ -295,7 +296,7 @@ def get_max_aln_score(gold_alns):
 
         pseq_ppos_max_scores[seq_id] = ppos_scores
         max_score += sum(ppos_scores.values())
-    return max_score, pseq_ppos_max_scores
+    return max_score, pseq_ppos_max_scores, per_core_pos_max_scores
 
 
 def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
@@ -308,7 +309,7 @@ def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
     target_id = gold_aln_data["target"]
     gold_alns = gold_aln_data["alns"]
 
-    max_aln_score, pseq_ppos_max_scores = get_max_aln_score(gold_alns)
+    max_aln_score, pseq_ppos_max_scores, per_core_pos_max_score = get_max_aln_score(gold_alns)
 
     result_cores = compare_cores_complex(gold_alns, target_id, test_aln)
     overall_score = result_cores["overall_score"]
@@ -326,10 +327,12 @@ def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
         per_residue_scores = merge_nested_dicts(per_residue_scores, result_vars["per_residue_scores"])
 
     overall_score /= max_aln_score
+    print result_cores["per_core_position_scores"]
     return {
         "overall_score": overall_score, "per_residue_scores": per_residue_scores,
         "max_scores": pseq_ppos_max_scores,
-        "confusion_matrix": confusion_matrix
+        "confusion_matrix": confusion_matrix,
+        "per_core_position_scores": result_cores["per_core_position_scores"]
     }
 
 
@@ -339,6 +342,7 @@ def compare_cores_complex(gold_alns, target_id, test_aln):
     overall_score = 0
 
     per_residue_scores = {}
+    per_core_position_scores = {}
     # check the aligned ones in test alignment (FPs and TPs)
     test_target_aln = test_aln["cores"][target_id]
 
@@ -404,13 +408,17 @@ def compare_cores_complex(gold_alns, target_id, test_aln):
                 confusion_matrix["TP"] += confusion_mat_score
 
             per_residue_scores[seq_id][res_number] = (found_aln, res_score)
+            if i + 1 not in per_core_position_scores:
+                per_core_position_scores[i + 1] = 0
+            per_core_position_scores[i + 1] += res_score
 
         overall_score += pairwise_score
 
     return {
         "n": n, "overall_score": overall_score,
         "per_residue_scores": per_residue_scores,
-        "confusion_matrix": confusion_matrix
+        "confusion_matrix": confusion_matrix,
+        "per_core_position_scores": per_core_position_scores
     }
 
 
