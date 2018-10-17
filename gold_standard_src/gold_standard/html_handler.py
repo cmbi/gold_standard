@@ -247,6 +247,7 @@ class HtmlHandler(object):
 
     def aln_to_html_pairwise_complex(self, quality_data):
         num_aln = quality_data["num_aln"]
+        aa_aln = quality_data["aa_aln"]
         gold_aln = quality_data["gold_aln"]
         full = quality_data["full"]
         wrong = quality_data["wrong_cols"]
@@ -279,7 +280,8 @@ class HtmlHandler(object):
                 # full_seq pos to 0-based right below
                 if full_seq_pos != "-":
                     full_seq_pos = int(full_seq_pos) - 1
-                    res = full[seq_id][full_seq_pos]
+                    # res = full[seq_id][full_seq_pos]
+                    res = aa_aln[seq_id][aln_pos]
                     score = wrong[seq_id][full_seq_pos + 1]
                 else:
                     res = "-"
