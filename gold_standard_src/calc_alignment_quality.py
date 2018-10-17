@@ -30,7 +30,7 @@ logging.basicConfig(level=logging.INFO, format=FORMAT)
 _log = logging.getLogger("__main__")
 
 
-def write_html_files(args):
+def write_html_files(quality_data, args):
     hh = HtmlHandler()
     if not args.gold_json:
         if args.html_pair and quality_data["write_pairwise_html"]:
@@ -106,12 +106,14 @@ def parse_input_alignment(aln_path, full_seq, gold_ids, in_format, final_core_pa
         # fill in the alignment with gaps so that the full master sequence is in
         # the test alignment
         old_aln_dict = deepcopy(aln_dict)
+        print old_aln_dict["2BWFA"]
         if master_id in aln_dict:
             aln_dict = make_master_seq_full(aln_dict, full_seq, gold_ids, master_id)
         else:
             _log.warning("Will not be able to create a pairwise comparison because "
                          "target sequence is not present in the test alignment")
             write_pairwise_html = False
+        print aln_dict["2BWFA"]
 
         # create alignment of grounded sequences
         num_aln_dict, core_indexes, num_corvar = core_aln_to_num(aln_dict, full_seq, golden_ids=gold_ids)
@@ -308,12 +310,13 @@ if __name__ == "__main__":
     try:
         if args.gold_json:
             quality_data = calculate_aln_quality_complex(input_paths, args.output,
-                                                        args.input_format, args.json)
+                                                         args.input_format, args.json)
         else:
-            quality_data = calculate_aln_quality_simple(input_paths, args.output,
-                                                        args.input_format, args.multi, args.json,
-                                                        args.gold_json)
-        write_html_files(args)
+            quality_data = calculate_aln_quality_simple(
+                    input_paths, args.output, args.input_format, args.multi, args.json,
+                    args.gold_json)
+
+        write_html_files(quality_data, args)
     except ParsingError as e:
         with open(args.output + ".err", "w") as o:
             o.write(e.message)

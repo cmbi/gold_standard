@@ -21,11 +21,8 @@ def parse_3SSP(aln_path):
             seq_id = line.split()[0]
             seq_start = 1
         strcts_order.append(seq_id)
-        sequence = line.split()[seq_start:]
-        seq_with_lower = [
-            core[0].lower() + core[1:-1] + core[-1].lower() for core in sequence
-        ]
-        sequence = "".join(seq_with_lower)
+        sequence = "".join(line.split()[seq_start:])
+
         seq_dict[seq_id] = sequence
 
     return seq_dict, strcts_order

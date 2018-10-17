@@ -168,10 +168,6 @@ class HtmlHandler(object):
                     return pos - gaps
                 c += 1
         raise RuntimeError("Did not find full seq pos for core index %d in seq: %s" % (core_index, merged_corvar_seq))
-        #return -1
-        # number_of_lower = len([i for i in merged_corvar_seq[:core_index + 1] if i.islower()])
-        # number_of_gaps = merged_corvar_seq[:core_index].count("-")
-        # return core_index - number_of_gaps + number_of_lower
 
     def make_html_var_seq_complex(self, corvar_seq, wrong, max_lengths, aln_length, short_var=False):
         html_seq = ""

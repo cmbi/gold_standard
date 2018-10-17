@@ -361,8 +361,6 @@ def compare_cores_complex(gold_alns, target_id, test_aln):
                 continue
             # alignment scores on this position
             gold_residue_scores = gold_aln[str(res_number)]
-            if seq_id == "2FAZA":
-                print gold_residue_scores
 
             # target residue aligned with residue 'res_number' from sequence 'seq_id'
             test_target_res = str(test_target_aln[i])
@@ -409,7 +407,6 @@ def compare_cores_complex(gold_alns, target_id, test_aln):
 
         overall_score += pairwise_score
 
-    print confusion_matrix
     return {
         "n": n, "overall_score": overall_score,
         "per_residue_scores": per_residue_scores,
@@ -481,7 +478,6 @@ def compare_vars_complex(gold_alns, target_id, test_aln):
             # that is the sore for this one solution
             penalty = sum([get_score_mod_value(i) for i in scores.values()]) / len(scores)
             # confusion_matrix["FN"] += abs(float(penalty) / SCORE_MODS["u"])
-            print seq_id, test_res_number
             confusion_matrix["FN"] += 1
             overall_score -= penalty
             per_residue_scores[seq_id][int(test_res_number)] = (False, -penalty)
