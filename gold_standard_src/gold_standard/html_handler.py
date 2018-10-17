@@ -243,6 +243,12 @@ class HtmlHandler(object):
             short_var = var
         return short_var
 
+    @staticmethod
+    def make_html_target_sequence(target_seq, target_id):
+        html_target_sequence = "<span style='color:gray;'><b>TARGET</b> {}  </span>{}".format(
+                target_id, "".join(["<span class=noFeat style='color:gray;'>{}</span>".format(res) for res in target_seq]))
+        return html_target_sequence
+
     def aln_to_html_pairwise_complex(self, quality_data):
         num_aln = quality_data["num_aln"]
         gold_aln = quality_data["gold_aln"]
@@ -268,13 +274,15 @@ class HtmlHandler(object):
 
                 # find out which residue is aligned with this in the test aln
         master_num_seq = num_aln["cores"][target_id]
+        html_target_sequence = self.make_html_target_sequence(target_seq, target_id)
+
         for seq_id in order:
             if seq_id not in gold_aln:
                 _log.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
                 continue
 
-            html_sequence = "<b>TEST</b> {}    ".format(seq_id)
-            html_gold_sequence = "<b>GOLD</b> {}    ".format(seq_id)
+            html_sequence = "<b>TEST</b>   {}  ".format(seq_id)
+            html_gold_sequence = "<b>GOLD</b>   {}  ".format(seq_id)
             asterisk_line = "<span class=asteriskBlank>         {}</span>".format(" " * len(seq_id))
 
             pairwise_gold_aln = gold_aln[seq_id]
@@ -332,7 +340,8 @@ class HtmlHandler(object):
 
                 html_sequence += new_res
                 html_gold_sequence += new_gold_res
-            html_out += asterisk_line + "\n"
+            # html_out += asterisk_line + "\n"
+            html_out += html_target_sequence + "\n"
             html_out += html_sequence + "\n"
             html_out += html_gold_sequence + "\n"
             html_out += "<br>"
