@@ -277,7 +277,7 @@ def split_core(core, full_seq, add_index=0):
                 core1_pos = -1
 
         full_seq_remainder2 = full_seq[add_index + core1_pos + len(core[:-i]):]
-        core2_regex = make_core_regex(core[-1:], full_seq_remainder2)
+        core2_regex = make_core_regex(core[-i:], full_seq_remainder2)
         core2_found = core2_regex.search(full_seq_remainder2)
         if core2_found:
             core2_pos = core2_found.start()
