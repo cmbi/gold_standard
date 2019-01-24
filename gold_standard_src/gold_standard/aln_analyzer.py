@@ -327,7 +327,6 @@ def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
         per_residue_scores = merge_nested_dicts(per_residue_scores, result_vars["per_residue_scores"])
 
     overall_score /= max_aln_score
-    print result_cores["per_core_position_scores"]
     return {
         "overall_score": overall_score, "per_residue_scores": per_residue_scores,
         "max_scores": pseq_ppos_max_scores,

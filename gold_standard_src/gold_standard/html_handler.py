@@ -284,7 +284,6 @@ class HtmlHandler(object):
         html_target_sequence = self.make_html_target_sequence(target_seq, target_id)
 
         ruler = self.make_ruler(target_seq)
-        print ruler
         html_out += ruler + "\n<br>"
 
         for i, seq_id in enumerate(order, start=1):
@@ -293,7 +292,6 @@ class HtmlHandler(object):
                 continue
             number = " " * (3 - len(str(i))) + str(i)
             html_sequence = "<b>{} TEST   {}</b>   ".format(number, seq_id)
-            print len(html_sequence)
             html_gold_sequence = "<b>    GOLD   {}</b>   ".format(seq_id)
             asterisk_line = "<span class=asteriskBlank>         {}</span>".format(" " * len(seq_id))
 
