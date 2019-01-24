@@ -241,7 +241,7 @@ class HtmlHandler(object):
 
     @staticmethod
     def make_html_target_sequence(target_seq, target_id):
-        html_target_sequence = "<span style='color:gray;'><b>TARGET</b> {}  </span>{}".format(
+        html_target_sequence = "<span style='color:gray;'><b>    TARGET</b> {}   </span>{}".format(
                 target_id, "".join(["<span class=noFeat style='color:gray;'>{}</span>".format(res) for res in target_seq]))
         return html_target_sequence
 
@@ -264,13 +264,13 @@ class HtmlHandler(object):
         master_num_seq = num_aln["cores"][target_id]
         html_target_sequence = self.make_html_target_sequence(target_seq, target_id)
 
-        for seq_id in order:
+        for i, seq_id in enumerate(order, start=1):
             if seq_id not in gold_aln:
                 _log.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
                 continue
-
-            html_sequence = "<b>TEST</b>   {}  ".format(seq_id)
-            html_gold_sequence = "<b>GOLD</b>   {}  ".format(seq_id)
+            number = " " * (3 - len(str(i))) + str(i)
+            html_sequence = "<b>{} TEST {}</b>     ".format(number, seq_id)
+            html_gold_sequence = "<b>    GOLD {}</b>     ".format(seq_id)
             asterisk_line = "<span class=asteriskBlank>         {}</span>".format(" " * len(seq_id))
 
             pairwise_gold_aln = gold_aln[seq_id]
