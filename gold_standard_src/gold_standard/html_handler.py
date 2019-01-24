@@ -269,8 +269,8 @@ class HtmlHandler(object):
                 _log.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
                 continue
             number = " " * (3 - len(str(i))) + str(i)
-            html_sequence = "<b>{} TEST {}</b>     ".format(number, seq_id)
-            html_gold_sequence = "<b>    GOLD {}</b>     ".format(seq_id)
+            html_sequence = "<b>{} TEST   {}</b>     ".format(number, seq_id)
+            html_gold_sequence = "<b>    GOLD   {}</b>     ".format(seq_id)
             asterisk_line = "<span class=asteriskBlank>         {}</span>".format(" " * len(seq_id))
 
             pairwise_gold_aln = gold_aln[seq_id]
