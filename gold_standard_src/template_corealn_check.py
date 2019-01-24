@@ -174,12 +174,16 @@ def get_newcorvar(aligned_regs):
     return core2, left_var, right_var
 
 
-def check_corevar(corevar1, corevar2, mafft_identity_cutoff):
+def check_corevar(corevar1, corevar2, mafft_identity_cutoff, core_number=None, full_coverage=False, only_equal_cores=False):
     corevar1 = corevar1.split()
     corevar2 = corevar2.split()
     for i, reg_i in enumerate(corevar1):
         if i % 2 == 0:
             # this is a var region, skip it
+            continue
+
+        # if core number is specified only check this core
+        if core_number is not None and (i - 1) / 2 != core_number:
             continue
 
         if corevar1[i].count('-'):
@@ -196,10 +200,29 @@ def check_corevar(corevar1, corevar2, mafft_identity_cutoff):
             seq2 = corevar2[i + 1].upper()
             if seq2 == '0':
                 continue
+            if only_equal_cores:
+                if len(seq1) != len(seq2):
+                    continue
+                aligned_regs = [seq1, seq2]
+            else:
+                aligned_regs = run_mafft_alignment(seq1, seq2)
 
-            aligned_regs = run_mafft_alignment(seq1, seq2)
-            if check_aln_coverage(aligned_regs) and calc_similarity(aligned_regs[0], aligned_regs[1]) > mafft_identity_cutoff:
+            if not ((not aligned_regs[0].endswith('-') and not aligned_regs[1].endswith('-')) or
+                    (not aligned_regs[0].startswith('-') and not aligned_regs[1].startswith('-'))):
+                print "here", aligned_regs
+                continue
+
+            sim = calc_similarity(aligned_regs[0], aligned_regs[1])
+            print (i - 1) / 2
+            print aligned_regs[0]
+            print aligned_regs[1]
+            print "sim: {}".format(sim)
+            if check_aln_coverage(aligned_regs) and sim > mafft_identity_cutoff:
                 new_core, left_var, right_var = get_newcorvar(aligned_regs)
+                if full_coverage and "-" in new_core or not new_core:
+                    continue
+
+                print "Updating core number {}".format((i - 1) / 2)
                 if corevar2[i - 1] == "0":
                     corevar2[i - 1] = left_var
                 elif left_var != "0":
@@ -336,7 +359,8 @@ def merge_corvar(aligned_templates, merged=False):
 
 def run_check(corevar_path, tmpl_identity=0.4, tmpl_id="",
               mafft_identity=0.6, write_log=False, diff_check=True,
-              outvar="", outfinal="", only_merge=False):
+              outvar="", outfinal="", only_merge=False, core_number=None,
+              full_coverage=False, only_equal_cores=False):
     """
     Checks correctness of core alignments in the final_core alignment by comparison
         to MAFFT alignments and removed the possibly incorrect cores
@@ -354,7 +378,7 @@ def run_check(corevar_path, tmpl_identity=0.4, tmpl_id="",
     if not only_merge:
         check_result = check_template_cores(
                 aligned_templates, target_id, cutoffs['tmpl'], cutoffs['mafft'],
-                write_log)
+                write_log, core_number, full_coverage, only_equal_cores)
     else:
         check_result = {
             "changed": 0,
@@ -367,7 +391,8 @@ def run_check(corevar_path, tmpl_identity=0.4, tmpl_id="",
     # merged = False
     aligned_templates = check_result["new_templates"]
     tmp = deepcopy(aligned_templates)
-    merged = merge_corvar(aligned_templates)
+    # merged = merge_corvar(aligned_templates)
+    merged = []
 
     if not (filled_in or merged):
         print "No changes to the input alignment"
@@ -410,7 +435,8 @@ def get_full_sequences(aligned_templates):
 
 
 def check_template_cores(aligned_templates, tmpl_id, tmpl_identity_cutoff=0.5,
-                         mafft_identity_cutoff=0.6, write_log=False):
+                         mafft_identity_cutoff=0.6, write_log=False, core_number=None,
+                         full_coverage=False, only_equal_cores=False):
     """
     Checks correctness of core alignments in the final_core alignment by comparison
         to MAFFT alignments and removed the possibly incorrect cores
@@ -447,8 +473,8 @@ def check_template_cores(aligned_templates, tmpl_id, tmpl_identity_cutoff=0.5,
             continue
 
         # run core-by-core check
-        print seq_id2
-        newcorevar = check_corevar(corevar1, corevar2, mafft_identity_cutoff)
+        newcorevar = check_corevar(corevar1, corevar2, mafft_identity_cutoff,
+                                   core_number, full_coverage, only_equal_cores)
         if newcorevar != corevar2:
             changed += 1
 
@@ -478,7 +504,10 @@ if __name__ == "__main__":
     parser.add_argument('--outvar')
     parser.add_argument('--outfinal')
     parser.add_argument('--tmpl_id')
+    parser.add_argument('--core_number', type=int)
+    parser.add_argument('--full_coverage', default=False, action="store_true")
     parser.add_argument('--only_merge', default=False, action="store_true")
+    parser.add_argument('--only_equal', default=False, action="store_true")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
@@ -486,4 +515,4 @@ if __name__ == "__main__":
     run_check(corevar_path=args.corvar, tmpl_identity=args.tmpl_identity,
               mafft_identity=args.mafft_identity, tmpl_id=args.tmpl_id,
               write_log=args.write_log, diff_check=not args.nodiffcheck, outvar=args.outvar,
-              outfinal=args.outfinal, only_merge=args.only_merge)
+              outfinal=args.outfinal, only_merge=args.only_merge, core_number=args.core_number, full_coverage=args.full_coverage, only_equal_cores=args.only_equal)
