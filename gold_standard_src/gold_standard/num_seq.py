@@ -254,9 +254,9 @@ def split_core(core, full_seq, add_index=0):
 
     full_seq_remainder = full_seq[add_index:]
     core_regex = make_core_regex(core, full_seq_remainder)
-
-    if core_regex.search(full_seq_remainder) != -1 and len(core) != 1:
-        return [{'pos': core_regex.search(full_seq_remainder).start() + add_index,
+    core_found = core_regex.search(full_seq_remainder)
+    if core_found and len(core) != 1:
+        return [{'pos': core_found.start() + add_index,
                  'seq': core}]
 
     for i in xrange(1, len(core)):
