@@ -1,4 +1,5 @@
 import logging
+import re
 
 _log = logging.getLogger("__main__")
 
@@ -37,7 +38,7 @@ def find_positions_to_fill_in(master_full_seq, master_aln_seq):
     positions_to_fill_in = []
     while pos_full < len(master_full_seq):
         # if pos_aln < len(master_aln_seq) - 1 and master_full_seq[pos_full] != master_aln_seq[pos_aln].upper():
-        if pos_aln < len(master_aln_seq) and master_full_seq[pos_full] != master_aln_seq[pos_aln].upper():
+        if pos_aln < len(master_aln_seq) and master_full_seq[pos_full] not in [master_aln_seq[pos_aln].upper(), 'X']:
             # different residue on this position, we need to insert a gap here
             positions_to_fill_in.append(tuple([pos_aln, master_full_seq[pos_full]]))
             if master_aln_seq[pos_aln] == "-":
@@ -53,6 +54,16 @@ def find_positions_to_fill_in(master_full_seq, master_aln_seq):
         # moving along the full sequence with each iteration
         pos_full += 1
     return positions_to_fill_in
+
+
+def make_master_seq_regex(master_full_seq):
+    master_full_seq_pattern = ""
+    for res_i in master_full_seq:
+        if res_i != 'X':
+            master_full_seq_pattern += "{}".format(res_i)
+        else:
+            master_full_seq_pattern += "."
+    return re.compile(master_full_seq_pattern)
 
 
 def fill_in_gaps(aln_dict, positions_to_fill_in, master_id, master_full_seq):
@@ -76,7 +87,11 @@ def fill_in_gaps(aln_dict, positions_to_fill_in, master_id, master_full_seq):
     # there should be no residues missing in the master seq now,
     # we can make it all uppercase
     aln_dict[master_id] = aln_dict[master_id].upper()
-    if aln_dict[master_id].replace("-", "") != master_full_seq:
+
+    master_full_seq_regex = make_master_seq_regex(master_full_seq)
+    master_aln_seq = aln_dict[master_id].replace("-", "")
+
+    if not master_full_seq_regex.match(master_aln_seq):
         msg = "Master sequence not equal to full master sequence:"
         _log.error(msg)
         _log.error(aln_dict[master_id].replace("-", ""))

@@ -229,6 +229,14 @@ def get_next_core(aligned_seq, start):
     return {"core": core, "core_start": core_start}
 
 
+def make_core_regex(core_seq, full_seq):
+    if 'X' in full_seq:
+        core_regex = "".join(["[{}X]".format(res_i) for res_i in core_seq])
+    else:
+        core_regex = core_seq
+    return re.compile(core_regex)
+
+
 def split_core(core, full_seq, add_index=0):
     """
     Recursively splits up a core into multiple cores
@@ -244,18 +252,37 @@ def split_core(core, full_seq, add_index=0):
             add_index: %s", core, full_seq, add_index)
     new_cores = []
 
-    if full_seq[add_index:].find(core) != -1 and len(core) != 1:
-        return [{'pos': full_seq[add_index:].find(core) + add_index,
+    full_seq_remainder = full_seq[add_index:]
+    core_regex = make_core_regex(core, full_seq_remainder)
+
+    if core_regex.search(full_seq_remainder) != -1 and len(core) != 1:
+        return [{'pos': core_regex.search(full_seq_remainder).start() + add_index,
                  'seq': core}]
 
     for i in xrange(1, len(core)):
-        core1_pos = full_seq[add_index:].find(core[:-i])
-        if core1_pos == -1 and core.find("X") != -1:
-            tmp_core = core.replace("X", "G")
-            core1_pos = full_seq[add_index:].find(tmp_core[:-i])
+        core_regex = make_core_regex(core[:-i], full_seq_remainder)
+        core_found = core_regex.search(full_seq_remainder)
+        if core_found:
+            core1_pos = core_found.start()
+        else:
+            core1_pos = -1
 
-        core2_pos = full_seq[add_index + core1_pos + len(core[:-i]):].find(
-            core[-i:])
+        if not core_found and core.find("X") != -1:
+            tmp_core = core.replace("X", "G")
+            core_regex = make_core_regex(tmp_core[:-i], full_seq_remainder)
+            core_found = core_regex.search(full_seq_remainder)
+            if core_found:
+                core1_pos = core_found.start()
+            else:
+                core1_pos = -1
+
+        full_seq_remainder2 = full_seq[add_index + core1_pos + len(core[:-i]):]
+        core2_regex = make_core_regex(core[-1:], full_seq_remainder2)
+        core2_found = core2_regex.search(full_seq_remainder2)
+        if core2_found:
+            core2_pos = core2_found.start()
+        else:
+            core2_pos = -1
 
         if core1_pos != -1 and core2_pos != -1:
             # means all cores are split up, can exit the function
