@@ -253,6 +253,17 @@ class HtmlHandler(object):
         html_target_sequence = header + sequence
         return html_target_sequence
 
+    @staticmethod
+    def make_ruler(target_sequence):
+        ruler = " " * 19
+        for i in range(1, len(target_sequence) + 1):
+            if i % 10 == 0:
+                new_number = " " * (10 - len(str(i))) + str(i)
+                new_number = "<span class=noFeat style='color:gray;'>{}</span>".format(new_number)
+                ruler += new_number
+
+        return ruler
+
     def aln_to_html_pairwise_complex(self, quality_data):
         num_aln = quality_data["num_aln"]
         aa_aln = quality_data["aa_aln"]
@@ -272,12 +283,17 @@ class HtmlHandler(object):
         master_num_seq = num_aln["cores"][target_id]
         html_target_sequence = self.make_html_target_sequence(target_seq, target_id)
 
+        ruler = self.make_ruler(target_seq)
+        print ruler
+        html_out += ruler + "\n<br>"
+
         for i, seq_id in enumerate(order, start=1):
             if seq_id not in gold_aln:
                 _log.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
                 continue
             number = " " * (3 - len(str(i))) + str(i)
             html_sequence = "<b>{} TEST   {}</b>   ".format(number, seq_id)
+            print len(html_sequence)
             html_gold_sequence = "<b>    GOLD   {}</b>   ".format(seq_id)
             asterisk_line = "<span class=asteriskBlank>         {}</span>".format(" " * len(seq_id))
 
