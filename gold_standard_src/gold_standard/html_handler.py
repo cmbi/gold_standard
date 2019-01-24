@@ -241,8 +241,16 @@ class HtmlHandler(object):
 
     @staticmethod
     def make_html_target_sequence(target_seq, target_id):
-        html_target_sequence = "<span style='color:gray;'><b>    TARGET</b> {}   </span>{}".format(
-                target_id, "".join(["<span class=noFeat style='color:gray;'>{}</span>".format(res) for res in target_seq]))
+        header = "<span style='color:gray;'><b>    TARGET</b> {}   </span>".format(target_id)
+        sequence = ""
+        for i, res_i in enumerate(target_seq, start=1):
+            if i % 10 == 0:
+                res_i = "<b>" + res_i + "</b>"
+                res_i = "<span class=noFeat style='color:black;'>{}</span>".format(res_i)
+            else:
+                res_i = "<span class=noFeat style='color:gray;'>{}</span>".format(res_i)
+            sequence += res_i
+        html_target_sequence = header + sequence
         return html_target_sequence
 
     def aln_to_html_pairwise_complex(self, quality_data):
@@ -269,8 +277,8 @@ class HtmlHandler(object):
                 _log.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
                 continue
             number = " " * (3 - len(str(i))) + str(i)
-            html_sequence = "<b>{} TEST   {}</b>     ".format(number, seq_id)
-            html_gold_sequence = "<b>    GOLD   {}</b>     ".format(seq_id)
+            html_sequence = "<b>{} TEST   {}</b>   ".format(number, seq_id)
+            html_gold_sequence = "<b>    GOLD   {}</b>   ".format(seq_id)
             asterisk_line = "<span class=asteriskBlank>         {}</span>".format(" " * len(seq_id))
 
             pairwise_gold_aln = gold_aln[seq_id]
