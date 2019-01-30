@@ -299,6 +299,17 @@ def get_max_aln_score(gold_alns):
     return max_score, pseq_ppos_max_scores, per_core_pos_max_scores
 
 
+def get_statistical_measures(confusion_matrix):
+    tp = float(confusion_matrix["TP"])
+    fp = float(confusion_matrix["FP"])
+    tn = float(confusion_matrix["TN"])
+    fn = float(confusion_matrix["FN"])
+    accuracy = (tp + tn) / (tp + tn + fp + fn)
+    specificity = tn / (tn + fp)
+    sensitivity = tp / (tp + fn)
+    return accuracy, specificity, sensitivity
+
+
 def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
     """
     Calculate alignment scores based on a json alignment
@@ -322,6 +333,7 @@ def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
     # only TPs and FPs, and the one from vars only FNs and TNs
     confusion_matrix = result_cores["confusion_matrix"]
     confusion_matrix.update(result_vars["confusion_matrix"])
+    accuracy, specificity, sensitivity = get_statistical_measures(confusion_matrix)
 
     if mode == "strict":
         overall_score += result_vars["overall_score"]
@@ -329,10 +341,14 @@ def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
 
     overall_score /= max_aln_score
     return {
-        "overall_score": overall_score, "per_residue_scores": per_residue_scores,
+        "overall_score": overall_score,
+        "per_residue_scores": per_residue_scores,
         "max_scores": pseq_ppos_max_scores,
         "confusion_matrix": confusion_matrix,
-        "per_core_position_scores": result_cores["per_core_position_scores"]
+        "per_core_position_scores": result_cores["per_core_position_scores"],
+        "accuracy": accuracy,
+        "sensitivity": sensitivity,
+        "specificity": specificity
     }
 
 
