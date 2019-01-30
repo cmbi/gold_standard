@@ -320,7 +320,8 @@ def calc_scores_3dm_complex(gold_aln_data, test_aln, mode="strict"):
 
     # combined confusion matrices from cores and vars - one from cores contains
     # only TPs and FPs, and the one from vars only FNs and TNs
-    confusion_matrix = result_cores["confusion_matrix"].update(result_vars["confusion_matrix"])
+    confusion_matrix = result_cores["confusion_matrix"]
+    confusion_matrix.update(result_vars["confusion_matrix"])
 
     if mode == "strict":
         overall_score += result_vars["overall_score"]
