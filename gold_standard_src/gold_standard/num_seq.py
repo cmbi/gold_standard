@@ -229,9 +229,18 @@ def get_next_core(aligned_seq, start):
     return {"core": core, "core_start": core_start}
 
 
+def res_or_x(residue):
+    if residue != 'X':
+        return residue
+    else:
+        return '.'
+
+
 def make_core_regex(core_seq, full_seq):
     if 'X' in full_seq:
         core_regex = "".join(["[{}X]".format(res_i) for res_i in core_seq])
+    elif 'X' in core_seq:
+        core_regex = "".join([res_or_x(res_i) for res_i in core_seq])
     else:
         core_regex = core_seq
     return re.compile(core_regex)
@@ -268,7 +277,7 @@ def split_core(core, full_seq, add_index=0):
             core1_pos = -1
 
         if not core_found and core.find("X") != -1:
-            tmp_core = core.replace("X", "G")
+            tmp_core = core[:-i]
             core_regex = make_core_regex(tmp_core[:-i], full_seq_remainder)
             core_found = core_regex.search(full_seq_remainder)
             if core_found:

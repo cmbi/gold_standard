@@ -134,6 +134,15 @@ def test_split_core():
     new_cores = ns.split_core(core, full_seq, add_index)
     eq_(new_cores, expected_cores)
 
+    core = "NSSDELGRFVELTGIPVASTLMGLGSYPXDDELSLHMLGMHGTVY"
+    full_seq = "EQIVRLISESKKPVLYVGGGCLNSSDELGRFVELTGIPVASTLMGLGSYPZDDELSLHM" \
+               "LGMHGTVYANYAVEHSDLLLAFGVRFDDRVTGKLEAFASRAKIVHIDIDSAEIGKNKTP" \
+               "HVSVCGDVKLALQGMNKVLENRAEELKLDFGVWRNELNVQKQKFPLSFKTFGEAIPPQY" \
+               "AIKVLDELTDGKAIISTGVGQHQMWAA"
+    expected_cores = [{'pos': 22, 'seq': 'NSSDELGRFVELTGIPVASTLMGLGSYPXDDELSLHMLGMHGTVY'}]
+    new_cores = ns.split_core(core, full_seq, add_index)
+    eq_(new_cores, expected_cores)
+
 
 @raises(Exception)
 def test_split_core_exception():
