@@ -221,7 +221,7 @@ def get_next_core(aligned_seq, start):
             core_start = it
         elif (res == '-' or res.islower()) and in_core:
             found = True
-            if res.islower():
+            if res.islower() and not aligned_seq[it - 1].islower():
                 core += res.upper()
         elif in_core:
             core += res.upper()
