@@ -110,7 +110,7 @@ def merge_sets(sets_list):
     return flat_list
 
 
-def check_aln_coverage(aligned_cores):
+def check_aln_coverage(aligned_cores, coverage_cutoff=0.5):
     """
     Check if alignment coverage is good enough
     """
@@ -127,9 +127,10 @@ def check_aln_coverage(aligned_cores):
 
     if covered_positions >= 6:
         return True
-    if float(covered_positions) / tmpl_seq_len < 0.5:
+    if float(covered_positions) / tmpl_seq_len < coverage_cutoff:
         # check coverage percentage only if length of the shorter core
         # is lower than 6
+        logger.debug("Coverage too low")
         return False
     return True
 
@@ -174,18 +175,19 @@ def get_newcorvar(aligned_regs):
     return core2, left_var, right_var
 
 
-def check_corevar(corevar1, corevar2, mafft_identity_cutoff, core_number=None, full_coverage=False, only_equal_cores=False):
+def check_corevar(corevar1, corevar2, mafft_identity_cutoff, core_number=None,
+                  full_coverage=False, only_equal_cores=False, coverage_cutoff=None):
     corevar1 = corevar1.split()
     corevar2 = corevar2.split()
     for i, reg_i in enumerate(corevar1):
         if i % 2 == 0:
             # this is a var region, skip it
             continue
-
+        curr_core_number = (i - 1) / 2
         # if core number is specified only check this core
-        if core_number is not None and (i - 1) / 2 != core_number:
+        if core_number is not None and curr_core_number != core_number:
             continue
-
+        logger.debug("Checking core %s", curr_core_number)
         if corevar1[i].count('-'):
             # only take template cores if there are no gaps
             continue
@@ -209,15 +211,11 @@ def check_corevar(corevar1, corevar2, mafft_identity_cutoff, core_number=None, f
 
             if not ((not aligned_regs[0].endswith('-') and not aligned_regs[1].endswith('-')) or
                     (not aligned_regs[0].startswith('-') and not aligned_regs[1].startswith('-'))):
-                print "here", aligned_regs
                 continue
 
             sim = calc_similarity(aligned_regs[0], aligned_regs[1])
-            print (i - 1) / 2
-            print aligned_regs[0]
-            print aligned_regs[1]
-            print "sim: {}".format(sim)
-            if check_aln_coverage(aligned_regs) and sim > mafft_identity_cutoff:
+            logger.debug("Aligned regions with similarity %s:\n%s\n%s", sim, aligned_regs[0], aligned_regs[1])
+            if check_aln_coverage(aligned_regs, coverage_cutoff) and sim > mafft_identity_cutoff:
                 new_core, left_var, right_var = get_newcorvar(aligned_regs)
                 if full_coverage and "-" in new_core or not new_core:
                     continue
@@ -360,7 +358,7 @@ def merge_corvar(aligned_templates, merged=False):
 def run_check(corevar_path, tmpl_identity=0.4, tmpl_id="",
               mafft_identity=0.6, write_log=False, diff_check=True,
               outvar="", outfinal="", only_merge=False, core_number=None,
-              full_coverage=False, only_equal_cores=False):
+              full_coverage=False, only_equal_cores=False, coverage_cutoff=None):
     """
     Checks correctness of core alignments in the final_core alignment by comparison
         to MAFFT alignments and removed the possibly incorrect cores
@@ -378,7 +376,7 @@ def run_check(corevar_path, tmpl_identity=0.4, tmpl_id="",
     if not only_merge:
         check_result = check_template_cores(
                 aligned_templates, target_id, cutoffs['tmpl'], cutoffs['mafft'],
-                write_log, core_number, full_coverage, only_equal_cores)
+                write_log, core_number, full_coverage, only_equal_cores, coverage_cutoff)
     else:
         check_result = {
             "changed": 0,
@@ -436,7 +434,7 @@ def get_full_sequences(aligned_templates):
 
 def check_template_cores(aligned_templates, tmpl_id, tmpl_identity_cutoff=0.5,
                          mafft_identity_cutoff=0.6, write_log=False, core_number=None,
-                         full_coverage=False, only_equal_cores=False):
+                         full_coverage=False, only_equal_cores=False, coverage_cutoff=None):
     """
     Checks correctness of core alignments in the final_core alignment by comparison
         to MAFFT alignments and removed the possibly incorrect cores
@@ -474,7 +472,7 @@ def check_template_cores(aligned_templates, tmpl_id, tmpl_identity_cutoff=0.5,
 
         # run core-by-core check
         newcorevar = check_corevar(corevar1, corevar2, mafft_identity_cutoff,
-                                   core_number, full_coverage, only_equal_cores)
+                                   core_number, full_coverage, only_equal_cores, coverage_cutoff)
         if newcorevar != corevar2:
             changed += 1
 
@@ -498,8 +496,10 @@ if __name__ == "__main__":
                         default=-10.0, type=float)
     parser.add_argument("--mafft_identity", help="mafft identity cutoff",
                         default=0.2, type=float)
+    parser.add_argument("--coverage", help="coverage cutoff", type=float)
     parser.add_argument('--write_log', action='store_true', default=False)
     parser.add_argument('--nodiffcheck', action='store_true', default=False)
+    parser.add_argument('--verbose', action='store_true', default=False)
 
     parser.add_argument('--outvar')
     parser.add_argument('--outfinal')
@@ -512,7 +512,11 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
 
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+
     run_check(corevar_path=args.corvar, tmpl_identity=args.tmpl_identity,
               mafft_identity=args.mafft_identity, tmpl_id=args.tmpl_id,
               write_log=args.write_log, diff_check=not args.nodiffcheck, outvar=args.outvar,
-              outfinal=args.outfinal, only_merge=args.only_merge, core_number=args.core_number, full_coverage=args.full_coverage, only_equal_cores=args.only_equal)
+              outfinal=args.outfinal, only_merge=args.only_merge, core_number=args.core_number, full_coverage=args.full_coverage, only_equal_cores=args.only_equal,
+              coverage_cutoff=args.coverage)
