@@ -7,7 +7,11 @@ _log = logging.getLogger("__main__")
 def remove_positions(aln_dict, positions_to_remove):
     for i in sorted(positions_to_remove, reverse=True):
         for seq_id, seq in aln_dict.iteritems():
-            if i < len(seq) - 1:
+            if i == 0:
+                new_seq = seq[1].lower() + seq[i+2:]
+            elif i == 1:
+                new_seq = seq[0].lower() + seq[i+1].lower() + seq[i+2:]
+            elif i < len(seq) - 1:
                 new_seq = seq[:i-1] + seq[i-1].lower() + seq[i+1].lower() + seq[i+2:]
             else:
                 new_seq = seq[:i-1] + seq[i-1].lower()
@@ -122,5 +126,8 @@ def make_master_seq_full(aln_dict, full_seqs, gold_ids, master_id):
     positions_to_fill_in = find_positions_to_fill_in(master_full_seq, master_aln_seq)
 
     fill_in_gaps(aln_dict, positions_to_fill_in, master_id, master_full_seq)
+
+    # make sure that the new alnseq contains the whole master sequence
+    assert aln_dict[master_id].replace("-", "") == master_full_seq
 
     return aln_dict

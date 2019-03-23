@@ -106,6 +106,19 @@ def test_remove_positions():
 
     eq_(aln_dict, expected)
 
+    aln_dict = {
+        "4X1CH":  "--PIAIHILE",
+        "4FDXA":  "MSPIIMNLLE"
+    }
+    master_id = "4X1CH"
+    positions_to_remove = ap.find_positions_to_remove(aln_dict[master_id])
+    ap.remove_positions(aln_dict, positions_to_remove)
+    expected = {
+        "4X1CH":  "pIAIHILE",
+        "4FDXA":  "pIIMNLLE"
+    }
+    eq_(aln_dict, expected)
+
 def test_make_master_seq_full():
     # testcase 1: tautomerase
     aln_dict = {
@@ -138,7 +151,7 @@ def test_make_master_seq_full():
         "1OTFA":  "PIa-lYIIEGRTDEQKETLIRQVSEAMANSLDA-PLERVRVLITEMPKNHFGIGGEPASK---",
         "2OPAA":  "PYv-vKMLEGRTDEQKRNLVEKVTEAVKETTGA-SEEKIVVFIEEMRKDHYAVAGKRLSDm--",
     }
-    result_dict = ap.make_master_seq_full(aln_dict, full_seqs, gold_ids)
+    result_dict = ap.make_master_seq_full(aln_dict, full_seqs, gold_ids, "4X1CH")
 
     eq_(result_dict, expected)
 
@@ -163,7 +176,8 @@ def test_make_master_seq_full():
         "4HN1A": "MHPLSIEGAWSQEPVIHSDHRGRSHEWFRGESFRQAFGHDFPVAQVNVAVSHRGALRGINYTEIPPGQAKYSVCVRGAGLDVVVDVRIGSPTFGRWEIVPMDAERNTAVYLTAGLGRAFLSLTDDATLVFLCSSGYAPAREHSVNPLDPDLGIAWPDDIEPLLSDRDENAPTLATAERLGLLPTYQAWQEQQQAQRLEH"
     }
 
-    eq_(aln_dict["4HN1A"], full_seqs["4HN1A"])
+    result_dict = ap.make_master_seq_full(aln_dict, full_seqs, gold_ids, "4HN1A")
+    eq_(result_dict["4HN1A"], full_seqs["4HN1A"])
     gold_ids = ["4HN1A"]
 
     expected = {
@@ -181,6 +195,29 @@ def test_make_master_seq_full():
         "4O9GB": "----MLYNVALIKFKDIADKYGHLTP-IekI---------FDIKRVYYItvDKDITRGYNS-----KLHQVLICLNGSVKIRLKI-------PDEEKIIELN--DpvGLYIGPLVWREMFDFTEGCVLLVLASeyDETDYIRNY------------------------------------FY-----------------",
         "4ZU4A": "LQMSKVKGVSLHKFHLVNDLRGNLSV-GEF----------FTPKRYFTVfvPNKEVRGEHAH----ECKQFLICVSGNCSVLVDD-------GENREEYVLDS---KGIYLPPMTWGVQYKYSKDAVLLVFASHYYDSDDYIR-------------------------------------TF-----------------"
     }
-    result_dict = ap.make_master_seq_full(aln_dict, full_seqs, gold_ids)
+    result_dict = ap.make_master_seq_full(aln_dict, full_seqs, gold_ids, "4HN1A")
 
     eq_(result_dict, expected)
+
+    # ubiquitin, tricky
+    aln_dict = {
+        "1NDDA": "--iKVKt--gKEIEIDIEPTDKVERIKERv--kEg-pPQQQRLIYSGKQMNDEKTAADYKi--gSVLHLVl---",
+        "5CHWF": "wDLKVKm---nDFLVSv--sMTVSELKKQIAQKIGVPAFQQRLAHQTAVLQDGLTLSSLGLGp-sTVMLVVq--"
+    }
+
+    gold_ids = ["1NDDA", "5CHWF"]
+    full_seqs = {
+        "1NDDA": "MLIKVKTLTGKEIEIDIEPTDKVERIKERVEEKEGIPPQQQRLIYSGKQMNDEKTAADYKILGGSVLHLVLALR",
+        "5CHWF": "AWDLKVKMNDFLVSVNSMTVSELKKQIAQKIGVPAFQQRLAHQTAVLQDGLTLSSLGLGPSSTVMLVVQNSSEP"
+                 "LSILVRNERGHSNIYEVFLTQTVDTLKKKVSQREQVHEDQFWLSFEGRPMEDKELLGEYGLKPQCTVIKHLRL"
+    }
+
+    expected = {
+        "1NDDA": "MLIKVKTLTGKEIEIDIEPTDKVERIKERVEEKEGIPPQQQRLIYSGKQMNDEKTAADYKILGGSVLHLVLALR",
+        "5CHWF": "--lKVKm---nDFLVSv--sMTVSELKKQi--kIg-pAFQQRLAHQTAVLQDGLTLSSLGl---sTVMLVv---",
+    }
+    result_dict = ap.make_master_seq_full(aln_dict, full_seqs, gold_ids, "1NDDA")
+
+    eq_(result_dict, expected)
+
+

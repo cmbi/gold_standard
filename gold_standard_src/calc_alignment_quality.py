@@ -77,10 +77,11 @@ def detect_input_format(aln_path):
         return "3dm"
 
 
-def parse_input_alignment(aln_path, full_seq, gold_ids, in_format, final_core_path, master_id):
+def parse_input_alignment(aln_path, full_seq, gold_ids, in_format, final_core_path, master_id, dont_fill=False):
     """
     parse and assess test alignments
     """
+    print master_id
     # read the final_core file if provided
     if final_core_path:
         core_indexes = get_core_indexes(final_core_path)
@@ -106,7 +107,7 @@ def parse_input_alignment(aln_path, full_seq, gold_ids, in_format, final_core_pa
         # fill in the alignment with gaps so that the full master sequence is in
         # the test alignment
         old_aln_dict = deepcopy(aln_dict)
-        if master_id in aln_dict:
+        if master_id in aln_dict and not dont_fill:
             aln_dict = make_master_seq_full(aln_dict, full_seq, gold_ids, master_id)
         else:
             _log.warning("Will not be able to create a pairwise comparison because "
@@ -164,7 +165,7 @@ def process_per_residue_data(per_residue_scores, target_id, target_seq, max_scor
     return wrong_cols
 
 
-def calculate_aln_quality_complex(paths, output, in_format, write_json):
+def calculate_aln_quality_complex(paths, output, in_format, write_json, dont_fill=False):
     # read the gold standard alignments
 
     gold_path = paths['gold_path']
@@ -182,7 +183,7 @@ def calculate_aln_quality_complex(paths, output, in_format, write_json):
     aln_dict, strcts_order, num_aln_dict, core_indexes, write_pairwise_html = \
         parse_input_alignment(
             paths['aln_path'], gold_in['full_seq'], gold_in['ids'], in_format, final_core,
-            gold_in["target"])
+            gold_in["target"], dont_fill=dont_fill)
 
     # calculate scores
     scores = calc_scores_3dm_complex(gold_in, num_aln_dict)
@@ -212,7 +213,7 @@ def calculate_aln_quality_complex(paths, output, in_format, write_json):
     }
 
 
-def calculate_aln_quality_simple(paths, output, in_format, multi, write_json, gold_json):
+def calculate_aln_quality_simple(paths, output, in_format, multi, write_json, gold_json, dont_fill=False):
     # read the gold standard alignments
     if multi:
         gold_in = parse_gold_multi(paths['gold_path'])
@@ -225,7 +226,8 @@ def calculate_aln_quality_simple(paths, output, in_format, multi, write_json, go
     _log.debug("Sequences in the gold alignment: %s", gold_in['ids'])
 
     aln_dict, strcts_order, num_aln_dict, core_indexes, write_pairwise_html = parse_input_alignment(
-        paths['aln_path'], gold_in['full_seq'], gold_in['ids'], in_format, paths['final_core'], gold_in["ids"][0])
+            paths['aln_path'], gold_in['full_seq'], gold_in['ids'], in_format, paths['final_core'], gold_in["ids"][0],
+            dont_fill=dont_fill)
 
     # calculate scores
     scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)
@@ -268,6 +270,7 @@ def main():
     parser.add_argument("--input_format")
     parser.add_argument("-d", "--debug", default=False, action="store_true")
     parser.add_argument("--json", default=False, action="store_true")
+    parser.add_argument("--dont_fill", default=False, action="store_true")
     parser.add_argument("--final_core", help="final core file")
     parser.add_argument("--multi", action="store_true")
     parser.add_argument("--gold_path")
@@ -308,11 +311,11 @@ def main():
     try:
         if args.gold_json:
             quality_data = calculate_aln_quality_complex(input_paths, args.output,
-                                                         args.input_format, args.json)
+                                                         args.input_format, args.json, args.dont_fill)
         else:
             quality_data = calculate_aln_quality_simple(
                     input_paths, args.output, args.input_format, args.multi, args.json,
-                    args.gold_json)
+                    args.gold_json, args.dont_fill)
 
         write_html_files(quality_data, args)
     except ParsingError as e:
