@@ -221,7 +221,7 @@ def calculate_aln_quality_simple(paths, output, in_format, multi, write_json, do
         final_core_var_path = os.path.join(paths['gold_dir'], 'final_core.txt.Var')
         gold_in = parse_gold_multi(final_core_var_path)
         _, _, gold_num_aln_dict, _, _ = parse_input_alignment(
-                paths['aln_path'], gold_in['full_seq'], gold_in['ids'], in_format,
+                paths['gold_path'], gold_in['full_seq'], gold_in['ids'], in_format,
                 paths['final_core'], gold_in["ids"][0], dont_fill=dont_fill)
         gold_in['alns'] = gold_num_aln_dict
 
