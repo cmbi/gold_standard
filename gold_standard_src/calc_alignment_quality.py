@@ -328,7 +328,7 @@ def main():
         else:
             quality_data = calculate_aln_quality_simple(
                     input_paths, args.output, args.input_format, args.multi, args.json,
-                    args.gold_json, args.dont_fill, args.gold_3ssp)
+                    args.dont_fill, args.gold_3ssp)
 
         write_html_files(quality_data, args)
     except ParsingError as e:
