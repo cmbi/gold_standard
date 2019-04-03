@@ -4,6 +4,8 @@ all numerical sequences are 1-based
 import logging
 import re
 
+from copy import deepcopy
+
 
 _log = logging.getLogger(__name__)
 
@@ -324,3 +326,14 @@ def split_core(core, full_seq, add_index=0):
             "an error in the input sequence right before this segment\nremaining "
             "sequence[{}:]: {} newcores: {}\n".format(core, add_index, full_seq[add_index:], new_cores))
     return new_cores
+
+def convert_3ssp_to_gold_aln(num_aln_dict, full_seq):
+    gold_aln = {
+        'var': {},
+        'cores': deepcopy(num_aln_dict)
+    }
+    for seq_id, num_aln in num_aln_dict.iteritems():
+        all_res = range(1, len(full_seq) + 1)
+        unaligned = list(set(all_res).difference(num_aln))
+        gold_aln['var'][seq_id] = unaligned
+    return gold_aln
