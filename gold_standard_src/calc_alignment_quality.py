@@ -2,6 +2,7 @@
 import argparse
 import json
 import logging
+import os
 import sys
 
 from copy import deepcopy
@@ -15,7 +16,7 @@ from gold_standard.parsers.gold import (parse_gold_pairwise,
                                         parse_gold_multi, parse_gold_json)
 from gold_standard.parsers.fasta import parse_fasta
 from gold_standard.parsers.fatcat import parse_fatcat
-from gold_standard.num_seq import (core_aln_to_num,
+from gold_standard.num_seq import (core_aln_to_num, convert_3ssp_to_gold_aln,
                                    get_core_indexes, ParsingError)
 
 from gold_standard.aln_analyzer import calc_scores_3dm, calc_scores_3dm_complex
@@ -116,6 +117,7 @@ def parse_input_alignment(aln_path, full_seq, gold_ids, in_format, final_core_pa
 
         # create alignment of grounded sequences
         num_aln_dict, core_indexes, num_corvar = core_aln_to_num(aln_dict, full_seq, golden_ids=gold_ids)
+        print num_aln_dict
     else:
         # input format is 'csv'
         aln_dict, num_aln_dict, core_indexes = parse_csv_alignment(aln_path, gold_ids)
@@ -213,9 +215,17 @@ def calculate_aln_quality_complex(paths, output, in_format, write_json, dont_fil
     }
 
 
-def calculate_aln_quality_simple(paths, output, in_format, multi, write_json, gold_json, dont_fill=False):
+def calculate_aln_quality_simple(paths, output, in_format, multi, write_json, dont_fill=False, gold_3ssp=False):
     # read the gold standard alignments
-    if multi:
+    if gold_3ssp:
+        final_core_var_path = os.path.join(paths['gold_dir'], 'final_core.txt.Var')
+        gold_in = parse_gold_multi(final_core_var_path)
+        _, _, gold_num_aln_dict, _, _ = parse_input_alignment(
+                paths['aln_path'], gold_in['full_seq'], gold_in['ids'], in_format,
+                paths['final_core'], gold_in["ids"][0], dont_fill=dont_fill)
+        gold_in['alns'] = gold_num_aln_dict
+
+    elif multi:
         gold_in = parse_gold_multi(paths['gold_path'])
     else:
         gold_in = parse_gold_pairwise(paths['gold_dir'])
@@ -275,6 +285,7 @@ def main():
     parser.add_argument("--multi", action="store_true")
     parser.add_argument("--gold_path")
     parser.add_argument("--gold_json", default=False, action='store_true')
+    parser.add_argument("--gold_3ssp", default=False, action='store_true')
 
     args = parser.parse_args()
     # check args
@@ -308,6 +319,8 @@ def main():
         'aln_path': args.test_aln_path,
         'final_core': args.final_core
     }
+    # only one can be true
+    assert not (args.gold_json and args.gold_3ssp)
     try:
         if args.gold_json:
             quality_data = calculate_aln_quality_complex(input_paths, args.output,
@@ -315,7 +328,7 @@ def main():
         else:
             quality_data = calculate_aln_quality_simple(
                     input_paths, args.output, args.input_format, args.multi, args.json,
-                    args.gold_json, args.dont_fill)
+                    args.gold_json, args.dont_fill, args.gold_3ssp)
 
         write_html_files(quality_data, args)
     except ParsingError as e:
