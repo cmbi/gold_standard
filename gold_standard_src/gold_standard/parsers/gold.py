@@ -75,7 +75,6 @@ def fill_in_target(corvar):
 
     # check if all vars are empty
     if not any(target_vars):
-        print "skipping"
         return corvar
 
     for i, var_i in enumerate(target_vars):

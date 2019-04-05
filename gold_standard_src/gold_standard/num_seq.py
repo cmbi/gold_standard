@@ -62,7 +62,6 @@ def core_aln_to_num(aln_dict, full_seq, golden_ids=None):
             msg = "There was an error processing sequence <b>%s</b>.\n<b>full sequence:</b>\n%s\n<b>aligned sequence:</b>\n%s" % ( seq_id, full_seq[seq_id], seq)
             e.message = msg + "\n" + e.message
             raise e
-    print "here"
 
     return aln_3dm, list(core_indexes), num_corvar_aln
 
