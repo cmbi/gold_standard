@@ -254,15 +254,18 @@ class HtmlHandler(object):
         return html_target_sequence
 
     @staticmethod
-    def make_ruler(target_sequence):
-        ruler = " " * 19
+    def make_ruler(target_sequence, spaces_no=19):
+        ruler = " " * spaces_no
+        ticks = " " * spaces_no
         for i in range(1, len(target_sequence) + 1):
             if i % 10 == 0:
                 new_number = " " * (10 - len(str(i))) + str(i)
                 new_number = "<span class=noFeat style='color:gray;'>{}</span>".format(new_number)
                 ruler += new_number
+                new_tick = "<span class=noFeat style='color:gray;'>{}</span>".format(9 * " " + "|")
+                ticks += new_tick
 
-        return ruler
+        return ruler, ticks
 
     def aln_to_html_pairwise_complex(self, quality_data):
         num_aln = quality_data["num_aln"]
@@ -283,8 +286,9 @@ class HtmlHandler(object):
         master_num_seq = num_aln["cores"][target_id]
         html_target_sequence = self.make_html_target_sequence(target_seq, target_id)
 
-        ruler = self.make_ruler(target_seq)
-        html_out += ruler + "\n<br>"
+        ruler, ticks = self.make_ruler(target_seq)
+        html_out += ruler + "\n"
+        html_out += ticks + "\n"
 
         for i, seq_id in enumerate(order, start=1):
             if seq_id not in gold_aln:
@@ -532,6 +536,10 @@ class HtmlHandler(object):
     def complex_aln_to_html(self, aa_aln, num_aln, gold_aln, wrong, order, target_id, full):
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
 
+        ruler, ticks = self.make_ruler(aa_aln[target_id], spaces_no=9)
+        html_out += ruler + "\n"
+        html_out += ticks + "\n"
+
         master_num_seq = num_aln["cores"][target_id]
         for seq_id in order:
             seq = aa_aln[seq_id]
@@ -572,6 +580,11 @@ class HtmlHandler(object):
     def aln_to_html(self, aa_aln, wrong, order):
         # html_out = ""
         html_out = "<div class=monospacediv style='font-family:monospace;'>\n<br>"
+
+        ruler, ticks = self.make_ruler(aa_aln[order[0]], spaces_no=9)
+        html_out += ruler + "\n"
+        html_out += ticks + "\n"
+
         aln_length = len(aa_aln)
         for seq_id in order:
             if seq_id not in wrong:
