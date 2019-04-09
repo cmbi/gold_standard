@@ -126,8 +126,6 @@ def parse_input_alignment(aln_path, full_seq, gold_ids, in_format, final_core_pa
         raise Exception("Test alignment has fewer than 2 sequences from the "
                         "gold standard alignment. Did you provide any "
                         "sequences from the gold standard alignment?")
-    _log.debug("Sequences in the test alignment: %s",
-               str(num_aln_dict['cores'].keys()))
     return aln_dict, strcts_order, num_aln_dict, core_indexes, write_pairwise_html
 
 
@@ -175,7 +173,6 @@ def calculate_aln_quality_complex(paths, output, in_format, write_json, dont_fil
 
     if not gold_in['ids']:
         raise RuntimeError("No gold standard alignments were found")
-    _log.debug("Sequences in the gold alignment: %s", gold_in['ids'])
 
     # that's the test alignment in a final core format, not necessary
     final_core = paths.get("final_core")
@@ -213,7 +210,7 @@ def calculate_aln_quality_complex(paths, output, in_format, write_json, dont_fil
     }
 
 
-def calculate_aln_quality_simple(paths, output, in_format, multi, write_json, dont_fill=False, gold_3ssp=False):
+def calculate_aln_quality_simple(paths, output, in_format, multi, write_json, dont_fill=False, gold_3ssp=False, target_only=False):
     # read the gold standard alignments
     if gold_3ssp:
         final_core_var_path = os.path.join(paths['gold_dir'], 'final_core.txt.Var')
@@ -231,14 +228,13 @@ def calculate_aln_quality_simple(paths, output, in_format, multi, write_json, do
     if not gold_in['ids']:
         raise RuntimeError("No gold standard alignments were found")
     _log.info("'SIMPLE' score calculation")
-    _log.debug("Sequences in the gold alignment: %s", gold_in['ids'])
 
     aln_dict, strcts_order, num_aln_dict, core_indexes, write_pairwise_html = parse_input_alignment(
             paths['aln_path'], gold_in['full_seq'], gold_in['ids'], in_format, paths['final_core'], gold_in["ids"][0],
             dont_fill=dont_fill)
 
     # calculate scores
-    scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi)
+    scores = calc_scores_3dm(gold_in['alns'], num_aln_dict, multi, target_id=gold_in['ids'][0], target_only=target_only)
     stats = process_results(scores['pairwise'], scores['full'], scores['sp_scores'],
                             output, len(strcts_order))
 
@@ -284,6 +280,7 @@ def main():
     parser.add_argument("--gold_path")
     parser.add_argument("--gold_json", default=False, action='store_true')
     parser.add_argument("--gold_3ssp", default=False, action='store_true')
+    parser.add_argument("--target_only", default=False, action='store_true')
 
     args = parser.parse_args()
     # check args
@@ -326,7 +323,7 @@ def main():
         else:
             quality_data = calculate_aln_quality_simple(
                     input_paths, args.output, args.input_format, args.multi, args.json,
-                    args.dont_fill, args.gold_3ssp)
+                    args.dont_fill, args.gold_3ssp, args.target_only)
 
         write_html_files(quality_data, args)
     except ParsingError as e:

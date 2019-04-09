@@ -586,13 +586,14 @@ class HtmlHandler(object):
         html_out += ticks + "\n"
 
         aln_length = len(aa_aln)
+        longest_seq_id = max(map(len, order))
         for seq_id in order:
             if seq_id not in wrong:
                 _log.warning("Sequence %s from the test aln is not present in the gold aln", seq_id)
                 continue
 
             seq = aa_aln[seq_id]
-            html_sequence = "{}    ".format(seq_id)
+            html_sequence = "{}{}    ".format(seq_id, " " * (longest_seq_id - len(seq_id)))
             for r, res in enumerate(seq):
                 if res != "-" and res != " ":
                     if r in wrong[seq_id].keys():

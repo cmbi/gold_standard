@@ -230,7 +230,7 @@ def calc_pairwise_score(golden_aln, id1, seq1, id2, seq2):
     return result
 
 
-def calc_scores_3dm(golden_alns, test_aln, multi):
+def calc_scores_3dm(golden_alns, test_aln, multi, target_only=False, target_id=None):
     _log.info("Calculating confusion matrices [3DM mode]")
     result = {
         'pairwise': {},
@@ -239,6 +239,8 @@ def calc_scores_3dm(golden_alns, test_aln, multi):
         'wrong_cols': {seq_id: {} for seq_id in test_aln["cores"].keys()}
     }
     for id1, seq1 in test_aln["cores"].iteritems():
+        if target_only and id1 != target_id:
+            continue
         for id2, seq2 in test_aln["cores"].iteritems():
             id_set = fs([id1, id2])
             if id1 != id2 and id_set not in result['pairwise'].keys():
