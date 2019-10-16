@@ -8,12 +8,14 @@ from .error_types import ParserError
 _log = logging.getLogger(__name__)
 
 
-def parse_fasta(aln_text, golden_ids=None):
-    aln_file = aln_text.splitlines()
+def parse_fasta(aln_path, golden_ids=None):
+    with open(aln_path) as a:
+        aln_lines = a.read().splitlines()
+
     aln_dict = {}
     seq_id = ""
     found_fasta_headers = False
-    for l in aln_file:
+    for l in aln_lines:
         if l.startswith(">"):
             found_fasta_headers = True
             if '|' in l:
@@ -31,6 +33,7 @@ def parse_fasta(aln_text, golden_ids=None):
             aln_dict[seq_id] += l.upper().rstrip("*")
     if not found_fasta_headers:
         raise ParserError("Incorrect format, no fasta headers found.")
+
     return aln_dict
 
 

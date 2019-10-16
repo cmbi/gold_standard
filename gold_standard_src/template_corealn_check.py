@@ -187,7 +187,6 @@ def check_corevar(corevar1, corevar2, mafft_identity_cutoff, core_number=None,
         # if core number is specified only check this core
         if core_number is not None and curr_core_number != core_number:
             continue
-        logger.debug("Checking core %s", curr_core_number)
         if corevar1[i].count('-'):
             # only take template cores if there are no gaps
             continue
@@ -214,7 +213,7 @@ def check_corevar(corevar1, corevar2, mafft_identity_cutoff, core_number=None,
                 continue
 
             sim = calc_similarity(aligned_regs[0], aligned_regs[1])
-            logger.debug("Aligned regions with similarity %s:\n%s\n%s", sim, aligned_regs[0], aligned_regs[1])
+            logger.debug("[core %d] Aligned regions with similarity %s:\n%s\n%s", (i / 2) + 1, sim, aligned_regs[0], aligned_regs[1])
             if check_aln_coverage(aligned_regs, coverage_cutoff) and sim > mafft_identity_cutoff:
                 new_core, left_var, right_var = get_newcorvar(aligned_regs)
                 if full_coverage and "-" in new_core or not new_core:
@@ -471,6 +470,7 @@ def check_template_cores(aligned_templates, tmpl_id, tmpl_identity_cutoff=0.5,
             continue
 
         # run core-by-core check
+        logger.info("Checking structure %s", seq_id2)
         newcorevar = check_corevar(corevar1, corevar2, mafft_identity_cutoff,
                                    core_number, full_coverage, only_equal_cores, coverage_cutoff)
         if newcorevar != corevar2:
